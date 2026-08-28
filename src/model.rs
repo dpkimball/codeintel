@@ -67,6 +67,8 @@ pub struct FileRecord {
     pub wildcard_imports: u32,
     pub symbol_ids: Vec<String>,
     pub edge_ids: Vec<String>,
+    #[serde(default)]
+    pub config_ids: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -125,4 +127,13 @@ pub struct ImportRecord {
     pub path: String,
     pub is_wildcard: bool,
     pub is_crate_local: bool,
+}
+
+/// Flattened key from `dpk.toml` (and later other manifests). Values are tokens, not blobs.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigKeyRecord {
+    pub file_path: String,
+    pub key: String,
+    #[serde(default)]
+    pub value_tokens: Vec<String>,
 }

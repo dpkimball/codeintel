@@ -325,12 +325,14 @@ impl Architecture {
 
     /// Graph-first implementation plan. Source paths are payload strings, not file reads.
     ///
-    /// Matching prefers file paths named in the request, then crate names. That keeps
-    /// the inspection set to implicated files instead of every payload in a crate.
+    /// Matching order: file paths named in the request, then `dpk.toml` config keys/tokens,
+    /// then crate names as whole tokens. Inspect paths are `repo:path`.
     pub fn plan(&self, request: &str) -> Result<PlanReport> {
         let names = repo_names(&self.store)?;
         let needle = request.to_lowercase();
+        let tokens = request_tokens(&needle);
         let mut matched_files: Vec<(String, String)> = Vec::new();
+        let mut matched_configs: Vec<(String, String)> = Vec::new();
         let mut matched_crates: Vec<(String, String)> = Vec::new();
         let mut likely_affected = BTreeSet::new();
         let mut matching_patterns = Vec::new();
@@ -347,8 +349,14 @@ impl Architecture {
                     repos.insert(name.clone());
                 }
             }
+            for ck in q.config_keys()? {
+                if request_matches_config(&needle, &ck) {
+                    matched_configs.push((name.clone(), ck.file_path.clone()));
+                    repos.insert(name.clone());
+                }
+            }
             for c in &crates {
-                if needle.contains(&c.name.to_lowercase()) {
+                if tokens.contains(&c.name.to_lowercase()) {
                     matched_crates.push((name.clone(), c.name.clone()));
                     likely_affected.insert(format!("{}/{}", name, c.name));
                     repos.insert(name.clone());
@@ -366,16 +374,22 @@ impl Architecture {
             }
         }
 
+        matched_configs.sort();
+        matched_configs.dedup();
+
         let prefer_files = !matched_files.is_empty();
+        let prefer_config = !prefer_files && !matched_configs.is_empty();
         let matched_kind = if prefer_files {
             "file"
+        } else if prefer_config {
+            "config"
         } else if !matched_crates.is_empty() {
             "crate"
         } else {
             "none"
         };
 
-        if !prefer_files && !matched_crates.is_empty() {
+        if !prefer_files && !prefer_config && !matched_crates.is_empty() {
             let matched_repos: BTreeSet<String> =
                 matched_crates.iter().map(|(r, _)| r.clone()).collect();
             for name in matched_repos {
@@ -397,12 +411,21 @@ impl Architecture {
                 "matched files {}",
                 matched_files
                     .iter()
-                    .map(|(r, p)| format!("{r}:{p}"))
+                    .map(|(r, p)| qualify_path(r, p))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        } else if prefer_config {
+            format!(
+                "matched config {}",
+                matched_configs
+                    .iter()
+                    .map(|(r, p)| qualify_path(r, p))
                     .collect::<Vec<_>>()
                     .join(", ")
             )
         } else if matched_crates.is_empty() {
-            "no crate name or file path in the request matched the graph; inspect nothing until the agent names a crate, file, or symbol present in bindb".into()
+            "no crate name, file path, or config key in the request matched the graph; inspect nothing until the agent names a crate, file, config key, or symbol present in bindb".into()
         } else {
             format!(
                 "matched {}",
@@ -414,30 +437,45 @@ impl Architecture {
             )
         };
 
-        let impact_targets: Vec<(String, String)> = if prefer_files {
-            matched_files
+        if prefer_config {
+            for (repo, path) in &matched_configs {
+                let qpath = qualify_path(repo, path);
+                inspect.insert(qpath.clone());
+                files.insert(qpath);
+                let q = QueryEngine::open(&self.store, repo);
+                if let Some(f) = q.files()?.into_iter().find(|f| &f.path == path) {
+                    if let Some(c) = f.crate_name {
+                        likely_affected.insert(format!("{repo}/{c}"));
+                    }
+                }
+            }
         } else {
-            matched_crates
-        };
+            let impact_targets: Vec<(String, String)> = if prefer_files {
+                matched_files
+            } else {
+                matched_crates
+            };
 
-        for (repo, spec) in &impact_targets {
-            let q = QueryEngine::open(&self.store, repo);
-            let impact = impact::analyze(&q, spec)?;
-            for f in &impact.inspection_set.files {
-                inspect.insert(f.clone());
-                files.insert(f.clone());
-            }
-            for c in &impact.inspection_set.crates {
-                likely_affected.insert(format!("{repo}/{c}"));
-            }
-            for d in &impact.transitive_crate_dependents {
-                likely_affected.insert(format!("{repo}/{d}"));
-            }
-            if let Some(crate_name) = crate_label(&impact) {
-                if let Ok(fed) = federation::impact(&self.store, &crate_name) {
-                    for d in fed.dependents {
-                        repos.insert(d.repo.clone());
-                        likely_affected.insert(format!("{}/{}", d.repo, d.name));
+            for (repo, spec) in &impact_targets {
+                let q = QueryEngine::open(&self.store, repo);
+                let impact = impact::analyze(&q, spec)?;
+                for f in &impact.inspection_set.files {
+                    let qpath = qualify_path(repo, f);
+                    inspect.insert(qpath.clone());
+                    files.insert(qpath);
+                }
+                for c in &impact.inspection_set.crates {
+                    likely_affected.insert(format!("{repo}/{c}"));
+                }
+                for d in &impact.transitive_crate_dependents {
+                    likely_affected.insert(format!("{repo}/{d}"));
+                }
+                if let Some(crate_name) = crate_label(&impact) {
+                    if let Ok(fed) = federation::impact(&self.store, &crate_name) {
+                        for d in fed.dependents {
+                            repos.insert(d.repo.clone());
+                            likely_affected.insert(format!("{}/{}", d.repo, d.name));
+                        }
                     }
                 }
             }
@@ -458,6 +496,24 @@ impl Architecture {
             source_files_opened: 0,
         })
     }
+}
+
+/// `repo:path` so colliding filenames across repositories stay distinct.
+pub(crate) fn qualify_path(repo: &str, path: &str) -> String {
+    format!("{repo}:{path}")
+}
+
+/// True when an opened path is the same inspection entry, with or without the repo prefix.
+pub(crate) fn inspect_paths_match(identified: &str, opened: &str) -> bool {
+    if identified == opened {
+        return true;
+    }
+    let id_path = identified
+        .split_once(':')
+        .map(|(_, p)| p)
+        .unwrap_or(identified);
+    let open_path = opened.split_once(':').map(|(_, p)| p).unwrap_or(opened);
+    id_path == open_path
 }
 
 /// True when the request names this indexed path (multi-component suffix or distinctive filename).
@@ -482,6 +538,32 @@ fn request_matches_file(needle: &str, path: &str) -> bool {
     false
 }
 
+fn request_matches_config(needle: &str, rec: &crate::model::ConfigKeyRecord) -> bool {
+    let key = rec.key.to_lowercase();
+    if needle.contains(&key) {
+        return true;
+    }
+    if let Some(last) = key.rsplit('.').next() {
+        if last.len() >= 8 && needle.contains(last) {
+            return true;
+        }
+    }
+    rec.value_tokens.iter().any(|tok| {
+        let t = tok.to_lowercase();
+        t.len() >= 8 && needle.contains(&t)
+    })
+}
+
+fn request_tokens(needle: &str) -> BTreeSet<String> {
+    needle
+        .split(|c: char| {
+            !(c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' || c == '/')
+        })
+        .filter(|s| s.len() >= 2)
+        .map(|s| s.to_string())
+        .collect()
+}
+
 fn repo_names(store: &BinderStore) -> Result<Vec<String>> {
     let mut names = Vec::new();
     for v in store.list(PREFIX_ALL_REPOS)? {
@@ -494,6 +576,11 @@ fn repo_names(store: &BinderStore) -> Result<Vec<String>> {
 
 fn resolve_repo_target(store: &BinderStore, target: &str) -> Result<(String, String)> {
     let target = target.trim();
+    if let Some((repo, spec)) = target.split_once(':') {
+        if !spec.is_empty() && repo_names(store)?.iter().any(|n| n == repo) {
+            return Ok((repo.to_string(), spec.to_string()));
+        }
+    }
     if let Some((repo, spec)) = target.split_once('/') {
         if repo_names(store)?.iter().any(|n| n == repo) {
             return Ok((repo.to_string(), spec.to_string()));

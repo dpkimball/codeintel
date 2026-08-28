@@ -40,6 +40,10 @@ pub fn symbol_id(name: &str, qual: &str) -> ObjectId {
     ObjectId::new(format!("code://sym/{name}/{qual}"))
 }
 
+pub fn config_id(name: &str, path: &str, key: &str) -> ObjectId {
+    ObjectId::new(format!("code://config/{name}/{path}/{key}"))
+}
+
 pub fn sync_id(name: &str) -> ObjectId {
     ObjectId::new(format!("code://sync/{name}"))
 }
@@ -88,6 +92,10 @@ pub fn prefix_mod(name: &str) -> String {
 
 pub fn prefix_crate(name: &str) -> String {
     format!("code://crate/{name}/")
+}
+
+pub fn prefix_config(name: &str) -> String {
+    format!("code://config/{name}/")
 }
 
 pub fn prefix_commit(name: &str) -> String {

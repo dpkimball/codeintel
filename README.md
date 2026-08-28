@@ -53,7 +53,7 @@ cargo run --release -- workflow start --store ./store --request "change src/lib.
 cargo run --release -- workflow finish --session /tmp/wf.json --opened src/lib.rs --modified src/lib.rs --validation pass
 ```
 
-Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Workflow: [docs/specs/autonomous-workflow.md](docs/specs/autonomous-workflow.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
+Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Inspect-set fidelity: [docs/specs/plan-inspect-sets.md](docs/specs/plan-inspect-sets.md). Workflow: [docs/specs/autonomous-workflow.md](docs/specs/autonomous-workflow.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
 
 ## bindb mapping
 
@@ -66,6 +66,7 @@ Not SQL tables. Native bindb objects and edges under `code://`:
 | file | `code://file/{name}/{path}` |
 | module | `code://mod/{name}/{path}` |
 | crate | `code://crate/{name}/{crate}` |
+| config key | `code://config/{name}/{path}/{key}` |
 | symbol | `code://sym/{name}/{qualname}` |
 | sync bookmark | `code://sync/{name}` |
 
