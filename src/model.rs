@@ -78,6 +78,10 @@ pub struct ModuleRecord {
 pub struct CrateRecord {
     pub name: String,
     pub manifest_path: String,
+    #[serde(default)]
+    pub repository: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

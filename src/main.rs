@@ -68,6 +68,14 @@ enum Cmd {
         #[arg(long)]
         to: String,
     },
+    /// Federated graph across repositories in one store (no source walk).
+    Federation {
+        #[arg(long)]
+        store: PathBuf,
+        /// Crate name or `repo/crate` for cross-repo impact.
+        #[arg(long)]
+        impact: Option<String>,
+    },
     /// Index twice (full + incremental no-op) and print validation metrics.
     Validate {
         repo: PathBuf,
@@ -190,6 +198,17 @@ fn run() -> codeintel::Result<()> {
             let db = open_store(&store)?;
             let report = codeintel::drift_analyze(&db, &name, &from, &to)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
+            db.close()?;
+        }
+        Cmd::Federation { store, impact } => {
+            let db = open_store(&store)?;
+            if let Some(target) = impact {
+                let report = codeintel::federation_impact(&db, &target)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                let report = codeintel::federation_analyze(&db)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
             db.close()?;
         }
         Cmd::Validate { repo, store, name } => {

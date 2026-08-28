@@ -93,3 +93,16 @@ pub fn prefix_crate(name: &str) -> String {
 pub fn prefix_commit(name: &str) -> String {
     format!("code://commit/{name}/")
 }
+
+pub const PREFIX_ALL_CRATES: &str = "code://crate/";
+pub const PREFIX_ALL_REPOS: &str = "code://repo/";
+
+/// `code://crate/{repo}/{crate}` → `(repo, crate)`.
+pub fn parse_crate_id(id: &ObjectId) -> Option<(String, String)> {
+    let rest = id.0.strip_prefix(PREFIX_ALL_CRATES)?;
+    let (repo, crate_name) = rest.split_once('/')?;
+    if repo.is_empty() || crate_name.is_empty() {
+        return None;
+    }
+    Some((repo.to_string(), crate_name.to_string()))
+}
