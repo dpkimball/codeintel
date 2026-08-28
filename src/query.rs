@@ -95,6 +95,10 @@ impl<'a> QueryEngine<'a> {
         }
     }
 
+    pub(crate) fn store(&self) -> &'a BinderStore {
+        self.store
+    }
+
     pub fn timed<T: Serialize>(&self, f: impl FnOnce() -> Result<T>) -> Result<QueryTimed<T>> {
         let t = Instant::now();
         let result = f()?;

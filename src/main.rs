@@ -39,6 +39,24 @@ enum Cmd {
         #[arg(long)]
         to: Option<String>,
     },
+    /// Evaluate architectural doctrine against the bindb graph (no source walk).
+    Doctrine {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        name: String,
+        #[arg(long, default_value = "auto")]
+        profile: String,
+    },
+    /// Change impact for a crate, module, file, or symbol — bindb only.
+    Impact {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        target: String,
+    },
     /// Index twice (full + incremental no-op) and print validation metrics.
     Validate {
         repo: PathBuf,
@@ -122,6 +140,34 @@ fn run() -> codeintel::Result<()> {
                 Question::Diagram => serde_json::to_value(q.mermaid_crate_graph()?)?,
             };
             println!("{}", serde_json::to_string_pretty(&out)?);
+            db.close()?;
+        }
+        Cmd::Doctrine {
+            store,
+            name,
+            profile,
+        } => {
+            let db = open_store(&store)?;
+            let q = QueryEngine::open(&db, name);
+            let crates: Vec<String> = q.crates()?.into_iter().map(|c| c.name).collect();
+            let doctrine = match profile.as_str() {
+                "binder" => codeintel::Doctrine::binder(),
+                "workspace" => codeintel::Doctrine::workspace_default(),
+                _ => codeintel::Doctrine::detect(&crates),
+            };
+            let report = doctrine.evaluate(&q)?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            db.close()?;
+        }
+        Cmd::Impact {
+            store,
+            name,
+            target,
+        } => {
+            let db = open_store(&store)?;
+            let q = QueryEngine::open(&db, name);
+            let report = codeintel::impact_analyze(&q, &target)?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
             db.close()?;
         }
         Cmd::Validate { repo, store, name } => {

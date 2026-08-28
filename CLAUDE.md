@@ -18,9 +18,10 @@ src/
   cargo_graph.rs   # workspace crates + path deps
   indexer.rs       # extract → bindb objects/edges
   query.rs         # agent questions over bindb
-  doctrine.rs      # Binder layer ranks
+  doctrine.rs      # conformance engine (layering, forbidden, ownership, acyclic)
+  impact.rs        # change impact + inspection set from graph
   report.rs        # validation metrics
-  main.rs          # index / query / validate CLI
+  main.rs          # index / query / doctrine / impact / validate CLI
 ```
 
 New languages implement `LanguageParser` and get wired in `indexer.rs`. Do not special-case a second language inside `rust_parser.rs`.

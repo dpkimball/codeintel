@@ -15,7 +15,7 @@ Git repository → Git sync → language parser → semantic extract → bindb �
 
 ## Status
 
-POC. Single Git repository. Rust parser first. Parser trait is language-agnostic.
+POC #1: incremental Git sync into bindb. POC #2: doctrine conformance and change impact from the graph (no repo walk).
 
 ## Build
 
@@ -41,7 +41,11 @@ cargo run --release -- query --store ./store --name binder-desktop --question cy
 cargo run --release -- query --store ./store --name binder-desktop --question layering
 cargo run --release -- query --store ./store --name binder-desktop --question unused
 cargo run --release -- query --store ./store --name binder-desktop --question diagram
+cargo run --release -- doctrine --store ./store --name binder-desktop
+cargo run --release -- impact --store ./store --name binder-desktop --target binder-storage
 ```
+
+Reasoning is documented in [docs/specs/architectural-reasoning.md](docs/specs/architectural-reasoning.md). Discovery uses bindb; open source only at the inspection-set paths the graph returns.
 
 ## bindb mapping
 
@@ -63,4 +67,4 @@ Call resolution is name-based (not rustc/HIR). Good enough to answer architectur
 
 ## Out of scope (POC)
 
-Multi-repo, cross-repo deps, non-Rust parsers, embeddings, stored doctrine beyond the Binder layer profile, autonomous review loops.
+Multi-repo, rust-analyzer/rustc, embeddings, autonomous review loops. Parser accuracy is a later enhancement; it is not required for doctrine or impact.
