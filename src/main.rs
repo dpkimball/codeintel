@@ -57,6 +57,17 @@ enum Cmd {
         #[arg(long)]
         target: String,
     },
+    /// Architectural drift between two indexed Git SHAs (bindb as_of, no source walk).
+    Drift {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        from: String,
+        #[arg(long)]
+        to: String,
+    },
     /// Index twice (full + incremental no-op) and print validation metrics.
     Validate {
         repo: PathBuf,
@@ -167,6 +178,17 @@ fn run() -> codeintel::Result<()> {
             let db = open_store(&store)?;
             let q = QueryEngine::open(&db, name);
             let report = codeintel::impact_analyze(&q, &target)?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            db.close()?;
+        }
+        Cmd::Drift {
+            store,
+            name,
+            from,
+            to,
+        } => {
+            let db = open_store(&store)?;
+            let report = codeintel::drift_analyze(&db, &name, &from, &to)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
             db.close()?;
         }

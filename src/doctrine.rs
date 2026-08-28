@@ -219,12 +219,20 @@ impl Doctrine {
 
     /// Evaluate crate `DEPENDS_ON` edges in bindb. Does not open source files.
     pub fn evaluate(&self, engine: &QueryEngine) -> Result<ConformanceReport> {
-        let edges = engine.crate_dep_graph()?;
+        self.evaluate_graph(&engine.name, &engine.crate_dep_graph()?)
+    }
+
+    /// Same rules as `evaluate`, against an already reconstructed dep graph.
+    pub fn evaluate_graph(
+        &self,
+        repo: &str,
+        edges: &[(String, String)],
+    ) -> Result<ConformanceReport> {
         let mut findings = Vec::new();
         for rule in &self.rules {
             match rule {
                 Rule::Layering { id, layers } => {
-                    for (from, to) in &edges {
+                    for (from, to) in edges {
                         if layers.violates(from, to) {
                             let from_rank = layers.rank_of(from).unwrap_or(0);
                             let to_rank = layers.rank_of(to).unwrap_or(0);
@@ -241,8 +249,8 @@ impl Doctrine {
                                     detail: format!("{from} (rank {from_rank}) DEPENDS_ON {to} (rank {to_rank})"),
                                 },
                                 objects: vec![
-                                    crate::ids::crate_id(&engine.name, from).0,
-                                    crate::ids::crate_id(&engine.name, to).0,
+                                    crate::ids::crate_id(repo, from).0,
+                                    crate::ids::crate_id(repo, to).0,
                                 ],
                                 remediation: format!(
                                     "Remove {from} → {to}, or move the needed types into rank ≥ {from_rank}."
@@ -257,7 +265,7 @@ impl Doctrine {
                     to,
                     remediation,
                 } => {
-                    for (a, b) in &edges {
+                    for (a, b) in edges {
                         if glob_match(from, a) && glob_match(to, b) {
                             findings.push(Finding {
                                 rule_id: id.clone(),
@@ -270,8 +278,8 @@ impl Doctrine {
                                     detail: format!("direct DEPENDS_ON {a} → {b}"),
                                 },
                                 objects: vec![
-                                    crate::ids::crate_id(&engine.name, a).0,
-                                    crate::ids::crate_id(&engine.name, b).0,
+                                    crate::ids::crate_id(repo, a).0,
+                                    crate::ids::crate_id(repo, b).0,
                                 ],
                                 remediation: remediation.clone(),
                             });
@@ -284,7 +292,7 @@ impl Doctrine {
                     may_depend_on,
                     severity,
                 } => {
-                    for (a, b) in &edges {
+                    for (a, b) in edges {
                         if !owners.iter().any(|p| glob_match(p, a)) {
                             continue;
                         }
@@ -305,8 +313,8 @@ impl Doctrine {
                                 detail: format!("{a} is an owner crate but DEPENDS_ON {b}"),
                             },
                             objects: vec![
-                                crate::ids::crate_id(&engine.name, a).0,
-                                crate::ids::crate_id(&engine.name, b).0,
+                                crate::ids::crate_id(repo, a).0,
+                                crate::ids::crate_id(repo, b).0,
                             ],
                             remediation: format!(
                                 "Keep {a}'s dependencies inside the ownership set, or extend the allow-list deliberately."
@@ -315,11 +323,11 @@ impl Doctrine {
                     }
                 }
                 Rule::Acyclic { id } => {
-                    let cycles = engine.circular_dependencies()?;
+                    let cycles = crate::query::crate_cycles(edges);
                     for Cycle { nodes } in cycles {
                         let objects: Vec<String> = nodes
                             .iter()
-                            .map(|n| crate::ids::crate_id(&engine.name, n).0)
+                            .map(|n| crate::ids::crate_id(repo, n).0)
                             .collect();
                         let path = nodes.join(" → ");
                         findings.push(Finding {

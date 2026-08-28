@@ -151,7 +151,7 @@ impl<'a> QueryEngine<'a> {
 
     pub fn circular_dependencies(&self) -> Result<Vec<Cycle>> {
         let edges = self.crate_dep_graph()?;
-        Ok(find_cycles(&edges))
+        Ok(crate_cycles(&edges))
     }
 
     pub fn layering_violations(&self) -> Result<Vec<LayerViolation>> {
@@ -440,7 +440,7 @@ fn decode_list<T: serde::de::DeserializeOwned>(
     Ok(out)
 }
 
-fn find_cycles(edges: &[(String, String)]) -> Vec<Cycle> {
+pub(crate) fn crate_cycles(edges: &[(String, String)]) -> Vec<Cycle> {
     let mut adj: HashMap<&str, Vec<&str>> = HashMap::new();
     let mut nodes = HashSet::new();
     for (a, b) in edges {
