@@ -146,9 +146,10 @@ pub fn index_into(store: &BinderStore, root: &Path, name: &str) -> Result<IndexS
         last_incremental_ms: bookmark.as_ref().map(|_| duration_ms),
     };
     let mut tx = Transaction::new();
-    put_json(&mut tx, sync_id(name), &bm, Some(provenance))?;
+    put_json(&mut tx, sync_id(name), &bm, Some(provenance.clone()))?;
     store.commit_buffered(tx, ACTOR, format!("sync {name} {}", head.sha))?;
     store.flush()?;
+    stamp_commit_catalog(store, name, &head, &tree, &ws, &provenance)?;
 
     Ok(IndexStats {
         name: name.to_string(),
@@ -552,10 +553,50 @@ fn put_repo_and_commit(
             repository: name.to_string(),
             timestamp: head.timestamp.clone(),
             branch: head.branch.clone(),
+            bindb_commit: None,
+            crate_names: Vec::new(),
+            file_paths: Vec::new(),
         },
         Some(provenance.clone()),
     )?;
     store.commit_buffered(tx, ACTOR, "repo/commit")?;
+    Ok(())
+}
+
+fn stamp_commit_catalog(
+    store: &BinderStore,
+    name: &str,
+    head: &GitHead,
+    tree: &[TrackedFile],
+    ws: &WorkspaceGraph,
+    provenance: &Provenance,
+) -> Result<()> {
+    let bindb_commit = store.head()?.ok_or_else(|| {
+        CodeintelError::Other("bindb head missing after index; cannot stamp drift catalog".into())
+    })?;
+    let mut crate_names: Vec<String> = ws.crates.iter().map(|c| c.name.clone()).collect();
+    crate_names.sort();
+    crate_names.dedup();
+    let mut file_paths: Vec<String> = tree.iter().map(|f| f.path.clone()).collect();
+    file_paths.sort();
+    let rec = CommitRecord {
+        sha: head.sha.clone(),
+        repository: name.to_string(),
+        timestamp: head.timestamp.clone(),
+        branch: head.branch.clone(),
+        bindb_commit: Some(bindb_commit),
+        crate_names,
+        file_paths,
+    };
+    let mut tx = Transaction::new();
+    put_json(
+        &mut tx,
+        crate::ids::commit_id(name, &head.sha),
+        &rec,
+        Some(provenance.clone()),
+    )?;
+    store.commit_buffered(tx, ACTOR, format!("catalog {}", head.sha))?;
+    store.flush()?;
     Ok(())
 }
 

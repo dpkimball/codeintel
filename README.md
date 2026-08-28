@@ -15,7 +15,7 @@ Git repository → Git sync → language parser → semantic extract → bindb �
 
 ## Status
 
-POC #1: incremental Git sync into bindb. POC #2: doctrine conformance and change impact from the graph (no repo walk).
+POC #1: incremental Git sync into bindb. POC #2: doctrine conformance and change impact from the graph (no repo walk). POC #3: historical drift between two indexed Git SHAs via bindb `as_of`.
 
 ## Build
 
@@ -43,9 +43,10 @@ cargo run --release -- query --store ./store --name binder-desktop --question un
 cargo run --release -- query --store ./store --name binder-desktop --question diagram
 cargo run --release -- doctrine --store ./store --name binder-desktop
 cargo run --release -- impact --store ./store --name binder-desktop --target binder-storage
+cargo run --release -- drift --store ./store --name binder-desktop --from <sha-a> --to <sha-b>
 ```
 
-Reasoning is documented in [docs/specs/architectural-reasoning.md](docs/specs/architectural-reasoning.md). Discovery uses bindb; open source only at the inspection-set paths the graph returns.
+Reasoning is documented in [docs/specs/architectural-reasoning.md](docs/specs/architectural-reasoning.md) and [docs/specs/historical-drift.md](docs/specs/historical-drift.md). Discovery uses bindb; open source only at the inspection-set paths the graph returns. Drift requires both SHAs to have been indexed; it does not check them out.
 
 ## bindb mapping
 
@@ -67,4 +68,4 @@ Call resolution is name-based (not rustc/HIR). Good enough to answer architectur
 
 ## Out of scope (POC)
 
-Multi-repo, rust-analyzer/rustc, embeddings, autonomous review loops. Parser accuracy is a later enhancement; it is not required for doctrine or impact.
+Multi-repo, rust-analyzer/rustc, embeddings, autonomous review loops. Parser accuracy is a later enhancement; it is not required for doctrine, impact, or drift.

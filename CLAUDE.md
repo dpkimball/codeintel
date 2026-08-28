@@ -20,8 +20,9 @@ src/
   query.rs         # agent questions over bindb
   doctrine.rs      # conformance engine (layering, forbidden, ownership, acyclic)
   impact.rs        # change impact + inspection set from graph
+  drift.rs         # historical drift via bindb as_of
   report.rs        # validation metrics
-  main.rs          # index / query / doctrine / impact / validate CLI
+  main.rs          # index / query / doctrine / impact / drift / validate CLI
 ```
 
 New languages implement `LanguageParser` and get wired in `indexer.rs`. Do not special-case a second language inside `rust_parser.rs`.

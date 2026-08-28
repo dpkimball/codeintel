@@ -2,6 +2,7 @@
 
 pub mod cargo_graph;
 pub mod doctrine;
+pub mod drift;
 pub mod error;
 pub mod git_sync;
 pub mod ids;
@@ -14,6 +15,7 @@ pub mod report;
 pub mod rust_parser;
 
 pub use doctrine::{ConformanceReport, Doctrine};
+pub use drift::{analyze as drift_analyze, DriftReport};
 pub use error::{CodeintelError, Result};
 pub use impact::{analyze as impact_analyze, ImpactReport};
 pub use indexer::{index, IndexOptions, IndexStats};

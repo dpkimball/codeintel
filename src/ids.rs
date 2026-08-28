@@ -89,3 +89,7 @@ pub fn prefix_mod(name: &str) -> String {
 pub fn prefix_crate(name: &str) -> String {
     format!("code://crate/{name}/")
 }
+
+pub fn prefix_commit(name: &str) -> String {
+    format!("code://commit/{name}/")
+}

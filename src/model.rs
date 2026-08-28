@@ -43,6 +43,13 @@ pub struct CommitRecord {
     pub repository: String,
     pub timestamp: String,
     pub branch: String,
+    /// bindb commit at which this Git SHA's graph is queryable via as_of.
+    #[serde(default)]
+    pub bindb_commit: Option<bindb::CommitId>,
+    #[serde(default)]
+    pub crate_names: Vec<String>,
+    #[serde(default)]
+    pub file_paths: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
