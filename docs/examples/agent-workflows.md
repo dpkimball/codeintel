@@ -4,10 +4,15 @@ These sequences are what an autonomous agent should run. None of them start with
 
 ## Implement a change in a crate
 
-1. `architecture.plan("change binder-storage")`
-2. Read `rules_must_remain_satisfied` and `smallest_file_set`.
-3. Open only those files.
-4. After the patch: `index` then `architecture.doctrine()`.
+1. `codeintel workflow start --store ./store --request "change src/lib.rs" --bind repo=./repo --session /tmp/wf.json`
+2. Open only `files_identified` (plus new files that did not exist in the graph).
+3. Implement and validate.
+4. Commit (re-index follows Git HEAD).
+5. `codeintel workflow finish --session /tmp/wf.json --opened src/lib.rs --modified src/lib.rs --validation pass`
+
+Planning, doctrine, and impact never walk the tree. `opened_outside_inspection_set` is non-empty if the agent read a graph file the plan did not name.
+
+## Review a PR for layering
 
 ## Review a PR for layering
 

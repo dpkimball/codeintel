@@ -15,7 +15,7 @@ Git repository → Git sync → language parser → semantic extract → bindb �
 
 ## Status
 
-POC #1: incremental Git sync. POC #2: doctrine and impact. POC #3: historical drift. POC #4: cross-repository federation. Agent API: `Architecture` (`docs/specs/agent-architecture-api.md`).
+POC #1: incremental Git sync. POC #2: doctrine and impact. Historical drift and cross-repository federation are on master. Agent API: `Architecture`. Autonomous workflow: `docs/specs/autonomous-workflow.md` (`workflow start` / `workflow finish`).
 
 ## Build
 
@@ -49,9 +49,11 @@ cargo run --release -- index . --store ./store --name codeintel
 cargo run --release -- federation --store ./store
 cargo run --release -- architecture --store ./store summary
 cargo run --release -- architecture --store ./store plan --request "change binder-storage"
+cargo run --release -- workflow start --store ./store --request "change src/lib.rs" --bind codeintel=. --session /tmp/wf.json
+cargo run --release -- workflow finish --session /tmp/wf.json --opened src/lib.rs --modified src/lib.rs --validation pass
 ```
 
-Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
+Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Workflow: [docs/specs/autonomous-workflow.md](docs/specs/autonomous-workflow.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
 
 ## bindb mapping
 
@@ -73,4 +75,4 @@ Call resolution is name-based (not rustc/HIR). Good enough to answer architectur
 
 ## Out of scope (POC)
 
-Multi-repo in **separate** stores, rust-analyzer/rustc, embeddings, autonomous review loops. Parser accuracy is a later enhancement; it is not required for doctrine, impact, drift, or federation.
+Multi-repo in **separate** stores, rust-analyzer/rustc, embeddings. Parser accuracy is a later enhancement; it is not required for doctrine, impact, drift, federation, or the workflow loop.

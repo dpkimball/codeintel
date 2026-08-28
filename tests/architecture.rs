@@ -94,6 +94,7 @@ fn architecture_api_reasons_from_bindb_after_trees_removed() {
         .plan("smallest file set to change libx while keeping doctrine")
         .unwrap();
     assert_eq!(plan.source_files_opened, 0);
+    assert_eq!(plan.matched_kind, "crate");
     assert!(plan.interpretation.contains("libx"));
     assert!(!plan.smallest_file_set.is_empty());
     assert!(!plan.rules_must_remain_satisfied.is_empty());
