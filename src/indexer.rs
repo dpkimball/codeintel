@@ -559,6 +559,7 @@ fn put_repo_and_commit(
             bindb_commit: None,
             crate_names: Vec::new(),
             file_paths: Vec::new(),
+            symbol_qualnames: Vec::new(),
         },
         Some(provenance.clone()),
     )?;
@@ -582,6 +583,13 @@ fn stamp_commit_catalog(
     crate_names.dedup();
     let mut file_paths: Vec<String> = tree.iter().map(|f| f.path.clone()).collect();
     file_paths.sort();
+    let mut symbol_qualnames: Vec<String> = Vec::new();
+    for v in store.list(&crate::ids::prefix_sym(name))? {
+        let rec: crate::model::SymbolRecord = decode(&v)?;
+        symbol_qualnames.push(rec.qualname);
+    }
+    symbol_qualnames.sort();
+    symbol_qualnames.dedup();
     let rec = CommitRecord {
         sha: head.sha.clone(),
         repository: name.to_string(),
@@ -590,6 +598,7 @@ fn stamp_commit_catalog(
         bindb_commit: Some(bindb_commit),
         crate_names,
         file_paths,
+        symbol_qualnames,
     };
     let mut tx = Transaction::new();
     put_json(

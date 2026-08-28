@@ -96,6 +96,7 @@ pub fn prefix_commit(name: &str) -> String {
 
 pub const PREFIX_ALL_CRATES: &str = "code://crate/";
 pub const PREFIX_ALL_REPOS: &str = "code://repo/";
+pub const PREFIX_ALL_COMMITS: &str = "code://commit/";
 
 /// `code://crate/{repo}/{crate}` → `(repo, crate)`.
 pub fn parse_crate_id(id: &ObjectId) -> Option<(String, String)> {
@@ -105,4 +106,14 @@ pub fn parse_crate_id(id: &ObjectId) -> Option<(String, String)> {
         return None;
     }
     Some((repo.to_string(), crate_name.to_string()))
+}
+
+/// `code://commit/{repo}/{sha}` → `(repo, sha)`.
+pub fn parse_commit_id(id: &ObjectId) -> Option<(String, String)> {
+    let rest = id.0.strip_prefix(PREFIX_ALL_COMMITS)?;
+    let (repo, sha) = rest.split_once('/')?;
+    if repo.is_empty() || sha.is_empty() {
+        return None;
+    }
+    Some((repo.to_string(), sha.to_string()))
 }

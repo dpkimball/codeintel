@@ -1,5 +1,6 @@
 //! Code intelligence domain: Git-synced semantic graph stored in bindb.
 
+pub mod architecture;
 pub mod cargo_graph;
 pub mod doctrine;
 pub mod drift;
@@ -15,6 +16,7 @@ pub mod query;
 pub mod report;
 pub mod rust_parser;
 
+pub use architecture::Architecture;
 pub use doctrine::{ConformanceReport, Doctrine};
 pub use drift::{analyze as drift_analyze, DriftReport};
 pub use error::{CodeintelError, Result};

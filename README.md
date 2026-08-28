@@ -15,7 +15,7 @@ Git repository → Git sync → language parser → semantic extract → bindb �
 
 ## Status
 
-POC #1: incremental Git sync into bindb. POC #2: doctrine conformance and change impact from the graph (no repo walk). POC #3: historical drift between two indexed Git SHAs via bindb `as_of`. POC #4: cross-repository `DEPENDS_ON` in one store.
+POC #1: incremental Git sync. POC #2: doctrine and impact. POC #3: historical drift. POC #4: cross-repository federation. Agent API: `Architecture` (`docs/specs/agent-architecture-api.md`).
 
 ## Build
 
@@ -47,10 +47,11 @@ cargo run --release -- drift --store ./store --name binder-desktop --from <sha-a
 cargo run --release -- index ../bindb --store ./store --name bindb
 cargo run --release -- index . --store ./store --name codeintel
 cargo run --release -- federation --store ./store
-cargo run --release -- federation --store ./store --impact bindb
+cargo run --release -- architecture --store ./store summary
+cargo run --release -- architecture --store ./store plan --request "change binder-storage"
 ```
 
-Reasoning is documented in [docs/specs/architectural-reasoning.md](docs/specs/architectural-reasoning.md), [docs/specs/historical-drift.md](docs/specs/historical-drift.md), and [docs/specs/cross-repository.md](docs/specs/cross-repository.md). Discovery uses bindb; open source only at the inspection-set paths the graph returns. Drift requires both SHAs to have been indexed; it does not check them out. Federation requires each repo to have been indexed into the **same** store.
+Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
 
 ## bindb mapping
 

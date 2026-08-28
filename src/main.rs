@@ -76,6 +76,13 @@ enum Cmd {
         #[arg(long)]
         impact: Option<String>,
     },
+    /// Agent-facing architecture API (JSON). Prefer this over graph primitives.
+    Architecture {
+        #[arg(long)]
+        store: PathBuf,
+        #[command(subcommand)]
+        op: ArchOp,
+    },
     /// Index twice (full + incremental no-op) and print validation metrics.
     Validate {
         repo: PathBuf,
@@ -83,6 +90,33 @@ enum Cmd {
         store: PathBuf,
         #[arg(long)]
         name: Option<String>,
+    },
+}
+
+#[derive(Subcommand)]
+enum ArchOp {
+    Summary,
+    Doctrine,
+    Impact {
+        #[arg(long)]
+        target: String,
+    },
+    Dependencies {
+        #[arg(long)]
+        target: String,
+    },
+    Cycles,
+    Layering,
+    Drift {
+        #[arg(long)]
+        from: String,
+        #[arg(long)]
+        to: String,
+    },
+    Federation,
+    Plan {
+        #[arg(long)]
+        request: String,
     },
 }
 
@@ -210,6 +244,24 @@ fn run() -> codeintel::Result<()> {
                 println!("{}", serde_json::to_string_pretty(&report)?);
             }
             db.close()?;
+        }
+        Cmd::Architecture { store, op } => {
+            let arch = codeintel::Architecture::open(&store)?;
+            let out = match op {
+                ArchOp::Summary => serde_json::to_value(arch.summary()?)?,
+                ArchOp::Doctrine => serde_json::to_value(arch.doctrine()?)?,
+                ArchOp::Impact { target } => serde_json::to_value(arch.impact(&target)?)?,
+                ArchOp::Dependencies { target } => {
+                    serde_json::to_value(arch.dependencies(&target)?)?
+                }
+                ArchOp::Cycles => serde_json::to_value(arch.cycles()?)?,
+                ArchOp::Layering => serde_json::to_value(arch.layering()?)?,
+                ArchOp::Drift { from, to } => serde_json::to_value(arch.drift(&from, &to)?)?,
+                ArchOp::Federation => serde_json::to_value(arch.federation()?)?,
+                ArchOp::Plan { request } => serde_json::to_value(arch.plan(&request)?)?,
+            };
+            println!("{}", serde_json::to_string_pretty(&out)?);
+            arch.close()?;
         }
         Cmd::Validate { repo, store, name } => {
             let name = name.or_else(|| repo.file_name().map(|s| s.to_string_lossy().into_owned()));
