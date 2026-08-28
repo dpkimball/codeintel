@@ -50,6 +50,8 @@ pub struct CommitRecord {
     pub crate_names: Vec<String>,
     #[serde(default)]
     pub file_paths: Vec<String>,
+    #[serde(default)]
+    pub symbol_qualnames: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

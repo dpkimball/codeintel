@@ -2,7 +2,7 @@
 
 use crate::doctrine::{Doctrine, Finding};
 use crate::error::{CodeintelError, Result};
-use crate::ids::{crate_id, edge_id, prefix_commit, REL_DEPENDS_ON};
+use crate::ids::{crate_id, edge_id, prefix_commit, PREFIX_ALL_COMMITS, REL_DEPENDS_ON};
 use crate::indexer::decode_obj;
 use crate::model::CommitRecord;
 use bindb::{BinderStore, CommitId};
@@ -25,6 +25,8 @@ pub struct DriftReport {
     pub deps_removed: Vec<(String, String)>,
     pub doctrine_introduced: Vec<Finding>,
     pub doctrine_resolved: Vec<Finding>,
+    pub symbols_added: Vec<String>,
+    pub symbols_removed: Vec<String>,
 }
 
 pub fn analyze(
@@ -62,6 +64,10 @@ pub fn analyze(
     let findings_to = doctrine.evaluate_graph(name, &deps_to)?.findings;
     let (doctrine_introduced, doctrine_resolved) = finding_diff(&findings_from, &findings_to);
 
+    let symbols_from = symbols_at(store, name, from_cid, &from.symbol_qualnames)?;
+    let symbols_to = symbols_at(store, name, to_cid, &to.symbol_qualnames)?;
+    let (symbols_added, symbols_removed) = set_diff(&symbols_from, &symbols_to);
+
     Ok(DriftReport {
         from_sha: from.sha,
         to_sha: to.sha,
@@ -77,7 +83,41 @@ pub fn analyze(
         deps_removed,
         doctrine_introduced,
         doctrine_resolved,
+        symbols_added,
+        symbols_removed,
     })
+}
+
+/// Compare two indexed Git SHAs; repo is inferred from commit catalogs.
+pub fn analyze_indexed(store: &BinderStore, from_sha: &str, to_sha: &str) -> Result<DriftReport> {
+    let from = find_commit(store, from_sha)?;
+    let to = find_commit(store, to_sha)?;
+    if from.repository != to.repository {
+        return Err(CodeintelError::Other(format!(
+            "SHAs belong to different repositories ({} vs {}); drift is per-repo",
+            from.repository, to.repository
+        )));
+    }
+    analyze(store, &from.repository, &from.sha, &to.sha)
+}
+
+fn find_commit(store: &BinderStore, spec: &str) -> Result<CommitRecord> {
+    let mut matches = Vec::new();
+    for v in store.list(PREFIX_ALL_COMMITS)? {
+        let rec: CommitRecord = decode_obj(&v)?;
+        if rec.sha == spec || rec.sha.starts_with(spec) {
+            matches.push(rec);
+        }
+    }
+    match matches.len() {
+        1 => Ok(matches.remove(0)),
+        0 => Err(CodeintelError::Other(format!(
+            "git SHA {spec} is not indexed; run `codeintel index` at that commit first"
+        ))),
+        n => Err(CodeintelError::Other(format!(
+            "git SHA prefix {spec} is ambiguous ({n} indexed matches)"
+        ))),
+    }
 }
 
 fn load_commit(store: &BinderStore, name: &str, spec: &str) -> Result<CommitRecord> {
@@ -141,6 +181,24 @@ fn files_at(
             .is_some()
         {
             out.push(path.clone());
+        }
+    }
+    Ok(out)
+}
+
+fn symbols_at(
+    store: &BinderStore,
+    name: &str,
+    at: CommitId,
+    catalog: &[String],
+) -> Result<Vec<String>> {
+    let mut out = Vec::new();
+    for qual in catalog {
+        if store
+            .object_as_of(&crate::ids::symbol_id(name, qual), at)?
+            .is_some()
+        {
+            out.push(qual.clone());
         }
     }
     Ok(out)

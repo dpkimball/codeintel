@@ -22,8 +22,9 @@ src/
   impact.rs        # change impact + inspection set from graph
   drift.rs         # historical drift via bindb as_of
   federation.rs    # cross-repo DEPENDS_ON in one store
+  architecture.rs  # agent-facing semantic API (Architecture)
   report.rs        # validation metrics
-  main.rs          # index / query / doctrine / impact / drift / federation / validate CLI
+  main.rs          # CLI; `architecture` is the agent JSON surface
 ```
 
 New languages implement `LanguageParser` and get wired in `indexer.rs`. Do not special-case a second language inside `rust_parser.rs`.
