@@ -150,6 +150,7 @@ pub fn index_into(store: &BinderStore, root: &Path, name: &str) -> Result<IndexS
     store.commit_buffered(tx, ACTOR, format!("sync {name} {}", head.sha))?;
     store.flush()?;
     stamp_commit_catalog(store, name, &head, &tree, &ws, &provenance)?;
+    crate::federation::link_cross_repo(store)?;
 
     Ok(IndexStats {
         name: name.to_string(),
@@ -350,6 +351,8 @@ fn index_crates(
         let rec = CrateRecord {
             name: c.name.clone(),
             manifest_path: c.manifest_path.to_string_lossy().into_owned(),
+            repository: name.to_string(),
+            dependencies: c.dependencies.clone(),
         };
         put_json(&mut tx, cid.clone(), &rec, Some(provenance.clone()))?;
         add_edge_simple(&mut tx, REL_IN_REPO, &cid, &repo_id(name), provenance);
