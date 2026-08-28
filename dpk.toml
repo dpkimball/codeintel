@@ -1,0 +1,7 @@
+[project]
+name = "codeintel"
+language = "rust"
+
+[skip]
+image = true
+deploy = true

@@ -1,0 +1,7 @@
+/target
+**/*.rs.bk
+.DS_Store
+.claude/
+**/.dpk-build.lock
+/store/
+/validation-store/
