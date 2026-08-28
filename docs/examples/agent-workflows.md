@@ -5,7 +5,7 @@ These sequences are what an autonomous agent should run. None of them start with
 ## Implement a change in a crate
 
 1. `codeintel workflow start --store ./store --request "change src/lib.rs" --bind repo=./repo --session /tmp/wf.json`
-2. Open only `files_identified` (plus new files that did not exist in the graph).
+2. Open only `files_identified` (plus new files that did not exist in the graph). Paths are `repo:path`; opening the unprefixed path still counts as identified.
 3. Implement and validate.
 4. Commit (re-index follows Git HEAD).
 5. `codeintel workflow finish --session /tmp/wf.json --opened src/lib.rs --modified src/lib.rs --validation pass`

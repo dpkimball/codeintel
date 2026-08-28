@@ -59,7 +59,7 @@ Then it re-indexes each `--bind`, re-runs doctrine and impact, and emits metrics
 
 ## Plan matching
 
-`Architecture::plan` prefers **file paths** named in the request (multi-component suffixes such as `src/lib.rs`, or distinctive filenames). If no file matches, it falls back to **crate names**. Crate-wide impact lists every file in the crate; file-level impact is the implicated set.
+`Architecture::plan` prefers **file paths** named in the request (multi-component suffixes such as `src/lib.rs`, or distinctive filenames). If no file matches, it matches **`dpk.toml` config keys and value tokens**. If those miss, it falls back to **crate names as whole tokens**. Inspect paths are `repo:path`. Crate-wide impact lists architecture files for that crate (`*.rs`, manifests, Dockerfile), not `.github/` clutter. See [plan-inspect-sets](plan-inspect-sets.md).
 
 ## Non-goals
 

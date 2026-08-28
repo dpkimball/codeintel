@@ -179,10 +179,10 @@ pub fn finish(
     let mut files_new = Vec::new();
     let mut opened_outside = Vec::new();
     for path in &opened {
-        if identified.contains(path) {
+        if set_contains_path(&identified, path) {
             continue;
         }
-        if graph_files.contains(path) {
+        if set_contains_path(&graph_files, path) {
             opened_outside.push(path.clone());
         } else {
             files_new.push(path.clone());
@@ -260,7 +260,7 @@ fn indexed_file_paths(store: &Path) -> Result<Vec<String>> {
         let rec: crate::model::RepoRecord = crate::indexer::decode_obj(&v)?;
         let q = QueryEngine::open(&db, &rec.name);
         for f in q.files()? {
-            files.insert(f.path);
+            files.insert(crate::architecture::qualify_path(&rec.name, &f.path));
         }
     }
     db.close()?;
@@ -295,4 +295,9 @@ fn status_of(snaps: &[DoctrineSnapshot]) -> String {
     } else {
         format!("{findings} finding(s)")
     }
+}
+
+fn set_contains_path(set: &BTreeSet<String>, path: &str) -> bool {
+    set.iter()
+        .any(|entry| crate::architecture::inspect_paths_match(entry, path))
 }

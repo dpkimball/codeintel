@@ -1,10 +1,11 @@
 use crate::cargo_graph::{rust_module_path, scan_workspace, WorkspaceGraph};
+use crate::config_keys::{extract_dpk_toml, is_dpk_toml};
 use crate::error::{CodeintelError, Result};
 use crate::git_sync::{self, FileDelta, GitHead, TrackedFile};
 use crate::ids::{
-    crate_id, edge_id, file_id, module_id, repo_id, symbol_id, sync_id, ACTOR, NAMESPACE,
-    REL_AT_COMMIT, REL_CALLS, REL_CONTAINS, REL_DEFINED_IN, REL_DEPENDS_ON, REL_IMPLEMENTS,
-    REL_IMPORTS, REL_IN_REPO, REL_PARENT_OF, REL_REFERENCES,
+    config_id, crate_id, edge_id, file_id, module_id, repo_id, symbol_id, sync_id, ACTOR,
+    NAMESPACE, REL_AT_COMMIT, REL_CALLS, REL_CONTAINS, REL_DEFINED_IN, REL_DEPENDS_ON,
+    REL_IMPLEMENTS, REL_IMPORTS, REL_IN_REPO, REL_PARENT_OF, REL_REFERENCES,
 };
 use crate::model::{
     CommitRecord, CrateRecord, FileRecord, ModuleRecord, RepoRecord, SymbolRecord, SyncBookmark,
@@ -225,7 +226,19 @@ fn index_one_file(
     let fid = file_id(name, &file.path);
     let mut symbol_ids = Vec::new();
     let mut edge_ids = Vec::new();
+    let mut config_ids = Vec::new();
     let mut tx = Transaction::new();
+
+    if is_dpk_toml(&file.path) {
+        if let Ok(text) = std::str::from_utf8(&bytes) {
+            for rec in extract_dpk_toml(&file.path, text) {
+                let cid = config_id(name, &rec.file_path, &rec.key);
+                config_ids.push(cid.0.clone());
+                put_json(&mut tx, cid.clone(), &rec, Some(provenance.clone()))?;
+                add_edge(&mut tx, &mut edge_ids, REL_CONTAINS, &fid, &cid, provenance);
+            }
+        }
+    }
 
     for sym in &ir.symbols {
         let sid = symbol_id(name, &sym.qualname);
@@ -300,6 +313,7 @@ fn index_one_file(
         wildcard_imports: ir.wildcard_imports,
         symbol_ids: symbol_ids.clone(),
         edge_ids: edge_ids.clone(),
+        config_ids: config_ids.clone(),
     };
     put_json(&mut tx, fid.clone(), &frec, Some(provenance.clone()))?;
     add_edge(
@@ -519,6 +533,16 @@ fn tombstone_file(
     let mut tx = Transaction::new();
     for sid in &rec.symbol_ids {
         tx.delete_object(ObjectId::new(sid.clone()));
+    }
+    for cid in &rec.config_ids {
+        tx.delete_object(ObjectId::new(cid.clone()));
+    }
+    for v in store.list(&crate::ids::prefix_config(name))? {
+        if let Ok(cfg) = decode::<crate::model::ConfigKeyRecord>(&v) {
+            if cfg.file_path == path {
+                tx.delete_object(v.object_id.clone());
+            }
+        }
     }
     for eid in &rec.edge_ids {
         tx.delete_edge(bindb::EdgeId::new(eid.clone()));

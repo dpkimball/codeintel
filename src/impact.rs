@@ -370,7 +370,9 @@ fn build_inspection_set(input: InspectionInput<'_>) -> Result<InspectionSet> {
         }
         TargetKind::Crate => {
             for f in engine.files()? {
-                if f.crate_name.as_deref() == Some(resolved.spec.as_str()) {
+                if f.crate_name.as_deref() == Some(resolved.spec.as_str())
+                    && is_crate_inspect_file(&f.path)
+                {
                     files.insert(f.path);
                     if let Some(m) = f.module {
                         modules.insert(m);
@@ -404,4 +406,18 @@ fn build_inspection_set(input: InspectionInput<'_>) -> Result<InspectionSet> {
         files: files.into_iter().collect(),
         symbols: symbols.into_iter().collect(),
     })
+}
+
+/// Crate-wide plans name architecture files, not repo clutter under the crate root.
+pub(crate) fn is_crate_inspect_file(path: &str) -> bool {
+    let p = path.replace('\\', "/");
+    if p.split('/').any(|s| s == ".github") {
+        return false;
+    }
+    if p.ends_with(".rs") {
+        return true;
+    }
+    let name = p.rsplit('/').next().unwrap_or("");
+    matches!(name, "Cargo.toml" | "dpk.toml" | "Dockerfile" | "Makefile")
+        || p.ends_with(".cargo/config.toml")
 }

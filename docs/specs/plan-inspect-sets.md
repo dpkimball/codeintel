@@ -1,0 +1,33 @@
+---
+title: Plan inspect-set fidelity
+status: active
+github_issue: https://github.com/dpkimball/codeintel/issues/13
+---
+
+# Plan inspect-set fidelity
+
+`Architecture::plan` is the agent inspection set. Paths must be unambiguous across repositories, crate-wide matches must not dump repo clutter, and `dpk.toml` keys must be in the graph so Docker/`extra_args` questions resolve without a source walk.
+
+Git remains the source of truth. bindb stores dotted keys and identifier tokens (env names, Docker flags), not config blobs.
+
+## Matching order
+
+1. **File** — request names an indexed path (multi-component suffix or distinctive filename).
+2. **Config** — request contains a `dpk.toml` dotted key, a key last-segment of length ≥ 8 (`extra_args`), or a stored value token (`CARGO_REGISTRIES_DPK_INDEX`, `--build-arg`).
+3. **Crate** — request contains the crate name as a whole token.
+
+`matched_kind` is `file`, `config`, `crate`, or `none`. File wins over config; config wins over crate.
+
+## Inspect paths
+
+`inspect_before_change` and `smallest_file_set` entries are `repo:path` (example: `binder-server:dpk.toml`). Agents may still open the unprefixed path; `workflow finish` treats `src/lib.rs` as matching `libs:src/lib.rs`.
+
+Crate-wide inspection includes only `*.rs`, `Cargo.toml`, `dpk.toml`, `Dockerfile`, `Makefile`, and `.cargo/config.toml`. It excludes `.github/`.
+
+## Re-index
+
+Existing stores do not gain config objects until each repo is indexed again.
+
+## Non-goals
+
+Python/TS parsers, `query patterns` catalog rewrite, Helm/`OLLAMA_HOST` extraction, indexing non-git workspace apps.

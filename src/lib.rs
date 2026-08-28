@@ -5,6 +5,7 @@ pub const WORKFLOW_PROTOCOL: &str = "bindb-first";
 
 pub mod architecture;
 pub mod cargo_graph;
+pub mod config_keys;
 pub mod doctrine;
 pub mod drift;
 pub mod error;

@@ -65,12 +65,18 @@ fn workflow_plans_from_graph_after_trees_removed() {
     assert_eq!(started.source_files_opened_during_planning, 0);
     assert_eq!(started.matched_kind, "file");
     assert!(
-        started.files_identified.iter().any(|f| f == "src/lib.rs"),
-        "graph should name src/lib.rs: {:?}",
+        started
+            .files_identified
+            .iter()
+            .any(|f| f == "libs:src/lib.rs"),
+        "graph should name libs:src/lib.rs: {:?}",
         started.files_identified
     );
     assert!(
-        !started.files_identified.iter().any(|f| f == "src/extra.rs"),
+        !started
+            .files_identified
+            .iter()
+            .any(|f| f.ends_with("src/extra.rs")),
         "extra.rs is not implicated: {:?}",
         started.files_identified
     );
@@ -101,7 +107,8 @@ fn workflow_loop_implements_only_inspection_set() {
     .unwrap();
     assert_eq!(started.matched_kind, "file");
     let identified = started.files_identified.clone();
-    assert!(identified.iter().any(|f| f == "src/lib.rs"));
+    assert!(identified.iter().any(|f| f == "libs:src/lib.rs"));
+    assert!(!identified.iter().any(|f| f.ends_with("src/extra.rs")));
     assert!(!identified.iter().any(|f| f == "src/extra.rs"));
 
     fs::write(
