@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+concurrency:
+  group: codeintel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: dpkimball/dpk-ci/.github/workflows/rust-library-ci.yml@master
+    with:
+      project_name: codeintel
+      path_dep_repo: bindb
+      runner: product-ci
+      run_publish: false
+    secrets: inherit

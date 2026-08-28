@@ -1,0 +1,26 @@
+[package]
+name = "codeintel"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+authors = ["DPK Platform Team"]
+license = "MIT"
+description = "Code intelligence domain — Git-synced semantic graph stored in bindb"
+repository = "https://github.com/dpkimball/codeintel"
+readme = "README.md"
+publish = false
+
+[dependencies]
+bindb = { path = "../bindb" }
+syn = { version = "2", features = ["full", "visit", "extra-traits"] }
+proc-macro2 = { version = "1", features = ["span-locations"] }
+quote = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+toml = "0.8"
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"
