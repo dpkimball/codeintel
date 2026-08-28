@@ -1,5 +1,8 @@
 //! Code intelligence domain: Git-synced semantic graph stored in bindb.
 
+/// Agents plan from bindb and open source only to implement or verify.
+pub const WORKFLOW_PROTOCOL: &str = "bindb-first";
+
 pub mod architecture;
 pub mod cargo_graph;
 pub mod doctrine;
@@ -15,6 +18,7 @@ pub mod parser;
 pub mod query;
 pub mod report;
 pub mod rust_parser;
+pub mod workflow;
 
 pub use architecture::Architecture;
 pub use doctrine::{ConformanceReport, Doctrine};
@@ -27,3 +31,4 @@ pub use impact::{analyze as impact_analyze, ImpactReport};
 pub use indexer::{index, IndexOptions, IndexStats};
 pub use query::QueryEngine;
 pub use report::{run_validation, ValidationReport};
+pub use workflow::{finish as workflow_finish, start as workflow_start, WorkflowReport};

@@ -83,6 +83,11 @@ enum Cmd {
         #[command(subcommand)]
         op: ArchOp,
     },
+    /// Autonomous engineering workflow (graph plan → inspect → implement → re-index).
+    Workflow {
+        #[command(subcommand)]
+        op: WorkflowOp,
+    },
     /// Index twice (full + incremental no-op) and print validation metrics.
     Validate {
         repo: PathBuf,
@@ -118,6 +123,43 @@ enum ArchOp {
         #[arg(long)]
         request: String,
     },
+}
+
+#[derive(Subcommand)]
+enum WorkflowOp {
+    /// Plan from bindb, snapshot doctrine/impact, write a session file.
+    Start {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        request: String,
+        /// Repeatable `name=/path/to/repo` for later re-index.
+        #[arg(long = "bind")]
+        binds: Vec<String>,
+        #[arg(long)]
+        session: PathBuf,
+    },
+    /// Re-index bound repos, re-check doctrine, emit execution metrics.
+    Finish {
+        #[arg(long)]
+        session: PathBuf,
+        /// Paths the agent actually opened (relative to the repo root).
+        #[arg(long)]
+        opened: Vec<String>,
+        /// Paths the agent modified.
+        #[arg(long)]
+        modified: Vec<String>,
+        #[arg(long, value_enum)]
+        validation: ValidationStatus,
+        #[arg(long, default_value = "")]
+        validation_detail: String,
+    },
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum ValidationStatus {
+    Pass,
+    Fail,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -263,6 +305,35 @@ fn run() -> codeintel::Result<()> {
             println!("{}", serde_json::to_string_pretty(&out)?);
             arch.close()?;
         }
+        Cmd::Workflow { op } => match op {
+            WorkflowOp::Start {
+                store,
+                request,
+                binds,
+                session,
+            } => {
+                let binds = binds
+                    .iter()
+                    .map(|s| codeintel::workflow::parse_bind(s))
+                    .collect::<codeintel::Result<Vec<_>>>()?;
+                let out = codeintel::workflow_start(store, &request, binds, session)?;
+                println!("{}", serde_json::to_string_pretty(&out)?);
+            }
+            WorkflowOp::Finish {
+                session,
+                opened,
+                modified,
+                validation,
+                validation_detail,
+            } => {
+                let record = codeintel::workflow::ValidationRecord {
+                    passed: matches!(validation, ValidationStatus::Pass),
+                    detail: validation_detail,
+                };
+                let out = codeintel::workflow_finish(session, opened, modified, record)?;
+                println!("{}", serde_json::to_string_pretty(&out)?);
+            }
+        },
         Cmd::Validate { repo, store, name } => {
             let name = name.or_else(|| repo.file_name().map(|s| s.to_string_lossy().into_owned()));
             let opts = IndexOptions {

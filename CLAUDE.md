@@ -23,8 +23,9 @@ src/
   drift.rs         # historical drift via bindb as_of
   federation.rs    # cross-repo DEPENDS_ON in one store
   architecture.rs  # agent-facing semantic API (Architecture)
+  workflow.rs      # autonomous loop: plan → inspect → re-index → report
   report.rs        # validation metrics
-  main.rs          # CLI; `architecture` is the agent JSON surface
+  main.rs          # CLI; `architecture` and `workflow` are the agent JSON surface
 ```
 
 New languages implement `LanguageParser` and get wired in `indexer.rs`. Do not special-case a second language inside `rust_parser.rs`.
