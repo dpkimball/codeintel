@@ -10,6 +10,44 @@ pub fn is_dpk_toml(path: &str) -> bool {
     p == "dpk.toml" || p.ends_with("/dpk.toml")
 }
 
+pub fn is_env_manifest(path: &str, text: &str) -> bool {
+    let p = path.replace('\\', "/").to_ascii_lowercase();
+    let name = p.rsplit('/').next().unwrap_or("");
+    if name == "dockerfile" {
+        return true;
+    }
+    let yaml = p.ends_with(".yaml") || p.ends_with(".yml") || p.ends_with(".tpl");
+    if !yaml {
+        return false;
+    }
+    name.starts_with("values")
+        || p.contains("/templates/")
+        || p.contains("/charts/")
+        || text.contains("OLLAMA_HOST")
+}
+
+/// Helm values/templates and Dockerfiles: env names as keys, not blobs.
+pub fn extract_env_manifest(path: &str, text: &str) -> Vec<ConfigKeyRecord> {
+    if !is_env_manifest(path, text) {
+        return Vec::new();
+    }
+    let mut tokens = env_tokens(text);
+    if text.contains("OLLAMA_HOST") && !tokens.iter().any(|t| t == "OLLAMA_HOST") {
+        tokens.push("OLLAMA_HOST".into());
+    }
+    tokens.sort();
+    tokens.dedup();
+    tokens
+        .into_iter()
+        .filter(|t| t.len() >= 8)
+        .map(|t| ConfigKeyRecord {
+            file_path: path.to_string(),
+            key: format!("env.{t}"),
+            value_tokens: vec![t],
+        })
+        .collect()
+}
+
 pub fn extract_dpk_toml(path: &str, text: &str) -> Vec<ConfigKeyRecord> {
     let Ok(value) = text.parse::<toml::Value>() else {
         return Vec::new();
@@ -131,5 +169,14 @@ extra_args = "--build-arg CARGO_REGISTRIES_DPK_INDEX=sparse+http://host.docker.i
             .value_tokens
             .iter()
             .any(|t| t.contains("http://") || t == "binder-server"));
+    }
+
+    #[test]
+    fn extracts_ollama_host_from_helm_template() {
+        let text = "- name: OLLAMA_HOST\n  value: {{ .host | quote }}\n";
+        let keys = extract_env_manifest("charts/templates/_helpers.tpl", text);
+        assert!(keys.iter().any(|k| k.key == "env.OLLAMA_HOST"));
+        assert!(!is_env_manifest("README.md", text));
+        assert!(extract_env_manifest("README.md", text).is_empty());
     }
 }

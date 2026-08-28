@@ -325,12 +325,13 @@ impl Architecture {
 
     /// Graph-first implementation plan. Source paths are payload strings, not file reads.
     ///
-    /// Matching order: file paths named in the request, then `dpk.toml` config keys/tokens,
-    /// then crate names as whole tokens. Inspect paths are `repo:path`.
+    /// Matching order: file paths named in the request, then config keys/tokens
+    /// and docker-shipping intent, then crate names as whole tokens. Inspect paths are `repo:path`.
     pub fn plan(&self, request: &str) -> Result<PlanReport> {
         let names = repo_names(&self.store)?;
         let needle = request.to_lowercase();
         let tokens = request_tokens(&needle);
+        let docker_intent = docker_shipping_intent(&needle);
         let mut matched_files: Vec<(String, String)> = Vec::new();
         let mut matched_configs: Vec<(String, String)> = Vec::new();
         let mut matched_crates: Vec<(String, String)> = Vec::new();
@@ -350,7 +351,7 @@ impl Architecture {
                 }
             }
             for ck in q.config_keys()? {
-                if request_matches_config(&needle, &ck) {
+                if request_matches_config(&needle, &ck, docker_intent) {
                     matched_configs.push((name.clone(), ck.file_path.clone()));
                     repos.insert(name.clone());
                 }
@@ -448,6 +449,14 @@ impl Architecture {
                         likely_affected.insert(format!("{repo}/{c}"));
                     }
                 }
+                if docker_intent && path.rsplit('/').next() == Some("dpk.toml") {
+                    let df = dockerfile_beside(path);
+                    if q.files()?.iter().any(|f| f.path == df) {
+                        let qpath = qualify_path(repo, &df);
+                        inspect.insert(qpath.clone());
+                        files.insert(qpath);
+                    }
+                }
             }
         } else {
             let impact_targets: Vec<(String, String)> = if prefer_files {
@@ -538,7 +547,14 @@ fn request_matches_file(needle: &str, path: &str) -> bool {
     false
 }
 
-fn request_matches_config(needle: &str, rec: &crate::model::ConfigKeyRecord) -> bool {
+fn request_matches_config(
+    needle: &str,
+    rec: &crate::model::ConfigKeyRecord,
+    docker_intent: bool,
+) -> bool {
+    if docker_intent && rec.key == "docker.extra_args" {
+        return true;
+    }
     let key = rec.key.to_lowercase();
     if needle.contains(&key) {
         return true;
@@ -552,6 +568,25 @@ fn request_matches_config(needle: &str, rec: &crate::model::ConfigKeyRecord) -> 
         let t = tok.to_lowercase();
         t.len() >= 8 && needle.contains(&t)
     })
+}
+
+fn docker_shipping_intent(needle: &str) -> bool {
+    let docker = needle.contains("docker")
+        || needle.contains("dockerfile")
+        || needle.contains("extra_args")
+        || needle.contains("build-context")
+        || needle.contains("build-arg")
+        || needle.contains("kellnr");
+    let ship = (needle.contains("ship") || needle.contains("shipping"))
+        && (needle.contains("binary") || needle.contains("rust"));
+    docker || ship
+}
+
+fn dockerfile_beside(dpk_path: &str) -> String {
+    match dpk_path.rsplit_once('/') {
+        Some((dir, _)) => format!("{dir}/Dockerfile"),
+        None => "Dockerfile".into(),
+    }
 }
 
 fn request_tokens(needle: &str) -> BTreeSet<String> {

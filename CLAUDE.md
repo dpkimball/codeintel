@@ -12,12 +12,12 @@ Git is the source of truth. bindb is the derived semantic representation.
 
 ```
 src/
-  git_sync.rs      # incremental git ls-tree / blob hashes
+  git_sync.rs      # incremental git ls-tree / blob hashes (nested subdirectory scope)
   parser.rs        # language-agnostic FileIr
   rust_parser.rs   # syn visitor (Rust plugin)
   cargo_graph.rs   # workspace crates + path deps
-  indexer.rs       # extract → bindb objects/edges (incl. dpk.toml config keys)
-  config_keys.rs   # flatten dpk.toml into key + identifier tokens
+  indexer.rs       # extract → bindb objects/edges (incl. dpk.toml and Helm/env keys)
+  config_keys.rs   # flatten dpk.toml + Helm/env identifier tokens
   query.rs         # agent questions over bindb
   doctrine.rs      # conformance engine (layering, forbidden, ownership, acyclic)
   impact.rs        # change impact + inspection set from graph

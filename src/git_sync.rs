@@ -32,6 +32,55 @@ pub fn require_git_repo(root: &Path) -> Result<PathBuf> {
     Ok(top)
 }
 
+/// Git toplevel plus an optional subdirectory prefix (monorepo app).
+#[derive(Debug, Clone)]
+pub struct GitScope {
+    pub git_top: PathBuf,
+    /// `""` or `"repo-dashboard/"` — git paths are `prefix + stored_path`.
+    pub prefix: String,
+}
+
+pub fn index_scope(requested: &Path) -> Result<GitScope> {
+    let git_top = require_git_repo(requested)?;
+    let top = git_top.canonicalize().unwrap_or_else(|_| git_top.clone());
+    let req = requested
+        .canonicalize()
+        .unwrap_or_else(|_| requested.to_path_buf());
+    let prefix = if req == top {
+        String::new()
+    } else if let Ok(rel) = req.strip_prefix(&top) {
+        let mut s = rel.to_string_lossy().replace('\\', "/");
+        if !s.is_empty() && !s.ends_with('/') {
+            s.push('/');
+        }
+        s
+    } else {
+        String::new()
+    };
+    Ok(GitScope { git_top, prefix })
+}
+
+pub fn git_blob_path(prefix: &str, stored: &str) -> String {
+    format!("{prefix}{stored}")
+}
+
+pub fn ls_tree_scoped(scope: &GitScope, sha: &str) -> Result<Vec<TrackedFile>> {
+    let raw = ls_tree(&scope.git_top, sha)?;
+    if scope.prefix.is_empty() {
+        return Ok(raw);
+    }
+    Ok(raw
+        .into_iter()
+        .filter_map(|f| {
+            let path = f.path.strip_prefix(&scope.prefix)?.to_string();
+            Some(TrackedFile {
+                path,
+                blob_hash: f.blob_hash,
+            })
+        })
+        .collect())
+}
+
 pub fn head(root: &Path) -> Result<GitHead> {
     let sha = git(root, &["rev-parse", "HEAD"])?;
     let branch = git(root, &["rev-parse", "--abbrev-ref", "HEAD"])?;
