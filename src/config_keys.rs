@@ -35,6 +35,13 @@ pub fn extract_env_manifest(path: &str, text: &str) -> Vec<ConfigKeyRecord> {
     if text.contains("OLLAMA_HOST") && !tokens.iter().any(|t| t == "OLLAMA_HOST") {
         tokens.push("OLLAMA_HOST".into());
     }
+    // values-dev.yaml has `ollama.host` but not the env name string.
+    if is_helm_values_file(path)
+        && yaml_key_present(text, "ollama")
+        && !tokens.iter().any(|t| t == "OLLAMA_HOST")
+    {
+        tokens.push("OLLAMA_HOST".into());
+    }
     tokens.sort();
     tokens.dedup();
     tokens
@@ -46,6 +53,42 @@ pub fn extract_env_manifest(path: &str, text: &str) -> Vec<ConfigKeyRecord> {
             value_tokens: vec![t],
         })
         .collect()
+}
+
+pub fn is_helm_values_file(path: &str) -> bool {
+    let name = path
+        .replace('\\', "/")
+        .rsplit('/')
+        .next()
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    name == "values.yaml"
+        || name == "values.yml"
+        || (name.starts_with("values-") && (name.ends_with(".yaml") || name.ends_with(".yml")))
+}
+
+/// Chart directory for a template or values file (`charts/foo` from `charts/foo/templates/x`).
+pub fn helm_chart_dir(path: &str) -> Option<String> {
+    let p = path.replace('\\', "/");
+    if let Some(i) = p.find("/templates/") {
+        return Some(p[..i].to_string());
+    }
+    if is_helm_values_file(&p) {
+        return Some(
+            p.rsplit_once('/')
+                .map(|(d, _)| d.to_string())
+                .unwrap_or_default(),
+        );
+    }
+    None
+}
+
+fn yaml_key_present(text: &str, key: &str) -> bool {
+    let prefix = format!("{key}:");
+    text.lines().any(|line| {
+        let t = line.trim();
+        !t.starts_with('#') && (t == prefix.as_str() || t.starts_with(&prefix))
+    })
 }
 
 pub fn extract_dpk_toml(path: &str, text: &str) -> Vec<ConfigKeyRecord> {
@@ -178,5 +221,12 @@ extra_args = "--build-arg CARGO_REGISTRIES_DPK_INDEX=sparse+http://host.docker.i
         assert!(keys.iter().any(|k| k.key == "env.OLLAMA_HOST"));
         assert!(!is_env_manifest("README.md", text));
         assert!(extract_env_manifest("README.md", text).is_empty());
+    }
+
+    #[test]
+    fn values_overlay_without_env_string_still_gets_ollama_host() {
+        let text = "ollama:\n  host: \"http://dev-proxies-ollama.dev.svc.cluster.local:11434\"\n";
+        let keys = extract_env_manifest("charts/app/values-dev.yaml", text);
+        assert!(keys.iter().any(|k| k.key == "env.OLLAMA_HOST"));
     }
 }

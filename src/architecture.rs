@@ -439,7 +439,23 @@ impl Architecture {
         };
 
         if prefer_config {
+            let mut config_files = matched_configs.clone();
             for (repo, path) in &matched_configs {
+                let Some(dir) = crate::config_keys::helm_chart_dir(path) else {
+                    continue;
+                };
+                let q = QueryEngine::open(&self.store, repo);
+                for f in q.files()? {
+                    if crate::config_keys::helm_chart_dir(&f.path).as_deref() == Some(dir.as_str())
+                        && crate::config_keys::is_helm_values_file(&f.path)
+                    {
+                        config_files.push((repo.clone(), f.path));
+                    }
+                }
+            }
+            config_files.sort();
+            config_files.dedup();
+            for (repo, path) in &config_files {
                 let qpath = qualify_path(repo, path);
                 inspect.insert(qpath.clone());
                 files.insert(qpath);

@@ -223,7 +223,7 @@ fn change_crate_is_not_stolen_by_docker_sibling_names() {
 }
 
 #[test]
-fn ollama_host_matches_helm_template() {
+fn ollama_host_includes_values_overlay() {
     let app = tempfile::tempdir().unwrap();
     fs::create_dir_all(app.path().join("charts/templates")).unwrap();
     fs::write(
@@ -234,6 +234,16 @@ fn ollama_host_matches_helm_template() {
     fs::write(
         app.path().join("charts/templates/_helpers.tpl"),
         "{{- with .Values.ollama }}\n- name: OLLAMA_HOST\n  value: {{ .host | quote }}\n{{- end }}\n",
+    )
+    .unwrap();
+    fs::write(
+        app.path().join("charts/values.yaml"),
+        "ollama:\n  host: \"\"\n",
+    )
+    .unwrap();
+    fs::write(
+        app.path().join("charts/values-dev.yaml"),
+        "ollama:\n  host: \"http://dev-proxies-ollama.dev.svc.cluster.local:11434\"\n",
     )
     .unwrap();
     git(app.path(), &["init", "-b", "master"]);
@@ -247,13 +257,17 @@ fn ollama_host_matches_helm_template() {
     let arch = Architecture::open(store_dir.path()).unwrap();
     let plan = arch.plan("change OLLAMA_HOST").unwrap();
     assert_eq!(plan.matched_kind, "config");
-    assert!(
-        plan.smallest_file_set
-            .iter()
-            .any(|p| p == "dash:charts/templates/_helpers.tpl"),
-        "{:?}",
-        plan.smallest_file_set
-    );
+    for expected in [
+        "dash:charts/templates/_helpers.tpl",
+        "dash:charts/values.yaml",
+        "dash:charts/values-dev.yaml",
+    ] {
+        assert!(
+            plan.smallest_file_set.iter().any(|p| p == expected),
+            "missing {expected} in {:?}",
+            plan.smallest_file_set
+        );
+    }
     arch.close().unwrap();
 }
 

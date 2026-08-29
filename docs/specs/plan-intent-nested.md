@@ -26,7 +26,9 @@ When intent matches `docker.extra_args`, the inspect set is those `dpk.toml` fil
 
 ## Helm / env
 
-`values.yaml`, `values-*.yaml`, `templates/*`, and Dockerfiles contribute `env.{NAME}` objects for uppercase identifier tokens (length ≥ 8), including `OLLAMA_HOST`.
+Templates contribute `env.OLLAMA_HOST` when that name appears. Helm **values** files (`values.yaml`, `values-*.yaml`) get the same token when they define an `ollama:` key, even if the string `OLLAMA_HOST` is absent.
+
+When `plan` matches any file in a chart, the inspect set includes that chart’s `values.yaml` / `values-*.yaml`. A client must be able to read both the env injection and the overlay that sets the host.
 
 ## Re-index
 
