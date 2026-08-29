@@ -46,6 +46,8 @@ cargo run --release -- impact --store ./store --name binder-desktop --target bin
 cargo run --release -- drift --store ./store --name binder-desktop --from <sha-a> --to <sha-b>
 cargo run --release -- index ../bindb --store ./store --name bindb
 cargo run --release -- index . --store ./store --name codeintel
+cargo run --release -- index ../repo-dashboard --store ./store --name repo-dashboard
+cargo run --release -- index ../dpk-build --store ./store --name dpk-build
 cargo run --release -- federation --store ./store
 cargo run --release -- architecture --store ./store summary
 cargo run --release -- architecture --store ./store plan --request "change binder-storage"
@@ -53,7 +55,7 @@ cargo run --release -- workflow start --store ./store --request "change src/lib.
 cargo run --release -- workflow finish --session /tmp/wf.json --opened src/lib.rs --modified src/lib.rs --validation pass
 ```
 
-Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Inspect-set fidelity: [docs/specs/plan-inspect-sets.md](docs/specs/plan-inspect-sets.md). Workflow: [docs/specs/autonomous-workflow.md](docs/specs/autonomous-workflow.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
+Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Inspect-set fidelity: [docs/specs/plan-inspect-sets.md](docs/specs/plan-inspect-sets.md). Intent / nested index: [docs/specs/plan-intent-nested.md](docs/specs/plan-intent-nested.md). Workflow: [docs/specs/autonomous-workflow.md](docs/specs/autonomous-workflow.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
 
 ## bindb mapping
 

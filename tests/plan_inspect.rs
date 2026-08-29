@@ -146,26 +146,33 @@ fn extra_args_config_points_at_dpk_toml() {
 }
 
 #[test]
-fn crate_named_in_prose_does_not_include_github_templates() {
+fn crate_named_in_shipping_prose_uses_docker_config_not_crate_dump() {
     let (store_dir, _, _) = index_two_and_drop_trees();
     let arch = Architecture::open(store_dir.path()).unwrap();
     let plan = arch
         .plan("How should a Python service ship a Rust binary from binder-server")
         .unwrap();
-    assert_eq!(plan.matched_kind, "crate");
+    assert_eq!(plan.matched_kind, "config");
     assert!(
-        !plan.smallest_file_set.iter().any(|p| p.contains(".github")),
-        "crate inspect must not include .github: {:?}",
+        plan.smallest_file_set
+            .iter()
+            .any(|p| p == "binder-server:dpk.toml"),
+        "{:?}",
         plan.smallest_file_set
     );
-    assert!(plan
-        .smallest_file_set
-        .iter()
-        .any(|p| p == "binder-server:src/lib.rs"));
-    assert!(plan
-        .smallest_file_set
-        .iter()
-        .any(|p| p == "binder-server:Cargo.toml"));
+    assert!(
+        !plan.smallest_file_set.iter().any(|p| p.contains(".github")),
+        "inspect must not include .github: {:?}",
+        plan.smallest_file_set
+    );
+    assert!(
+        !plan
+            .smallest_file_set
+            .iter()
+            .any(|p| p.ends_with("src/lib.rs")),
+        "shipping intent must not dump crate sources: {:?}",
+        plan.smallest_file_set
+    );
     arch.close().unwrap();
 }
 
@@ -176,5 +183,138 @@ fn impact_accepts_repo_qualified_path() {
     let impact = arch.impact("binder-server:src/lib.rs").unwrap();
     assert_eq!(impact.source_files_opened, 0);
     assert!(impact.repositories.contains(&"binder-server".to_string()));
+    arch.close().unwrap();
+}
+
+#[test]
+fn docker_shipping_english_points_at_extra_args() {
+    let (store_dir, _, _) = index_two_and_drop_trees();
+    let arch = Architecture::open(store_dir.path()).unwrap();
+    let plan = arch
+        .plan("How does Binder ship a Rust binary in Docker")
+        .unwrap();
+    assert_eq!(plan.source_files_opened, 0);
+    assert_eq!(plan.matched_kind, "config");
+    assert!(
+        plan.smallest_file_set
+            .iter()
+            .any(|p| p == "binder-server:dpk.toml"),
+        "{:?}",
+        plan.smallest_file_set
+    );
+    assert!(plan
+        .smallest_file_set
+        .iter()
+        .any(|p| p == "binder-server:Dockerfile"));
+    arch.close().unwrap();
+}
+
+#[test]
+fn change_crate_is_not_stolen_by_docker_sibling_names() {
+    let (store_dir, _, _) = index_two_and_drop_trees();
+    let arch = Architecture::open(store_dir.path()).unwrap();
+    let plan = arch.plan("change binder-server").unwrap();
+    assert_eq!(plan.matched_kind, "crate");
+    assert!(plan
+        .smallest_file_set
+        .iter()
+        .any(|p| p == "binder-server:src/lib.rs"));
+    arch.close().unwrap();
+}
+
+#[test]
+fn ollama_host_includes_values_overlay() {
+    let app = tempfile::tempdir().unwrap();
+    fs::create_dir_all(app.path().join("charts/templates")).unwrap();
+    fs::write(
+        app.path().join("dpk.toml"),
+        "[project]\nname = \"dash\"\n[docker]\nimage_name = \"dash\"\n",
+    )
+    .unwrap();
+    fs::write(
+        app.path().join("charts/templates/_helpers.tpl"),
+        "{{- with .Values.ollama }}\n- name: OLLAMA_HOST\n  value: {{ .host | quote }}\n{{- end }}\n",
+    )
+    .unwrap();
+    fs::write(
+        app.path().join("charts/values.yaml"),
+        "ollama:\n  host: \"\"\n",
+    )
+    .unwrap();
+    fs::write(
+        app.path().join("charts/values-dev.yaml"),
+        "ollama:\n  host: \"http://dev-proxies-ollama.dev.svc.cluster.local:11434\"\n",
+    )
+    .unwrap();
+    git(app.path(), &["init", "-b", "master"]);
+    git(app.path(), &["add", "-A"]);
+    git(app.path(), &["commit", "-m", "init"]);
+    let store_dir = tempfile::tempdir().unwrap();
+    index(opts(app.path(), store_dir.path(), "dash")).unwrap();
+    let kept: PathBuf = app.keep();
+    fs::remove_dir_all(&kept).unwrap();
+
+    let arch = Architecture::open(store_dir.path()).unwrap();
+    let plan = arch.plan("change OLLAMA_HOST").unwrap();
+    assert_eq!(plan.matched_kind, "config");
+    for expected in [
+        "dash:charts/templates/_helpers.tpl",
+        "dash:charts/values.yaml",
+        "dash:charts/values-dev.yaml",
+    ] {
+        assert!(
+            plan.smallest_file_set.iter().any(|p| p == expected),
+            "missing {expected} in {:?}",
+            plan.smallest_file_set
+        );
+    }
+    arch.close().unwrap();
+}
+
+#[test]
+fn nested_git_subdirectory_indexes_only_that_app() {
+    let root = tempfile::tempdir().unwrap();
+    fs::create_dir_all(root.path().join("apps/dash")).unwrap();
+    fs::create_dir_all(root.path().join("apps/other")).unwrap();
+    fs::write(
+        root.path().join("apps/dash/dpk.toml"),
+        "[project]\nname = \"dash\"\n[docker]\nimage_name = \"dash\"\nextra_args = \"--build-context binder-ai=../binder-ai\"\n",
+    )
+    .unwrap();
+    fs::write(root.path().join("apps/dash/Dockerfile"), "FROM python:3\n").unwrap();
+    fs::write(
+        root.path().join("apps/other/secret.rs"),
+        "pub fn leak() {}\n",
+    )
+    .unwrap();
+    git(root.path(), &["init", "-b", "master"]);
+    git(root.path(), &["add", "-A"]);
+    git(root.path(), &["commit", "-m", "init"]);
+
+    let store_dir = tempfile::tempdir().unwrap();
+    index(opts(
+        &root.path().join("apps/dash"),
+        store_dir.path(),
+        "repo-dashboard",
+    ))
+    .unwrap();
+    let kept: PathBuf = root.keep();
+    fs::remove_dir_all(&kept).unwrap();
+
+    let arch = Architecture::open(store_dir.path()).unwrap();
+    let plan = arch.plan("change extra_args --build-context").unwrap();
+    assert_eq!(plan.matched_kind, "config");
+    assert!(plan
+        .smallest_file_set
+        .iter()
+        .any(|p| p == "repo-dashboard:dpk.toml"));
+    assert!(
+        !plan
+            .smallest_file_set
+            .iter()
+            .any(|p| p.contains("secret.rs") || p.contains("apps/other")),
+        "sibling tree must not be indexed: {:?}",
+        plan.smallest_file_set
+    );
     arch.close().unwrap();
 }

@@ -13,8 +13,8 @@ Git remains the source of truth. bindb stores dotted keys and identifier tokens 
 ## Matching order
 
 1. **File** — request names an indexed path (multi-component suffix or distinctive filename).
-2. **Config** — request contains a `dpk.toml` dotted key, a key last-segment of length ≥ 8 (`extra_args`), or a stored value token (`CARGO_REGISTRIES_DPK_INDEX`, `--build-arg`).
-3. **Crate** — request contains the crate name as a whole token.
+2. **Config** — `dpk.toml` keys/tokens, Helm/env names, or docker-shipping intent (`docker.extra_args`). See [plan-intent-nested](plan-intent-nested.md) (#15).
+3. **Crate** — request contains the crate name as a whole token (`change` / non-intent).
 
 `matched_kind` is `file`, `config`, `crate`, or `none`. File wins over config; config wins over crate.
 
@@ -30,4 +30,4 @@ Existing stores do not gain config objects until each repo is indexed again.
 
 ## Non-goals
 
-Python/TS parsers, `query patterns` catalog rewrite, Helm/`OLLAMA_HOST` extraction, indexing non-git workspace apps.
+Python/TS parsers, `query patterns` catalog rewrite. Helm env and nested-tree index are #15.

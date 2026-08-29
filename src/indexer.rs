@@ -1,5 +1,5 @@
 use crate::cargo_graph::{rust_module_path, scan_workspace, WorkspaceGraph};
-use crate::config_keys::{extract_dpk_toml, is_dpk_toml};
+use crate::config_keys::{extract_dpk_toml, extract_env_manifest, is_dpk_toml, is_env_manifest};
 use crate::error::{CodeintelError, Result};
 use crate::git_sync::{self, FileDelta, GitHead, TrackedFile};
 use crate::ids::{
@@ -40,25 +40,32 @@ pub struct IndexStats {
 }
 
 pub fn index(opts: IndexOptions) -> Result<IndexStats> {
-    let root = git_sync::require_git_repo(&opts.repo_root)?;
     let name = opts.name.clone().unwrap_or_else(|| {
-        root.file_name()
-            .map(|s| s.to_string_lossy().into_owned())
+        opts.repo_root
+            .canonicalize()
+            .ok()
+            .and_then(|p| p.file_name().map(|s| s.to_string_lossy().into_owned()))
+            .or_else(|| {
+                opts.repo_root
+                    .file_name()
+                    .map(|s| s.to_string_lossy().into_owned())
+            })
             .unwrap_or_else(|| "repo".into())
     });
     std::fs::create_dir_all(&opts.store_path)?;
     let store = BinderStore::open(&opts.store_path)?;
     store.register_namespace(NAMESPACE, ACTOR)?;
-    let mut stats = index_into(&store, &root, &name)?;
+    let mut stats = index_into(&store, &opts.repo_root, &name)?;
     stats.store_bytes = dir_size(&opts.store_path)?;
     store.close()?;
     Ok(stats)
 }
 
-pub fn index_into(store: &BinderStore, root: &Path, name: &str) -> Result<IndexStats> {
+pub fn index_into(store: &BinderStore, requested: &Path, name: &str) -> Result<IndexStats> {
     let started = Instant::now();
-    let head = git_sync::head(root)?;
-    let tree = git_sync::ls_tree(root, &head.sha)?;
+    let scope = git_sync::index_scope(requested)?;
+    let head = git_sync::head(&scope.git_top)?;
+    let tree = git_sync::ls_tree_scoped(&scope, &head.sha)?;
     let bookmark = load_bookmark(store, name)?;
 
     if let Some(prev) = &bookmark {
@@ -81,15 +88,15 @@ pub fn index_into(store: &BinderStore, root: &Path, name: &str) -> Result<IndexS
     }
 
     let old_tree = if let Some(prev) = &bookmark {
-        git_sync::ls_tree(root, &prev.sha).unwrap_or_default()
+        git_sync::ls_tree_scoped(&scope, &prev.sha).unwrap_or_default()
     } else {
         Vec::new()
     };
     let deltas = git_sync::diff_trees(&old_tree, &tree);
-    let ws = scan_workspace(root)?;
+    let ws = scan_workspace(requested)?;
     let provenance = git_provenance(&head);
 
-    put_repo_and_commit(store, name, root, &head, &provenance)?;
+    put_repo_and_commit(store, name, requested, &head, &provenance)?;
 
     let mut files_indexed = 0u64;
     let mut source_bytes = bookmark.as_ref().map(|b| b.source_bytes).unwrap_or(0);
@@ -102,9 +109,16 @@ pub fn index_into(store: &BinderStore, root: &Path, name: &str) -> Result<IndexS
                 files_indexed += 1;
             }
             FileDelta::Added(f) | FileDelta::Modified(f) => {
-                if let Some((ir, bytes)) =
-                    index_one_file(store, root, name, f, &ws, &head, &provenance)?
-                {
+                if let Some((ir, bytes)) = index_one_file(&IndexFileCtx {
+                    store,
+                    workspace: requested,
+                    scope: &scope,
+                    name,
+                    file: f,
+                    ws: &ws,
+                    head: &head,
+                    provenance: &provenance,
+                })? {
                     if bookmark.is_none() {
                         source_bytes = source_bytes.saturating_add(bytes as u64);
                     }
@@ -169,19 +183,31 @@ pub fn index_into(store: &BinderStore, root: &Path, name: &str) -> Result<IndexS
     })
 }
 
-fn index_one_file(
-    store: &BinderStore,
-    root: &Path,
-    name: &str,
-    file: &TrackedFile,
-    ws: &WorkspaceGraph,
-    head: &GitHead,
-    provenance: &Provenance,
-) -> Result<Option<(FileIr, usize)>> {
+struct IndexFileCtx<'a> {
+    store: &'a BinderStore,
+    workspace: &'a Path,
+    scope: &'a git_sync::GitScope,
+    name: &'a str,
+    file: &'a TrackedFile,
+    ws: &'a WorkspaceGraph,
+    head: &'a GitHead,
+    provenance: &'a Provenance,
+}
+
+fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
+    let store = ctx.store;
+    let workspace = ctx.workspace;
+    let scope = ctx.scope;
+    let name = ctx.name;
+    let file = ctx.file;
+    let ws = ctx.ws;
+    let head = ctx.head;
+    let provenance = ctx.provenance;
     tombstone_file(store, name, &file.path, provenance)?;
-    let bytes = git_sync::show_file(root, &head.sha, &file.path)?;
+    let blob = git_sync::git_blob_path(&scope.prefix, &file.path);
+    let bytes = git_sync::show_file(&scope.git_top, &head.sha, &blob)?;
     let language = detect_language(&file.path);
-    let abs = root.join(&file.path);
+    let abs = workspace.join(&file.path);
     let crate_info = ws.crate_for_file(&abs);
     let (crate_name, module, ir) = if language == "rust" {
         if let Ok(src) = std::str::from_utf8(&bytes) {
@@ -190,7 +216,7 @@ fn index_one_file(
                 .unwrap_or_else(|| name.to_string());
             let src_dir = crate_info
                 .map(|c| c.src_dir.clone())
-                .unwrap_or_else(|| root.join("src"));
+                .unwrap_or_else(|| workspace.join("src"));
             let module = rust_module_path(&cname, &src_dir, &abs);
             let parser = RustParser {
                 crate_name: cname.clone(),
@@ -232,6 +258,15 @@ fn index_one_file(
     if is_dpk_toml(&file.path) {
         if let Ok(text) = std::str::from_utf8(&bytes) {
             for rec in extract_dpk_toml(&file.path, text) {
+                let cid = config_id(name, &rec.file_path, &rec.key);
+                config_ids.push(cid.0.clone());
+                put_json(&mut tx, cid.clone(), &rec, Some(provenance.clone()))?;
+                add_edge(&mut tx, &mut edge_ids, REL_CONTAINS, &fid, &cid, provenance);
+            }
+        }
+    } else if let Ok(text) = std::str::from_utf8(&bytes) {
+        if is_env_manifest(&file.path, text) {
+            for rec in extract_env_manifest(&file.path, text) {
                 let cid = config_id(name, &rec.file_path, &rec.key);
                 config_ids.push(cid.0.clone());
                 put_json(&mut tx, cid.clone(), &rec, Some(provenance.clone()))?;

@@ -43,7 +43,7 @@ codeintel architecture --store ./store plan --request "change binder-storage"
 4. Agent opens source **only** at `inspect_before_change` / `smallest_file_set` paths.
 5. After edits, `workflow finish` (re-index if HEAD moved, then doctrine).
 
-File paths in the request win, then `dpk.toml` config keys/tokens, then crate names as whole tokens. Inspect paths are `repo:path`. See [plan-inspect-sets](plan-inspect-sets.md) and [autonomous-workflow](autonomous-workflow.md).
+File paths in the request win, then config keys/tokens and docker-shipping intent, then crate names as whole tokens. Inspect paths are `repo:path`. Nested git subdirectories index as their own `--name`. See [plan-inspect-sets](plan-inspect-sets.md), [plan-intent-nested](plan-intent-nested.md), and [autonomous-workflow](autonomous-workflow.md).
 
 ## Non-goals
 
