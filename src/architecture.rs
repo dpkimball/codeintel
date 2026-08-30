@@ -11,6 +11,7 @@ use crate::model::RepoRecord;
 use crate::query::{Cycle, LayerViolation, PatternHit, QueryEngine};
 use bindb::BinderStore;
 use serde::Serialize;
+use std::cmp::Reverse;
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
 
@@ -107,6 +108,50 @@ pub struct FederationView {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct IssueRef {
+    pub number: u64,
+    pub title: String,
+    pub url: String,
+    pub state: String,
+    pub repo: String,
+    /// First 1 000 chars of the issue body. Empty when body is blank.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub body_excerpt: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PrRef {
+    pub number: u64,
+    pub title: String,
+    pub url: String,
+    pub state: String,
+    pub repo: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DocRef {
+    pub path: String,
+    pub title: String,
+    pub repo: String,
+    pub kind: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MatchReason {
+    pub kind: String,
+    pub label: String,
+    pub repo: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DriftedFile {
+    pub path: String,
+    pub repo: String,
+    /// `"added"` or `"removed"` relative to the from-SHA snapshot.
+    pub change: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct PlanReport {
     pub request: String,
     pub interpretation: String,
@@ -118,6 +163,20 @@ pub struct PlanReport {
     pub matching_patterns: Vec<PatternHit>,
     pub inspect_before_change: Vec<String>,
     pub smallest_file_set: Vec<String>,
+    /// GitHub issues whose content overlaps with the query (top 10 by token overlap).
+    pub linked_issues: Vec<IssueRef>,
+    /// GitHub pull requests whose content overlaps with the query (top 8 by token overlap).
+    pub linked_prs: Vec<PrRef>,
+    /// Markdown docs whose content overlaps with the query (top 8 by token overlap).
+    pub linked_docs: Vec<DocRef>,
+    /// Structured explanation of what matched and why.
+    pub reasoning: Vec<MatchReason>,
+    /// Issue numbers linked to the inspection set via REL_RESOLVES edges from git log.
+    pub origin_issues: Vec<u64>,
+    /// Files added or removed in the matched repo(s) since `since_sha` that overlap
+    /// with the inspection set. Absent when `since_sha` is not provided.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub recent_changes: Vec<DriftedFile>,
     pub primary_source: &'static str,
     pub source_files_opened: usize,
 }
@@ -323,11 +382,24 @@ impl Architecture {
         })
     }
 
+    /// Graph-first implementation plan with drift context.
+    ///
+    /// `since_sha` must already be indexed (via `codeintel index`). `recent_changes` in the
+    /// returned report lists files in the matched repos that were added or removed between
+    /// `since_sha` and the current HEAD and also appear in the inspection set.
+    pub fn plan_since(&self, request: &str, since_sha: &str) -> Result<PlanReport> {
+        self.plan_impl(request, Some(since_sha))
+    }
+
     /// Graph-first implementation plan. Source paths are payload strings, not file reads.
     ///
     /// Matching order: file paths named in the request, then config keys/tokens
     /// and docker-shipping intent, then crate names as whole tokens. Inspect paths are `repo:path`.
     pub fn plan(&self, request: &str) -> Result<PlanReport> {
+        self.plan_impl(request, None)
+    }
+
+    fn plan_impl(&self, request: &str, since_sha: Option<&str>) -> Result<PlanReport> {
         let names = repo_names(&self.store)?;
         let needle = request.to_lowercase();
         let tokens = request_tokens(&needle);
@@ -335,6 +407,7 @@ impl Architecture {
         let mut matched_files: Vec<(String, String)> = Vec::new();
         let mut matched_configs: Vec<(String, String)> = Vec::new();
         let mut matched_crates: Vec<(String, String)> = Vec::new();
+        let mut matched_symbols: Vec<(String, String)> = Vec::new();
         let mut likely_affected = BTreeSet::new();
         let mut matching_patterns = Vec::new();
         let mut rules = BTreeSet::new();
@@ -368,7 +441,6 @@ impl Architecture {
             // lets queries like "hygiene workflow" or "routing selector" resolve
             // without requiring the caller to know the crate name.
             if matched_files.is_empty() && matched_configs.is_empty() {
-                let q = QueryEngine::open(&self.store, name);
                 'module_outer: for m in q.modules()? {
                     let segments: Vec<&str> = m.path.split("::").collect();
                     for seg in &segments {
@@ -383,6 +455,25 @@ impl Architecture {
                                 repos.insert(name.clone());
                             }
                             break 'module_outer;
+                        }
+                    }
+                }
+            }
+            // Symbol name matching: only when no crate matched yet (symbols provide
+            // focused impact vs. whole-crate; if a crate already matched, crate wins).
+            if matched_files.is_empty() && matched_configs.is_empty() && matched_crates.is_empty() {
+                for s in q.symbols()? {
+                    let name_lc = s.name.to_lowercase();
+                    for tok in &tokens {
+                        if tok.len() >= 4
+                            && *tok == name_lc
+                            && !matched_symbols
+                                .iter()
+                                .any(|(r, q)| r == name && q == &s.qualname)
+                        {
+                            matched_symbols.push((name.clone(), s.qualname.clone()));
+                            repos.insert(name.clone());
+                            break;
                         }
                     }
                 }
@@ -404,19 +495,29 @@ impl Architecture {
 
         let prefer_files = !matched_files.is_empty();
         let prefer_config = !prefer_files && !matched_configs.is_empty();
+        // matched_kind reflects the actual impact granularity used, not just what was found.
+        // Symbols only drive symbol-level impact when no crate also matched (crates win).
         let matched_kind = if prefer_files {
             "file"
         } else if prefer_config {
             "config"
+        } else if !matched_symbols.is_empty() && matched_crates.is_empty() {
+            "symbol"
         } else if !matched_crates.is_empty() {
             "crate"
         } else {
             "none"
         };
 
-        if !prefer_files && !prefer_config && !matched_crates.is_empty() {
-            let matched_repos: BTreeSet<String> =
-                matched_crates.iter().map(|(r, _)| r.clone()).collect();
+        if !prefer_files
+            && !prefer_config
+            && (!matched_crates.is_empty() || !matched_symbols.is_empty())
+        {
+            let matched_repos: BTreeSet<String> = matched_crates
+                .iter()
+                .chain(matched_symbols.iter())
+                .map(|(r, _)| r.clone())
+                .collect();
             for name in matched_repos {
                 let q = QueryEngine::open(&self.store, &name);
                 matching_patterns.extend(q.patterns()?);
@@ -429,6 +530,7 @@ impl Architecture {
             }
         }
 
+        let matched_files_for_reasoning = matched_files.clone();
         let mut inspect = BTreeSet::new();
         let mut files = BTreeSet::new();
         let interpretation = if prefer_files {
@@ -449,8 +551,17 @@ impl Architecture {
                     .collect::<Vec<_>>()
                     .join(", ")
             )
+        } else if matched_crates.is_empty() && matched_symbols.is_empty() {
+            "no crate name, file path, config key, or symbol in the request matched the graph; inspect nothing until the agent names a crate, file, config key, or symbol present in bindb".into()
         } else if matched_crates.is_empty() {
-            "no crate name, file path, or config key in the request matched the graph; inspect nothing until the agent names a crate, file, config key, or symbol present in bindb".into()
+            format!(
+                "matched symbols {}",
+                matched_symbols
+                    .iter()
+                    .map(|(r, q)| qualify_path(r, q))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
         } else {
             format!(
                 "matched {}",
@@ -501,8 +612,10 @@ impl Architecture {
         } else {
             let impact_targets: Vec<(String, String)> = if prefer_files {
                 matched_files
+            } else if !matched_symbols.is_empty() && matched_crates.is_empty() {
+                matched_symbols.clone()
             } else {
-                matched_crates
+                matched_crates.clone()
             };
 
             for (repo, spec) in &impact_targets {
@@ -531,6 +644,95 @@ impl Architecture {
         }
 
         let smallest_file_set: Vec<String> = files.into_iter().collect();
+
+        // semantic matching: issues and docs with ≥ 2 query-token overlap
+        let match_tokens: BTreeSet<String> = tokens
+            .iter()
+            .filter(|t| t.len() >= 4 || crate::ids::SHORT_TECHNICAL_TERMS.contains(&t.as_str()))
+            .cloned()
+            .collect();
+        let linked_issues = semantic_issues(&self.store, &names, &match_tokens)?;
+        let linked_prs = semantic_prs(&self.store, &names, &match_tokens)?;
+        let linked_docs = semantic_docs(&self.store, &names, &match_tokens)?;
+
+        let mut reasoning: Vec<MatchReason> = Vec::new();
+        for (repo, path) in &matched_files_for_reasoning {
+            reasoning.push(MatchReason {
+                kind: "file".into(),
+                label: path.clone(),
+                repo: repo.clone(),
+            });
+        }
+        // Symbols drive the impact set only when no crate also matched; otherwise
+        // crate-level impact is used, so show crate reasons (not symbol reasons).
+        if matched_crates.is_empty() {
+            for (repo, qualname) in &matched_symbols {
+                reasoning.push(MatchReason {
+                    kind: "symbol".into(),
+                    label: qualname.clone(),
+                    repo: repo.clone(),
+                });
+            }
+        }
+        for (repo, cname) in &matched_crates {
+            reasoning.push(MatchReason {
+                kind: "crate".into(),
+                label: cname.clone(),
+                repo: repo.clone(),
+            });
+        }
+        for issue in &linked_issues {
+            let title_short: String = issue.title.chars().take(60).collect();
+            reasoning.push(MatchReason {
+                kind: "issue".into(),
+                label: format!("#{} {}", issue.number, title_short),
+                repo: issue.repo.clone(),
+            });
+        }
+        for pr in &linked_prs {
+            let title_short: String = pr.title.chars().take(60).collect();
+            reasoning.push(MatchReason {
+                kind: "pr".into(),
+                label: format!("#{} {}", pr.number, title_short),
+                repo: pr.repo.clone(),
+            });
+        }
+        for doc in &linked_docs {
+            reasoning.push(MatchReason {
+                kind: "doc".into(),
+                label: doc.title.clone(),
+                repo: doc.repo.clone(),
+            });
+        }
+
+        // origin_issues: issue numbers linked to the inspection set via git log REL_RESOLVES edges.
+        let mut origin_issues_set: BTreeSet<u64> = BTreeSet::new();
+        for repo_name in &repos {
+            let repo_prefix = format!("{repo_name}:");
+            let file_paths_for_repo: Vec<&str> = smallest_file_set
+                .iter()
+                .filter_map(|full| full.strip_prefix(repo_prefix.as_str()))
+                .collect();
+            if !file_paths_for_repo.is_empty() {
+                if let Ok(nums) = crate::commit_issues::origin_issues_for_files(
+                    &self.store,
+                    repo_name,
+                    &file_paths_for_repo,
+                ) {
+                    origin_issues_set.extend(nums);
+                }
+            }
+        }
+        let origin_issues: Vec<u64> = origin_issues_set.into_iter().collect();
+
+        // recent_changes: files added/removed in matched repos between since_sha and HEAD,
+        // filtered to those that overlap with the inspection set.
+        let recent_changes = if let Some(since) = since_sha {
+            compute_recent_changes(&self.store, &repos, &smallest_file_set, since)
+        } else {
+            Vec::new()
+        };
+
         Ok(PlanReport {
             request: request.to_string(),
             interpretation,
@@ -541,6 +743,12 @@ impl Architecture {
             matching_patterns,
             inspect_before_change: inspect.into_iter().collect(),
             smallest_file_set,
+            linked_issues,
+            linked_prs,
+            linked_docs,
+            reasoning,
+            origin_issues,
+            recent_changes,
             primary_source: "bindb",
             source_files_opened: 0,
         })
@@ -550,6 +758,18 @@ impl Architecture {
 /// `repo:path` so colliding filenames across repositories stay distinct.
 pub(crate) fn qualify_path(repo: &str, path: &str) -> String {
     format!("{repo}:{path}")
+}
+
+/// Clip a body string to `max_bytes` on a UTF-8 char boundary.
+fn truncate_body(s: &str, max_bytes: usize) -> String {
+    if s.len() <= max_bytes {
+        return s.to_string();
+    }
+    let mut end = max_bytes;
+    while !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    s[..end].to_string()
 }
 
 /// True when an opened path is the same inspection entry, with or without the repo prefix.
@@ -728,5 +948,169 @@ fn outgoing_chains(edges: &[(String, String)], from: &str, max_depth: usize) -> 
         }
     }
     out.truncate(20);
+    out
+}
+
+fn semantic_issues(
+    store: &BinderStore,
+    names: &[String],
+    match_tokens: &BTreeSet<String>,
+) -> Result<Vec<IssueRef>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut scored: Vec<(usize, IssueRef)> = Vec::new();
+    for name in names {
+        let q = QueryEngine::open(store, name);
+        for issue in q.issues()? {
+            let overlap = issue
+                .tokens
+                .iter()
+                .filter(|t| match_tokens.contains(t.as_str()))
+                .count();
+            if overlap >= 2 {
+                scored.push((
+                    overlap,
+                    IssueRef {
+                        number: issue.number,
+                        title: issue.title.clone(),
+                        url: issue.url,
+                        state: issue.state,
+                        repo: name.clone(),
+                        body_excerpt: truncate_body(&issue.body, 1000),
+                    },
+                ));
+            }
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.truncate(10);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn semantic_prs(
+    store: &BinderStore,
+    names: &[String],
+    match_tokens: &BTreeSet<String>,
+) -> Result<Vec<PrRef>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut scored: Vec<(usize, PrRef)> = Vec::new();
+    for name in names {
+        let q = QueryEngine::open(store, name);
+        for pr in q.prs()? {
+            let overlap = pr
+                .tokens
+                .iter()
+                .filter(|t| match_tokens.contains(t.as_str()))
+                .count();
+            if overlap >= 2 {
+                scored.push((
+                    overlap,
+                    PrRef {
+                        number: pr.number,
+                        title: pr.title,
+                        url: pr.url,
+                        state: pr.state,
+                        repo: name.clone(),
+                    },
+                ));
+            }
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.truncate(8);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn semantic_docs(
+    store: &BinderStore,
+    names: &[String],
+    match_tokens: &BTreeSet<String>,
+) -> Result<Vec<DocRef>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut scored: Vec<(usize, DocRef)> = Vec::new();
+    for name in names {
+        let q = QueryEngine::open(store, name);
+        for doc in q.docs()? {
+            let overlap = doc
+                .tokens
+                .iter()
+                .filter(|t| match_tokens.contains(t.as_str()))
+                .count();
+            if overlap >= 2 {
+                scored.push((
+                    overlap,
+                    DocRef {
+                        path: doc.path,
+                        title: doc.title,
+                        repo: name.clone(),
+                        kind: doc.kind,
+                    },
+                ));
+            }
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.truncate(8);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn compute_recent_changes(
+    store: &BinderStore,
+    repos: &BTreeSet<String>,
+    file_set: &[String],
+    since_sha: &str,
+) -> Vec<DriftedFile> {
+    let mut out = Vec::new();
+    for repo_name in repos {
+        let q = QueryEngine::open(store, repo_name);
+        let head_sha = match q.bookmark() {
+            Ok(Some(b)) => b.sha,
+            Ok(None) => continue,
+            Err(e) => {
+                eprintln!("codeintel: bookmark failed for {repo_name}: {e}");
+                continue;
+            }
+        };
+        if head_sha == since_sha {
+            continue;
+        }
+        let repo_prefix = format!("{repo_name}:");
+        let drift = match crate::drift::analyze(store, repo_name, since_sha, &head_sha) {
+            Ok(d) => d,
+            Err(e) => {
+                eprintln!("codeintel: drift analyze failed for {repo_name} since {since_sha}: {e}");
+                continue;
+            }
+        };
+        for path in drift.files_added {
+            if file_set.iter().any(|e| {
+                e.strip_prefix(repo_prefix.as_str())
+                    .is_some_and(|p| p == path)
+            }) {
+                out.push(DriftedFile {
+                    path,
+                    repo: repo_name.clone(),
+                    change: "added".into(),
+                });
+            }
+        }
+        for path in drift.files_removed {
+            if file_set.iter().any(|e| {
+                e.strip_prefix(repo_prefix.as_str())
+                    .is_some_and(|p| p == path)
+            }) {
+                out.push(DriftedFile {
+                    path,
+                    repo: repo_name.clone(),
+                    change: "removed".into(),
+                });
+            }
+        }
+    }
     out
 }

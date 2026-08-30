@@ -137,3 +137,54 @@ pub struct ConfigKeyRecord {
     #[serde(default)]
     pub value_tokens: Vec<String>,
 }
+
+/// GitHub issue fetched via `gh issue list`. Stored per codeintel repo name.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IssueRecord {
+    pub number: u64,
+    pub title: String,
+    /// Body truncated to 2000 chars at index time.
+    pub body: String,
+    pub url: String,
+    pub state: String,
+    pub labels: Vec<String>,
+    /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+    pub github_repo: String,
+    /// codeintel repo name, e.g. "binder-ai".
+    pub repo_name: String,
+    /// Words (≥ 4 chars) extracted from title + body for semantic matching.
+    pub tokens: Vec<String>,
+}
+
+/// Markdown document indexed for content-based semantic search.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DocRecord {
+    pub path: String,
+    pub repo: String,
+    /// First `# Heading` or the filename stem.
+    pub title: String,
+    /// "spec", "claude_md", "readme", or "doc".
+    pub kind: String,
+    /// Words (≥ 4 chars) extracted from headings and body text.
+    pub tokens: Vec<String>,
+}
+
+/// GitHub pull request fetched via `gh pr list`. Stored per codeintel repo name.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PullRequestRecord {
+    pub number: u64,
+    pub title: String,
+    /// Body truncated to 2000 chars at index time.
+    pub body: String,
+    pub url: String,
+    /// "open", "closed", or "merged".
+    pub state: String,
+    pub labels: Vec<String>,
+    pub merged: bool,
+    /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+    pub github_repo: String,
+    /// codeintel repo name, e.g. "binder-ai".
+    pub repo_name: String,
+    /// Words (≥ 4 chars) extracted from title + body for semantic matching.
+    pub tokens: Vec<String>,
+}

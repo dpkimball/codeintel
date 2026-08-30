@@ -15,6 +15,8 @@ pub const REL_DEPENDS_ON: &str = "DEPENDS_ON";
 pub const REL_AT_COMMIT: &str = "AT_COMMIT";
 pub const REL_IN_REPO: &str = "IN_REPO";
 pub const REL_PARENT_OF: &str = "PARENT_OF";
+/// Written from issue_id → file_id when a commit subject references #NNN.
+pub const REL_RESOLVES: &str = "RESOLVES";
 
 pub fn repo_id(name: &str) -> ObjectId {
     ObjectId::new(format!("code://repo/{name}"))
@@ -102,9 +104,40 @@ pub fn prefix_commit(name: &str) -> String {
     format!("code://commit/{name}/")
 }
 
+pub fn issue_id(repo_name: &str, number: u64) -> ObjectId {
+    ObjectId::new(format!("code://issue/{repo_name}/{number}"))
+}
+
+pub fn pr_id(repo_name: &str, number: u64) -> ObjectId {
+    ObjectId::new(format!("code://pr/{repo_name}/{number}"))
+}
+
+pub fn doc_id(repo_name: &str, path: &str) -> ObjectId {
+    ObjectId::new(format!("code://doc/{repo_name}/{path}"))
+}
+
+pub fn prefix_issue(name: &str) -> String {
+    format!("code://issue/{name}/")
+}
+
+pub fn prefix_pr(name: &str) -> String {
+    format!("code://pr/{name}/")
+}
+
+pub fn prefix_doc(name: &str) -> String {
+    format!("code://doc/{name}/")
+}
+
 pub const PREFIX_ALL_CRATES: &str = "code://crate/";
 pub const PREFIX_ALL_REPOS: &str = "code://repo/";
 pub const PREFIX_ALL_COMMITS: &str = "code://commit/";
+
+/// Short technical terms that are meaningful despite being < 4 chars.
+/// Indexed and matched regardless of the standard length filter.
+pub const SHORT_TECHNICAL_TERMS: &[&str] = &[
+    "api", "cli", "sdk", "llm", "rag", "gpu", "cpu", "pr", "ci", "cd", "gh", "url", "uri", "git",
+    "rpc", "grpc", "http", "json", "toml", "yaml", "wasm", "fn",
+];
 
 /// `code://crate/{repo}/{crate}` → `(repo, crate)`.
 pub fn parse_crate_id(id: &ObjectId) -> Option<(String, String)> {

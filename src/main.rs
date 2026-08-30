@@ -96,6 +96,41 @@ enum Cmd {
         #[arg(long)]
         name: Option<String>,
     },
+    /// Fetch GitHub issues via `gh` CLI and index them for semantic plan() matching.
+    IndexIssues {
+        /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+        #[arg(long)]
+        github_repo: String,
+        /// bindb store path.
+        #[arg(long)]
+        store: PathBuf,
+        /// codeintel repo name (defaults to the last segment of github_repo).
+        #[arg(long)]
+        name: Option<String>,
+    },
+    /// Walk git log for #NNN commit refs and write REL_RESOLVES edges to the store.
+    LinkIssues {
+        /// Path to the git repository.
+        repo: PathBuf,
+        /// bindb store path.
+        #[arg(long)]
+        store: PathBuf,
+        /// codeintel repo name (defaults to the last path segment of repo).
+        #[arg(long)]
+        name: Option<String>,
+    },
+    /// Fetch GitHub pull requests via `gh` CLI and index them for semantic plan() matching.
+    IndexPrs {
+        /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+        #[arg(long)]
+        github_repo: String,
+        /// bindb store path.
+        #[arg(long)]
+        store: PathBuf,
+        /// codeintel repo name (defaults to the last segment of github_repo).
+        #[arg(long)]
+        name: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -122,6 +157,9 @@ enum ArchOp {
     Plan {
         #[arg(long)]
         request: String,
+        /// Compare against this indexed SHA to populate recent_changes.
+        #[arg(long)]
+        since_sha: Option<String>,
     },
 }
 
@@ -300,7 +338,13 @@ fn run() -> codeintel::Result<()> {
                 ArchOp::Layering => serde_json::to_value(arch.layering()?)?,
                 ArchOp::Drift { from, to } => serde_json::to_value(arch.drift(&from, &to)?)?,
                 ArchOp::Federation => serde_json::to_value(arch.federation()?)?,
-                ArchOp::Plan { request } => serde_json::to_value(arch.plan(&request)?)?,
+                ArchOp::Plan { request, since_sha } => {
+                    let report = match since_sha.as_deref() {
+                        Some(sha) => arch.plan_since(&request, sha)?,
+                        None => arch.plan(&request)?,
+                    };
+                    serde_json::to_value(report)?
+                }
             };
             println!("{}", serde_json::to_string_pretty(&out)?);
             arch.close()?;
@@ -334,6 +378,71 @@ fn run() -> codeintel::Result<()> {
                 println!("{}", serde_json::to_string_pretty(&out)?);
             }
         },
+        Cmd::IndexIssues {
+            github_repo,
+            store,
+            name,
+        } => {
+            let repo_name = name.unwrap_or_else(|| {
+                github_repo
+                    .rsplit('/')
+                    .next()
+                    .unwrap_or(&github_repo)
+                    .to_string()
+            });
+            let db = open_store(&store)?;
+            let count = codeintel::index_issues(&db, &github_repo, &repo_name)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "github_repo": github_repo,
+                    "repo_name": repo_name,
+                    "issues_indexed": count,
+                }))?
+            );
+        }
+        Cmd::LinkIssues { repo, store, name } => {
+            let repo_name = name.unwrap_or_else(|| {
+                repo.file_name()
+                    .map(|s| s.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| "repo".into())
+            });
+            let db = open_store(&store)?;
+            let count = codeintel::commit_issues::link_issues_from_commits(&db, &repo_name, &repo)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repo_name": repo_name,
+                    "edges_written": count,
+                }))?
+            );
+        }
+        Cmd::IndexPrs {
+            github_repo,
+            store,
+            name,
+        } => {
+            let repo_name = name.unwrap_or_else(|| {
+                github_repo
+                    .rsplit('/')
+                    .next()
+                    .unwrap_or(&github_repo)
+                    .to_string()
+            });
+            let db = open_store(&store)?;
+            let count = codeintel::index_prs(&db, &github_repo, &repo_name)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "github_repo": github_repo,
+                    "repo_name": repo_name,
+                    "prs_indexed": count,
+                }))?
+            );
+        }
         Cmd::Validate { repo, store, name } => {
             let name = name.or_else(|| repo.file_name().map(|s| s.to_string_lossy().into_owned()));
             let opts = IndexOptions {

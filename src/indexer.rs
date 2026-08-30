@@ -3,15 +3,18 @@ use crate::config_keys::{extract_dpk_toml, extract_env_manifest, is_dpk_toml, is
 use crate::error::{CodeintelError, Result};
 use crate::git_sync::{self, FileDelta, GitHead, TrackedFile};
 use crate::ids::{
-    config_id, crate_id, edge_id, file_id, module_id, repo_id, symbol_id, sync_id, ACTOR,
+    config_id, crate_id, doc_id, edge_id, file_id, module_id, repo_id, symbol_id, sync_id, ACTOR,
     NAMESPACE, REL_AT_COMMIT, REL_CALLS, REL_CONTAINS, REL_DEFINED_IN, REL_DEPENDS_ON,
     REL_IMPLEMENTS, REL_IMPORTS, REL_IN_REPO, REL_PARENT_OF, REL_REFERENCES,
 };
 use crate::model::{
-    CommitRecord, CrateRecord, FileRecord, ModuleRecord, RepoRecord, SymbolRecord, SyncBookmark,
+    CommitRecord, CrateRecord, DocRecord, FileRecord, ModuleRecord, RepoRecord, SymbolRecord,
+    SyncBookmark,
 };
 use crate::parser::{detect_language, FileIr, LanguageParser};
+use crate::python_parser::{python_module_path, PythonParser};
 use crate::rust_parser::RustParser;
+use crate::ts_parser::{ts_module_path, TypeScriptParser};
 use bindb::{BinderStore, ObjectId, Provenance, ProvenanceSource, Transaction};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -235,6 +238,52 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
                 },
             )
         }
+    } else if language == "python" {
+        if let Ok(src) = std::str::from_utf8(&bytes) {
+            let cname = crate_info
+                .map(|c| c.name.clone())
+                .unwrap_or_else(|| name.to_string());
+            let mod_path = python_module_path(&file.path);
+            let parser = PythonParser {
+                crate_name: cname.clone(),
+                module_path: mod_path.clone(),
+            };
+            let ir = parser.parse(&file.path, src);
+            (Some(cname), Some(mod_path), ir)
+        } else {
+            (
+                crate_info.map(|c| c.name.clone()),
+                None,
+                FileIr {
+                    language: "python".into(),
+                    parse_error: Some("not utf-8".into()),
+                    ..FileIr::default()
+                },
+            )
+        }
+    } else if language == "typescript" {
+        if let Ok(src) = std::str::from_utf8(&bytes) {
+            let cname = crate_info
+                .map(|c| c.name.clone())
+                .unwrap_or_else(|| name.to_string());
+            let mod_path = ts_module_path(&file.path);
+            let parser = TypeScriptParser {
+                crate_name: cname.clone(),
+                module_path: mod_path.clone(),
+            };
+            let ir = parser.parse(&file.path, src);
+            (Some(cname), Some(mod_path), ir)
+        } else {
+            (
+                crate_info.map(|c| c.name.clone()),
+                None,
+                FileIr {
+                    language: "typescript".into(),
+                    parse_error: Some("not utf-8".into()),
+                    ..FileIr::default()
+                },
+            )
+        }
     } else {
         (
             crate_info.map(|c| c.name.clone()),
@@ -380,6 +429,27 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
     let mut frec = frec;
     frec.edge_ids = edge_ids;
     put_json(&mut tx, fid, &frec, Some(provenance.clone()))?;
+
+    // index markdown files as DocRecord for content-based semantic search
+    if file.path.to_lowercase().ends_with(".md") {
+        if let Ok(text) = std::str::from_utf8(&bytes) {
+            let (title, tokens) = extract_md_tokens(text, &file.path);
+            let kind = doc_kind(&file.path);
+            let rec = DocRecord {
+                path: file.path.clone(),
+                repo: name.to_string(),
+                title,
+                kind,
+                tokens,
+            };
+            put_json(
+                &mut tx,
+                doc_id(name, &file.path),
+                &rec,
+                Some(provenance.clone()),
+            )?;
+        }
+    }
 
     if !tx.is_empty() {
         store.commit_buffered(tx, ACTOR, format!("index {}", file.path))?;
@@ -689,7 +759,7 @@ fn git_provenance(head: &GitHead) -> Provenance {
     }
 }
 
-fn put_json<T: serde::Serialize>(
+pub(crate) fn put_json<T: serde::Serialize>(
     tx: &mut Transaction,
     id: ObjectId,
     rec: &T,
@@ -790,4 +860,55 @@ pub fn decode_obj<T: serde::de::DeserializeOwned>(v: &bindb::BinderObjectVersion
 
 pub fn all_of(store: &BinderStore, prefix: &str) -> Result<Vec<bindb::BinderObjectVersion>> {
     Ok(store.list(prefix)?)
+}
+
+/// Extract title and content tokens from a markdown file for semantic search.
+pub(crate) fn extract_md_tokens(text: &str, path: &str) -> (String, Vec<String>) {
+    use std::collections::BTreeSet;
+    let mut title = String::new();
+    let mut tokens: BTreeSet<String> = BTreeSet::new();
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if let Some(heading) = trimmed.strip_prefix('#') {
+            let heading = heading.trim_start_matches('#').trim();
+            if title.is_empty() && !heading.is_empty() {
+                title = heading.to_string();
+            }
+            tokenize_into(heading, 4, &mut tokens);
+        } else {
+            tokenize_into(trimmed, 4, &mut tokens);
+        }
+    }
+    if title.is_empty() {
+        title = path
+            .rsplit('/')
+            .next()
+            .unwrap_or(path)
+            .trim_end_matches(".md")
+            .to_string();
+    }
+    (title, tokens.into_iter().collect())
+}
+
+fn tokenize_into(text: &str, min_len: usize, out: &mut std::collections::BTreeSet<String>) {
+    for word in text.split(|c: char| !c.is_alphanumeric() && c != '-' && c != '_') {
+        let w = word.to_lowercase();
+        let w = w.trim_matches(|c: char| c == '-' || c == '_');
+        if w.len() >= min_len || crate::ids::SHORT_TECHNICAL_TERMS.contains(&w) {
+            out.insert(w.to_string());
+        }
+    }
+}
+
+fn doc_kind(path: &str) -> String {
+    let name = path.rsplit('/').next().unwrap_or(path);
+    if name.eq_ignore_ascii_case("CLAUDE.md") {
+        "claude_md".into()
+    } else if name.eq_ignore_ascii_case("README.md") {
+        "readme".into()
+    } else if path.contains("/specs/") || path.contains("/codev/") || path.contains("/docs/") {
+        "spec".into()
+    } else {
+        "doc".into()
+    }
 }
