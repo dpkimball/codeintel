@@ -826,7 +826,7 @@ pub(crate) fn extract_md_tokens(text: &str, path: &str) -> (String, Vec<String>)
             if title.is_empty() && !heading.is_empty() {
                 title = heading.to_string();
             }
-            tokenize_into(heading, 3, &mut tokens);
+            tokenize_into(heading, 4, &mut tokens);
         } else {
             tokenize_into(trimmed, 4, &mut tokens);
         }
@@ -846,7 +846,7 @@ fn tokenize_into(text: &str, min_len: usize, out: &mut std::collections::BTreeSe
     for word in text.split(|c: char| !c.is_alphanumeric() && c != '-' && c != '_') {
         let w = word.to_lowercase();
         let w = w.trim_matches(|c: char| c == '-' || c == '_');
-        if w.len() >= min_len {
+        if w.len() >= min_len || crate::ids::SHORT_TECHNICAL_TERMS.contains(&w) {
             out.insert(w.to_string());
         }
     }

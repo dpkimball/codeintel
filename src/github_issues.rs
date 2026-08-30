@@ -160,7 +160,7 @@ fn extract_issue_tokens(title: &str, body: &str) -> Vec<String> {
     {
         let w = word.to_lowercase();
         let w = w.trim_matches(|c: char| c == '-' || c == '_');
-        if w.len() >= 4 {
+        if w.len() >= 4 || crate::ids::SHORT_TECHNICAL_TERMS.contains(&w) {
             tokens.insert(w.to_string());
         }
     }

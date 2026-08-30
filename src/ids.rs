@@ -122,6 +122,13 @@ pub const PREFIX_ALL_CRATES: &str = "code://crate/";
 pub const PREFIX_ALL_REPOS: &str = "code://repo/";
 pub const PREFIX_ALL_COMMITS: &str = "code://commit/";
 
+/// Short technical terms that are meaningful despite being < 4 chars.
+/// Indexed and matched regardless of the standard length filter.
+pub const SHORT_TECHNICAL_TERMS: &[&str] = &[
+    "api", "cli", "sdk", "llm", "rag", "gpu", "cpu", "pr", "ci", "cd", "gh", "url", "uri", "git",
+    "rpc", "grpc", "http", "json", "toml", "yaml", "wasm", "fn",
+];
+
 /// `code://crate/{repo}/{crate}` → `(repo, crate)`.
 pub fn parse_crate_id(id: &ObjectId) -> Option<(String, String)> {
     let rest = id.0.strip_prefix(PREFIX_ALL_CRATES)?;
