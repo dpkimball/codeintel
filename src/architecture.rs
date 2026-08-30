@@ -114,6 +114,9 @@ pub struct IssueRef {
     pub url: String,
     pub state: String,
     pub repo: String,
+    /// First 1 000 chars of the issue body. Empty when body is blank.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub body_excerpt: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -757,6 +760,18 @@ pub(crate) fn qualify_path(repo: &str, path: &str) -> String {
     format!("{repo}:{path}")
 }
 
+/// Clip a body string to `max_bytes` on a UTF-8 char boundary.
+fn truncate_body(s: &str, max_bytes: usize) -> String {
+    if s.len() <= max_bytes {
+        return s.to_string();
+    }
+    let mut end = max_bytes;
+    while !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    s[..end].to_string()
+}
+
 /// True when an opened path is the same inspection entry, with or without the repo prefix.
 pub(crate) fn inspect_paths_match(identified: &str, opened: &str) -> bool {
     if identified == opened {
@@ -958,10 +973,11 @@ fn semantic_issues(
                     overlap,
                     IssueRef {
                         number: issue.number,
-                        title: issue.title,
+                        title: issue.title.clone(),
                         url: issue.url,
                         state: issue.state,
                         repo: name.clone(),
+                        body_excerpt: truncate_body(&issue.body, 1000),
                     },
                 ));
             }
