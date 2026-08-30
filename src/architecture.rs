@@ -141,6 +141,14 @@ pub struct MatchReason {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct DriftedFile {
+    pub path: String,
+    pub repo: String,
+    /// `"added"` or `"removed"` relative to the from-SHA snapshot.
+    pub change: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct PlanReport {
     pub request: String,
     pub interpretation: String,
@@ -162,6 +170,10 @@ pub struct PlanReport {
     pub reasoning: Vec<MatchReason>,
     /// Issue numbers linked to the inspection set via REL_RESOLVES edges from git log.
     pub origin_issues: Vec<u64>,
+    /// Files added or removed in the matched repo(s) since `since_sha` that overlap
+    /// with the inspection set. Absent when `since_sha` is not provided.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub recent_changes: Vec<DriftedFile>,
     pub primary_source: &'static str,
     pub source_files_opened: usize,
 }
@@ -367,11 +379,24 @@ impl Architecture {
         })
     }
 
+    /// Graph-first implementation plan with drift context.
+    ///
+    /// `since_sha` must already be indexed (via `codeintel index`). `recent_changes` in the
+    /// returned report lists files in the matched repos that were added or removed between
+    /// `since_sha` and the current HEAD and also appear in the inspection set.
+    pub fn plan_since(&self, request: &str, since_sha: &str) -> Result<PlanReport> {
+        self.plan_impl(request, Some(since_sha))
+    }
+
     /// Graph-first implementation plan. Source paths are payload strings, not file reads.
     ///
     /// Matching order: file paths named in the request, then config keys/tokens
     /// and docker-shipping intent, then crate names as whole tokens. Inspect paths are `repo:path`.
     pub fn plan(&self, request: &str) -> Result<PlanReport> {
+        self.plan_impl(request, None)
+    }
+
+    fn plan_impl(&self, request: &str, since_sha: Option<&str>) -> Result<PlanReport> {
         let names = repo_names(&self.store)?;
         let needle = request.to_lowercase();
         let tokens = request_tokens(&needle);
@@ -697,6 +722,14 @@ impl Architecture {
         }
         let origin_issues: Vec<u64> = origin_issues_set.into_iter().collect();
 
+        // recent_changes: files added/removed in matched repos between since_sha and HEAD,
+        // filtered to those that overlap with the inspection set.
+        let recent_changes = if let Some(since) = since_sha {
+            compute_recent_changes(&self.store, &repos, &smallest_file_set, since)
+        } else {
+            Vec::new()
+        };
+
         Ok(PlanReport {
             request: request.to_string(),
             interpretation,
@@ -712,6 +745,7 @@ impl Architecture {
             linked_docs,
             reasoning,
             origin_issues,
+            recent_changes,
             primary_source: "bindb",
             source_files_opened: 0,
         })
@@ -1007,4 +1041,60 @@ fn semantic_docs(
     scored.sort_by_key(|a| Reverse(a.0));
     scored.truncate(8);
     Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn compute_recent_changes(
+    store: &BinderStore,
+    repos: &BTreeSet<String>,
+    file_set: &[String],
+    since_sha: &str,
+) -> Vec<DriftedFile> {
+    let mut out = Vec::new();
+    for repo_name in repos {
+        let q = QueryEngine::open(store, repo_name);
+        let head_sha = match q.bookmark() {
+            Ok(Some(b)) => b.sha,
+            Ok(None) => continue,
+            Err(e) => {
+                eprintln!("codeintel: bookmark failed for {repo_name}: {e}");
+                continue;
+            }
+        };
+        if head_sha == since_sha {
+            continue;
+        }
+        let repo_prefix = format!("{repo_name}:");
+        let drift = match crate::drift::analyze(store, repo_name, since_sha, &head_sha) {
+            Ok(d) => d,
+            Err(e) => {
+                eprintln!("codeintel: drift analyze failed for {repo_name} since {since_sha}: {e}");
+                continue;
+            }
+        };
+        for path in drift.files_added {
+            if file_set.iter().any(|e| {
+                e.strip_prefix(repo_prefix.as_str())
+                    .is_some_and(|p| p == path)
+            }) {
+                out.push(DriftedFile {
+                    path,
+                    repo: repo_name.clone(),
+                    change: "added".into(),
+                });
+            }
+        }
+        for path in drift.files_removed {
+            if file_set.iter().any(|e| {
+                e.strip_prefix(repo_prefix.as_str())
+                    .is_some_and(|p| p == path)
+            }) {
+                out.push(DriftedFile {
+                    path,
+                    repo: repo_name.clone(),
+                    change: "removed".into(),
+                });
+            }
+        }
+    }
+    out
 }

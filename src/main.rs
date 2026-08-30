@@ -157,6 +157,9 @@ enum ArchOp {
     Plan {
         #[arg(long)]
         request: String,
+        /// Compare against this indexed SHA to populate recent_changes.
+        #[arg(long)]
+        since_sha: Option<String>,
     },
 }
 
@@ -335,7 +338,13 @@ fn run() -> codeintel::Result<()> {
                 ArchOp::Layering => serde_json::to_value(arch.layering()?)?,
                 ArchOp::Drift { from, to } => serde_json::to_value(arch.drift(&from, &to)?)?,
                 ArchOp::Federation => serde_json::to_value(arch.federation()?)?,
-                ArchOp::Plan { request } => serde_json::to_value(arch.plan(&request)?)?,
+                ArchOp::Plan { request, since_sha } => {
+                    let report = match since_sha.as_deref() {
+                        Some(sha) => arch.plan_since(&request, sha)?,
+                        None => arch.plan(&request)?,
+                    };
+                    serde_json::to_value(report)?
+                }
             };
             println!("{}", serde_json::to_string_pretty(&out)?);
             arch.close()?;
