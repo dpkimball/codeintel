@@ -108,6 +108,17 @@ enum Cmd {
         #[arg(long)]
         name: Option<String>,
     },
+    /// Walk git log for #NNN commit refs and write REL_RESOLVES edges to the store.
+    LinkIssues {
+        /// Path to the git repository.
+        repo: PathBuf,
+        /// bindb store path.
+        #[arg(long)]
+        store: PathBuf,
+        /// codeintel repo name (defaults to the last path segment of repo).
+        #[arg(long)]
+        name: Option<String>,
+    },
     /// Fetch GitHub pull requests via `gh` CLI and index them for semantic plan() matching.
     IndexPrs {
         /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
@@ -379,6 +390,23 @@ fn run() -> codeintel::Result<()> {
                     "github_repo": github_repo,
                     "repo_name": repo_name,
                     "issues_indexed": count,
+                }))?
+            );
+        }
+        Cmd::LinkIssues { repo, store, name } => {
+            let repo_name = name.unwrap_or_else(|| {
+                repo.file_name()
+                    .map(|s| s.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| "repo".into())
+            });
+            let db = open_store(&store)?;
+            let count = codeintel::commit_issues::link_issues_from_commits(&db, &repo_name, &repo)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repo_name": repo_name,
+                    "edges_written": count,
                 }))?
             );
         }

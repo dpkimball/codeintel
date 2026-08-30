@@ -15,6 +15,8 @@ pub const REL_DEPENDS_ON: &str = "DEPENDS_ON";
 pub const REL_AT_COMMIT: &str = "AT_COMMIT";
 pub const REL_IN_REPO: &str = "IN_REPO";
 pub const REL_PARENT_OF: &str = "PARENT_OF";
+/// Written from issue_id → file_id when a commit subject references #NNN.
+pub const REL_RESOLVES: &str = "RESOLVES";
 
 pub fn repo_id(name: &str) -> ObjectId {
     ObjectId::new(format!("code://repo/{name}"))

@@ -160,6 +160,8 @@ pub struct PlanReport {
     pub linked_docs: Vec<DocRef>,
     /// Structured explanation of what matched and why.
     pub reasoning: Vec<MatchReason>,
+    /// Issue numbers linked to the inspection set via REL_RESOLVES edges from git log.
+    pub origin_issues: Vec<u64>,
     pub primary_source: &'static str,
     pub source_files_opened: usize,
 }
@@ -675,6 +677,34 @@ impl Architecture {
             });
         }
 
+        // origin_issues: issue numbers linked to the inspection set via git log REL_RESOLVES edges.
+        let inspect_paths: Vec<&str> = smallest_file_set
+            .iter()
+            .filter_map(|p| p.split_once(':').map(|(_, path)| path))
+            .collect();
+        let mut origin_issues_set: BTreeSet<u64> = BTreeSet::new();
+        for repo_name in &repos {
+            let file_paths_for_repo: Vec<&str> = inspect_paths
+                .iter()
+                .filter(|p| {
+                    smallest_file_set.iter().any(|full| {
+                        full.starts_with(&format!("{repo_name}:")) && full.ends_with(*p)
+                    })
+                })
+                .copied()
+                .collect();
+            if !file_paths_for_repo.is_empty() {
+                if let Ok(nums) = crate::commit_issues::origin_issues_for_files(
+                    &self.store,
+                    repo_name,
+                    &file_paths_for_repo,
+                ) {
+                    origin_issues_set.extend(nums);
+                }
+            }
+        }
+        let origin_issues: Vec<u64> = origin_issues_set.into_iter().collect();
+
         Ok(PlanReport {
             request: request.to_string(),
             interpretation,
@@ -689,6 +719,7 @@ impl Architecture {
             linked_prs,
             linked_docs,
             reasoning,
+            origin_issues,
             primary_source: "bindb",
             source_files_opened: 0,
         })
