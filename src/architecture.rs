@@ -363,6 +363,30 @@ impl Architecture {
                     repos.insert(name.clone());
                 }
             }
+            // Module-path segment matching: if a token (len >= 5) matches a
+            // module path segment, treat the owning crate as a match. This
+            // lets queries like "hygiene workflow" or "routing selector" resolve
+            // without requiring the caller to know the crate name.
+            if matched_files.is_empty() && matched_configs.is_empty() {
+                let q = QueryEngine::open(&self.store, name);
+                'module_outer: for m in q.modules()? {
+                    let segments: Vec<&str> = m.path.split("::").collect();
+                    for seg in &segments {
+                        let seg_lc = seg.to_lowercase();
+                        if seg_lc.len() >= 5 && tokens.contains(&seg_lc) {
+                            if !matched_crates
+                                .iter()
+                                .any(|(r, c)| r == name && *c == m.crate_name)
+                            {
+                                matched_crates.push((name.clone(), m.crate_name.clone()));
+                                likely_affected.insert(format!("{}/{}", name, m.crate_name));
+                                repos.insert(name.clone());
+                            }
+                            break 'module_outer;
+                        }
+                    }
+                }
+            }
             let doctrine = Doctrine::detect(&crate_names);
             for rule in &doctrine.rules {
                 let id = match rule {
