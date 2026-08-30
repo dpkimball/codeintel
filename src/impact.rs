@@ -418,6 +418,8 @@ pub(crate) fn is_crate_inspect_file(path: &str) -> bool {
         return true;
     }
     let name = p.rsplit('/').next().unwrap_or("");
-    matches!(name, "Cargo.toml" | "dpk.toml" | "Dockerfile" | "Makefile")
-        || p.ends_with(".cargo/config.toml")
+    matches!(
+        name,
+        "Cargo.toml" | "dpk.toml" | "Dockerfile" | "Makefile" | "CLAUDE.md" | "README.md"
+    ) || p.ends_with(".cargo/config.toml")
 }
