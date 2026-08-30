@@ -127,11 +127,14 @@ fn is_valid_ts_identifier(s: &str) -> bool {
 
 /// Derive a TypeScript module path from a file path (relative to repo root).
 /// `src/components/Button.tsx` → `src.components.Button`
+/// `.d.ts` is stripped as a unit first to avoid leaving a trailing `.d`.
 pub fn ts_module_path(file_path: &str) -> String {
     let path = file_path
-        .trim_end_matches(".tsx")
-        .trim_end_matches(".ts")
-        .trim_end_matches(".jsx")
-        .trim_end_matches(".js");
+        .strip_suffix(".d.ts")
+        .or_else(|| file_path.strip_suffix(".tsx"))
+        .or_else(|| file_path.strip_suffix(".ts"))
+        .or_else(|| file_path.strip_suffix(".jsx"))
+        .or_else(|| file_path.strip_suffix(".js"))
+        .unwrap_or(file_path);
     path.replace(['/', '\\'], ".")
 }

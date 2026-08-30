@@ -678,20 +678,12 @@ impl Architecture {
         }
 
         // origin_issues: issue numbers linked to the inspection set via git log REL_RESOLVES edges.
-        let inspect_paths: Vec<&str> = smallest_file_set
-            .iter()
-            .filter_map(|p| p.split_once(':').map(|(_, path)| path))
-            .collect();
         let mut origin_issues_set: BTreeSet<u64> = BTreeSet::new();
         for repo_name in &repos {
-            let file_paths_for_repo: Vec<&str> = inspect_paths
+            let repo_prefix = format!("{repo_name}:");
+            let file_paths_for_repo: Vec<&str> = smallest_file_set
                 .iter()
-                .filter(|p| {
-                    smallest_file_set.iter().any(|full| {
-                        full.starts_with(&format!("{repo_name}:")) && full.ends_with(*p)
-                    })
-                })
-                .copied()
+                .filter_map(|full| full.strip_prefix(repo_prefix.as_str()))
                 .collect();
             if !file_paths_for_repo.is_empty() {
                 if let Ok(nums) = crate::commit_issues::origin_issues_for_files(

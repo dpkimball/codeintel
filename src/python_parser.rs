@@ -20,17 +20,28 @@ impl LanguageParser for PythonParser {
     fn parse(&self, _path: &str, source: &str) -> FileIr {
         let loc = source.lines().count() as u32;
         let mut symbols = Vec::new();
-        let mut current_class: Option<String> = None;
-        let mut class_indent: usize = 0;
+        // Stack of (class_name, class_definition_indent) for nested class tracking.
+        let mut class_stack: Vec<(String, usize)> = Vec::new();
 
         for (lineno, line) in source.lines().enumerate() {
             let trimmed = line.trim_start();
+            if trimmed.is_empty() {
+                continue;
+            }
             let indent = line.len() - trimmed.len();
 
-            // Track whether we're still inside the class body.
-            if current_class.is_some() && !trimmed.is_empty() && indent <= class_indent {
-                current_class = None;
+            // Pop classes whose body we've exited (line is at or before the class definition).
+            while let Some((_, ci)) = class_stack.last() {
+                if indent <= *ci {
+                    class_stack.pop();
+                } else {
+                    break;
+                }
             }
+
+            let in_test = trimmed.starts_with("def test_")
+                || trimmed.starts_with("async def test_")
+                || self.module_path.contains("test");
 
             if let Some(name) = extract_class(trimmed) {
                 let qualname = format!("{}.{}", self.module_path, name);
@@ -48,21 +59,15 @@ impl LanguageParser for PythonParser {
                     complexity: 1,
                     start_line: lineno as u32 + 1,
                     end_line: lineno as u32 + 1,
-                    in_test: is_test_context(line, &self.module_path),
+                    in_test,
                     exact_hash: None,
                     structural_hash: None,
                 });
-                current_class = Some(name);
-                class_indent = indent;
+                class_stack.push((name, indent));
             } else if let Some(name) = extract_fn(trimmed) {
-                let is_method = current_class.is_some() && indent > class_indent;
-                let parent = if is_method {
-                    current_class
-                        .as_ref()
-                        .map(|c| format!("{}.{}", self.module_path, c))
-                } else {
-                    None
-                };
+                let parent = class_stack
+                    .last()
+                    .map(|(cn, _)| format!("{}.{}", self.module_path, cn));
                 let qualname = if let Some(ref p) = parent {
                     format!("{p}.{name}")
                 } else {
@@ -82,7 +87,7 @@ impl LanguageParser for PythonParser {
                     complexity: 1,
                     start_line: lineno as u32 + 1,
                     end_line: lineno as u32 + 1,
-                    in_test: is_test_context(line, &self.module_path),
+                    in_test,
                     exact_hash: None,
                     structural_hash: None,
                 });
@@ -124,10 +129,6 @@ fn extract_fn(trimmed: &str) -> Option<String> {
 
 fn is_valid_identifier(s: &str) -> bool {
     !s.is_empty() && s.chars().all(|c| c.is_alphanumeric() || c == '_')
-}
-
-fn is_test_context(line: &str, module_path: &str) -> bool {
-    line.contains("test_") || module_path.contains("test")
 }
 
 /// Derive a Python module path from a file path relative to repo root.
