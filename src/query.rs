@@ -1,13 +1,13 @@
 use crate::doctrine::LayerDoctrine;
 use crate::error::Result;
 use crate::ids::{
-    prefix_config, prefix_crate, prefix_doc, prefix_file, prefix_issue, prefix_mod, prefix_sym,
-    REL_CALLS, REL_DEPENDS_ON, REL_IMPLEMENTS, REL_REFERENCES,
+    prefix_config, prefix_crate, prefix_doc, prefix_file, prefix_issue, prefix_mod, prefix_pr,
+    prefix_sym, REL_CALLS, REL_DEPENDS_ON, REL_IMPLEMENTS, REL_REFERENCES,
 };
 use crate::indexer::decode_obj;
 use crate::model::{
-    ConfigKeyRecord, CrateRecord, DocRecord, FileRecord, IssueRecord, ModuleRecord, SymbolKind,
-    SymbolRecord, SyncBookmark, Visibility,
+    ConfigKeyRecord, CrateRecord, DocRecord, FileRecord, IssueRecord, ModuleRecord,
+    PullRequestRecord, SymbolKind, SymbolRecord, SyncBookmark, Visibility,
 };
 use bindb::BinderStore;
 use serde::Serialize;
@@ -435,6 +435,10 @@ impl<'a> QueryEngine<'a> {
 
     pub fn issues(&self) -> Result<Vec<IssueRecord>> {
         decode_list(self.store, &prefix_issue(&self.name))
+    }
+
+    pub fn prs(&self) -> Result<Vec<PullRequestRecord>> {
+        decode_list(self.store, &prefix_pr(&self.name))
     }
 
     pub fn docs(&self) -> Result<Vec<DocRecord>> {

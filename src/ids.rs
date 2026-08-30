@@ -106,12 +106,20 @@ pub fn issue_id(repo_name: &str, number: u64) -> ObjectId {
     ObjectId::new(format!("code://issue/{repo_name}/{number}"))
 }
 
+pub fn pr_id(repo_name: &str, number: u64) -> ObjectId {
+    ObjectId::new(format!("code://pr/{repo_name}/{number}"))
+}
+
 pub fn doc_id(repo_name: &str, path: &str) -> ObjectId {
     ObjectId::new(format!("code://doc/{repo_name}/{path}"))
 }
 
 pub fn prefix_issue(name: &str) -> String {
     format!("code://issue/{name}/")
+}
+
+pub fn prefix_pr(name: &str) -> String {
+    format!("code://pr/{name}/")
 }
 
 pub fn prefix_doc(name: &str) -> String {

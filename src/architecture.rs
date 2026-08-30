@@ -117,6 +117,15 @@ pub struct IssueRef {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct PrRef {
+    pub number: u64,
+    pub title: String,
+    pub url: String,
+    pub state: String,
+    pub repo: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct DocRef {
     pub path: String,
     pub title: String,
@@ -145,6 +154,8 @@ pub struct PlanReport {
     pub smallest_file_set: Vec<String>,
     /// GitHub issues whose content overlaps with the query (top 10 by token overlap).
     pub linked_issues: Vec<IssueRef>,
+    /// GitHub pull requests whose content overlaps with the query (top 8 by token overlap).
+    pub linked_prs: Vec<PrRef>,
     /// Markdown docs whose content overlaps with the query (top 8 by token overlap).
     pub linked_docs: Vec<DocRef>,
     /// Structured explanation of what matched and why.
@@ -611,6 +622,7 @@ impl Architecture {
             .cloned()
             .collect();
         let linked_issues = semantic_issues(&self.store, &names, &match_tokens)?;
+        let linked_prs = semantic_prs(&self.store, &names, &match_tokens)?;
         let linked_docs = semantic_docs(&self.store, &names, &match_tokens)?;
 
         let mut reasoning: Vec<MatchReason> = Vec::new();
@@ -647,6 +659,14 @@ impl Architecture {
                 repo: issue.repo.clone(),
             });
         }
+        for pr in &linked_prs {
+            let title_short: String = pr.title.chars().take(60).collect();
+            reasoning.push(MatchReason {
+                kind: "pr".into(),
+                label: format!("#{} {}", pr.number, title_short),
+                repo: pr.repo.clone(),
+            });
+        }
         for doc in &linked_docs {
             reasoning.push(MatchReason {
                 kind: "doc".into(),
@@ -666,6 +686,7 @@ impl Architecture {
             inspect_before_change: inspect.into_iter().collect(),
             smallest_file_set,
             linked_issues,
+            linked_prs,
             linked_docs,
             reasoning,
             primary_source: "bindb",
@@ -891,6 +912,42 @@ fn semantic_issues(
     }
     scored.sort_by_key(|a| Reverse(a.0));
     scored.truncate(10);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn semantic_prs(
+    store: &BinderStore,
+    names: &[String],
+    match_tokens: &BTreeSet<String>,
+) -> Result<Vec<PrRef>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut scored: Vec<(usize, PrRef)> = Vec::new();
+    for name in names {
+        let q = QueryEngine::open(store, name);
+        for pr in q.prs()? {
+            let overlap = pr
+                .tokens
+                .iter()
+                .filter(|t| match_tokens.contains(t.as_str()))
+                .count();
+            if overlap >= 2 {
+                scored.push((
+                    overlap,
+                    PrRef {
+                        number: pr.number,
+                        title: pr.title,
+                        url: pr.url,
+                        state: pr.state,
+                        repo: name.clone(),
+                    },
+                ));
+            }
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.truncate(8);
     Ok(scored.into_iter().map(|(_, r)| r).collect())
 }
 

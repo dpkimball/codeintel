@@ -12,7 +12,9 @@ use crate::model::{
     SyncBookmark,
 };
 use crate::parser::{detect_language, FileIr, LanguageParser};
+use crate::python_parser::{python_module_path, PythonParser};
 use crate::rust_parser::RustParser;
+use crate::ts_parser::{ts_module_path, TypeScriptParser};
 use bindb::{BinderStore, ObjectId, Provenance, ProvenanceSource, Transaction};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -231,6 +233,52 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
                 None,
                 FileIr {
                     language: language.into(),
+                    parse_error: Some("not utf-8".into()),
+                    ..FileIr::default()
+                },
+            )
+        }
+    } else if language == "python" {
+        if let Ok(src) = std::str::from_utf8(&bytes) {
+            let cname = crate_info
+                .map(|c| c.name.clone())
+                .unwrap_or_else(|| name.to_string());
+            let mod_path = python_module_path(&file.path);
+            let parser = PythonParser {
+                crate_name: cname.clone(),
+                module_path: mod_path.clone(),
+            };
+            let ir = parser.parse(&file.path, src);
+            (Some(cname), Some(mod_path), ir)
+        } else {
+            (
+                crate_info.map(|c| c.name.clone()),
+                None,
+                FileIr {
+                    language: "python".into(),
+                    parse_error: Some("not utf-8".into()),
+                    ..FileIr::default()
+                },
+            )
+        }
+    } else if language == "typescript" {
+        if let Ok(src) = std::str::from_utf8(&bytes) {
+            let cname = crate_info
+                .map(|c| c.name.clone())
+                .unwrap_or_else(|| name.to_string());
+            let mod_path = ts_module_path(&file.path);
+            let parser = TypeScriptParser {
+                crate_name: cname.clone(),
+                module_path: mod_path.clone(),
+            };
+            let ir = parser.parse(&file.path, src);
+            (Some(cname), Some(mod_path), ir)
+        } else {
+            (
+                crate_info.map(|c| c.name.clone()),
+                None,
+                FileIr {
+                    language: "typescript".into(),
                     parse_error: Some("not utf-8".into()),
                     ..FileIr::default()
                 },
