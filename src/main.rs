@@ -96,6 +96,18 @@ enum Cmd {
         #[arg(long)]
         name: Option<String>,
     },
+    /// Fetch GitHub issues via `gh` CLI and index them for semantic plan() matching.
+    IndexIssues {
+        /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+        #[arg(long)]
+        github_repo: String,
+        /// bindb store path.
+        #[arg(long)]
+        store: PathBuf,
+        /// codeintel repo name (defaults to the last segment of github_repo).
+        #[arg(long)]
+        name: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -334,6 +346,30 @@ fn run() -> codeintel::Result<()> {
                 println!("{}", serde_json::to_string_pretty(&out)?);
             }
         },
+        Cmd::IndexIssues {
+            github_repo,
+            store,
+            name,
+        } => {
+            let repo_name = name.unwrap_or_else(|| {
+                github_repo
+                    .rsplit('/')
+                    .next()
+                    .unwrap_or(&github_repo)
+                    .to_string()
+            });
+            let db = open_store(&store)?;
+            let count = codeintel::index_issues(&db, &github_repo, &repo_name)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "github_repo": github_repo,
+                    "repo_name": repo_name,
+                    "issues_indexed": count,
+                }))?
+            );
+        }
         Cmd::Validate { repo, store, name } => {
             let name = name.or_else(|| repo.file_name().map(|s| s.to_string_lossy().into_owned()));
             let opts = IndexOptions {

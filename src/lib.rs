@@ -11,6 +11,7 @@ pub mod drift;
 pub mod error;
 pub mod federation;
 pub mod git_sync;
+pub mod github_issues;
 pub mod ids;
 pub mod impact;
 pub mod indexer;
@@ -28,6 +29,7 @@ pub use error::{CodeintelError, Result};
 pub use federation::{
     analyze as federation_analyze, impact as federation_impact, FederationImpact, FederationReport,
 };
+pub use github_issues::index_issues;
 pub use impact::{analyze as impact_analyze, ImpactReport};
 pub use indexer::{index, IndexOptions, IndexStats};
 pub use query::QueryEngine;

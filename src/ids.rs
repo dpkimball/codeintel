@@ -102,6 +102,22 @@ pub fn prefix_commit(name: &str) -> String {
     format!("code://commit/{name}/")
 }
 
+pub fn issue_id(repo_name: &str, number: u64) -> ObjectId {
+    ObjectId::new(format!("code://issue/{repo_name}/{number}"))
+}
+
+pub fn doc_id(repo_name: &str, path: &str) -> ObjectId {
+    ObjectId::new(format!("code://doc/{repo_name}/{path}"))
+}
+
+pub fn prefix_issue(name: &str) -> String {
+    format!("code://issue/{name}/")
+}
+
+pub fn prefix_doc(name: &str) -> String {
+    format!("code://doc/{name}/")
+}
+
 pub const PREFIX_ALL_CRATES: &str = "code://crate/";
 pub const PREFIX_ALL_REPOS: &str = "code://repo/";
 pub const PREFIX_ALL_COMMITS: &str = "code://commit/";

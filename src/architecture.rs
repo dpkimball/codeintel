@@ -11,6 +11,7 @@ use crate::model::RepoRecord;
 use crate::query::{Cycle, LayerViolation, PatternHit, QueryEngine};
 use bindb::BinderStore;
 use serde::Serialize;
+use std::cmp::Reverse;
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
 
@@ -107,6 +108,23 @@ pub struct FederationView {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct IssueRef {
+    pub number: u64,
+    pub title: String,
+    pub url: String,
+    pub state: String,
+    pub repo: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DocRef {
+    pub path: String,
+    pub title: String,
+    pub repo: String,
+    pub kind: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct PlanReport {
     pub request: String,
     pub interpretation: String,
@@ -118,6 +136,10 @@ pub struct PlanReport {
     pub matching_patterns: Vec<PatternHit>,
     pub inspect_before_change: Vec<String>,
     pub smallest_file_set: Vec<String>,
+    /// GitHub issues whose content overlaps with the query (top 10 by token overlap).
+    pub linked_issues: Vec<IssueRef>,
+    /// Markdown docs whose content overlaps with the query (top 8 by token overlap).
+    pub linked_docs: Vec<DocRef>,
     pub primary_source: &'static str,
     pub source_files_opened: usize,
 }
@@ -531,6 +553,13 @@ impl Architecture {
         }
 
         let smallest_file_set: Vec<String> = files.into_iter().collect();
+
+        // semantic matching: issues and docs with ≥ 2 query-token overlap
+        let match_tokens: BTreeSet<String> =
+            tokens.iter().filter(|t| t.len() >= 4).cloned().collect();
+        let linked_issues = semantic_issues(&self.store, &names, &match_tokens)?;
+        let linked_docs = semantic_docs(&self.store, &names, &match_tokens)?;
+
         Ok(PlanReport {
             request: request.to_string(),
             interpretation,
@@ -541,6 +570,8 @@ impl Architecture {
             matching_patterns,
             inspect_before_change: inspect.into_iter().collect(),
             smallest_file_set,
+            linked_issues,
+            linked_docs,
             primary_source: "bindb",
             source_files_opened: 0,
         })
@@ -729,4 +760,75 @@ fn outgoing_chains(edges: &[(String, String)], from: &str, max_depth: usize) -> 
     }
     out.truncate(20);
     out
+}
+
+fn semantic_issues(
+    store: &BinderStore,
+    names: &[String],
+    match_tokens: &BTreeSet<String>,
+) -> Result<Vec<IssueRef>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut scored: Vec<(usize, IssueRef)> = Vec::new();
+    for name in names {
+        let q = QueryEngine::open(store, name);
+        for issue in q.issues()? {
+            let overlap = issue
+                .tokens
+                .iter()
+                .filter(|t| match_tokens.contains(t.as_str()))
+                .count();
+            if overlap >= 2 {
+                scored.push((
+                    overlap,
+                    IssueRef {
+                        number: issue.number,
+                        title: issue.title,
+                        url: issue.url,
+                        state: issue.state,
+                        repo: name.clone(),
+                    },
+                ));
+            }
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.truncate(10);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn semantic_docs(
+    store: &BinderStore,
+    names: &[String],
+    match_tokens: &BTreeSet<String>,
+) -> Result<Vec<DocRef>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut scored: Vec<(usize, DocRef)> = Vec::new();
+    for name in names {
+        let q = QueryEngine::open(store, name);
+        for doc in q.docs()? {
+            let overlap = doc
+                .tokens
+                .iter()
+                .filter(|t| match_tokens.contains(t.as_str()))
+                .count();
+            if overlap >= 2 {
+                scored.push((
+                    overlap,
+                    DocRef {
+                        path: doc.path,
+                        title: doc.title,
+                        repo: name.clone(),
+                        kind: doc.kind,
+                    },
+                ));
+            }
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.truncate(8);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
 }
