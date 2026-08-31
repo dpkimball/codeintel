@@ -1039,7 +1039,9 @@ mod yaml_tests {
         assert!(is_infra_yaml(".github/workflows/deploy.yaml"));
         assert!(is_infra_yaml(".github/actions/configure-cargo/action.yml"));
         assert!(is_infra_yaml("charts/binder-ai-serve/values-qa.yaml"));
-        assert!(is_infra_yaml("charts/binder-server/templates/deployment.yaml"));
+        assert!(is_infra_yaml(
+            "charts/binder-server/templates/deployment.yaml"
+        ));
         assert!(is_infra_yaml("argo-cd/applications/binder-ai-serve.yaml"));
     }
 
@@ -1052,7 +1054,10 @@ mod yaml_tests {
 
     #[test]
     fn yaml_doc_kind_classifies_correctly() {
-        assert_eq!(yaml_doc_kind(".github/workflows/deploy.yaml"), "ci_workflow");
+        assert_eq!(
+            yaml_doc_kind(".github/workflows/deploy.yaml"),
+            "ci_workflow"
+        );
         assert_eq!(
             yaml_doc_kind("charts/binder-ai-serve/templates/deployment.yaml"),
             "helm_template"
