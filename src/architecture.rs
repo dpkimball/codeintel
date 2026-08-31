@@ -644,6 +644,21 @@ impl Architecture {
             }
         }
 
+        // Always include orientation docs (CLAUDE.md, README.md) from matched repos so
+        // agents get architectural context even when symbol-level impact is very narrow.
+        if !repos.is_empty() {
+            for name in &repos {
+                let q = QueryEngine::open(&self.store, name);
+                for f in q.files()? {
+                    if matches!(f.path.as_str(), "CLAUDE.md" | "README.md") {
+                        let qpath = qualify_path(name, &f.path);
+                        inspect.insert(qpath.clone());
+                        files.insert(qpath);
+                    }
+                }
+            }
+        }
+
         let smallest_file_set: Vec<String> = files.into_iter().collect();
 
         // semantic matching: issues and docs with ≥ 2 query-token overlap
