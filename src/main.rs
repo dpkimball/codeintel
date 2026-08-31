@@ -131,6 +131,15 @@ enum Cmd {
         #[arg(long)]
         name: Option<String>,
     },
+    /// Parse question-bank.md and index Q&A pairs into the store for plan() guidance.
+    IndexQuestions {
+        /// bindb store path.
+        #[arg(long)]
+        store: PathBuf,
+        /// Path to question-bank.md.
+        #[arg(long)]
+        bank: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -440,6 +449,18 @@ fn run() -> codeintel::Result<()> {
                     "github_repo": github_repo,
                     "repo_name": repo_name,
                     "prs_indexed": count,
+                }))?
+            );
+        }
+        Cmd::IndexQuestions { store, bank } => {
+            let db = open_store(&store)?;
+            let count = codeintel::index_questions(&db, &bank)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "bank": bank.display().to_string(),
+                    "questions_indexed": count,
                 }))?
             );
         }

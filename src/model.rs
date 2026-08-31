@@ -169,6 +169,19 @@ pub struct DocRecord {
     pub tokens: Vec<String>,
 }
 
+/// Pre-authored Q&A pair for pre-implementation guidance.
+/// Stored under `code://question/{repo}/{id}` or `code://question/cross/{id}`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuestionRecord {
+    pub id: String,
+    /// codeintel repo name this question is scoped to, or "" for cross-repo.
+    pub repo: String,
+    pub question: String,
+    pub answer: String,
+    /// Tokens (≥ 4 chars) from question + answer text for overlap matching.
+    pub tags: Vec<String>,
+}
+
 /// GitHub pull request fetched via `gh pr list`. Stored per codeintel repo name.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PullRequestRecord {

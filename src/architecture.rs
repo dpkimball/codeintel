@@ -253,6 +253,16 @@ pub struct PlanReport {
     pub task_hint: String,
     pub primary_source: &'static str,
     pub source_files_opened: usize,
+    /// Pre-authored Q&A pairs from the question bank whose tokens overlap with the query.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub guidance: Vec<GuidanceItem>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GuidanceItem {
+    pub id: String,
+    pub question: String,
+    pub answer: String,
 }
 
 impl Architecture {
@@ -487,7 +497,19 @@ impl Architecture {
         let mut rules = BTreeSet::new();
         let mut repos = BTreeSet::new();
 
+        // Repo-anchor scoping: when a query token exactly matches a known repo name,
+        // restrict the search to only those repos. This prevents "codeintel index_prs"
+        // from matching binder-ai's knowledge/codeintel.rs module and polluting results.
+        let anchor_repos: BTreeSet<&str> = names
+            .iter()
+            .filter(|n| tokens.contains(n.as_str()))
+            .map(|n| n.as_str())
+            .collect();
+
         for name in &names {
+            if !anchor_repos.is_empty() && !anchor_repos.contains(name.as_str()) {
+                continue;
+            }
             let q = QueryEngine::open(&self.store, name);
             let crates = q.crates()?;
             let crate_names: Vec<String> = crates.iter().map(|c| c.name.clone()).collect();
@@ -744,6 +766,7 @@ impl Architecture {
         let linked_issues = semantic_issues(&self.store, &names, &match_tokens)?;
         let linked_prs = semantic_prs(&self.store, &names, &match_tokens)?;
         let linked_docs = semantic_docs(&self.store, &names, &match_tokens)?;
+        let guidance = semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos)?;
 
         let mut reasoning: Vec<MatchReason> = Vec::new();
         for (repo, path) in &matched_files_for_reasoning {
@@ -852,6 +875,7 @@ impl Architecture {
             task_hint,
             primary_source: "bindb",
             source_files_opened: 0,
+            guidance,
         })
     }
 }
@@ -1165,7 +1189,7 @@ fn dockerfile_beside(dpk_path: &str) -> String {
     }
 }
 
-fn request_tokens(needle: &str) -> BTreeSet<String> {
+pub(crate) fn request_tokens(needle: &str) -> BTreeSet<String> {
     needle
         .split(|c: char| {
             !(c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' || c == '/')
@@ -1372,6 +1396,52 @@ fn semantic_docs(
     }
     scored.sort_by_key(|a| Reverse(a.0));
     scored.truncate(8);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn semantic_guidance(
+    store: &BinderStore,
+    names: &[String],
+    match_tokens: &BTreeSet<String>,
+    anchor_repos: &BTreeSet<&str>,
+) -> Result<Vec<GuidanceItem>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    // Iterate repo-specific names plus "" for cross-repo (stored under code://question/cross/).
+    let cross = String::new();
+    let all_names = names.iter().chain(std::iter::once(&cross));
+    let mut scored: Vec<(usize, GuidanceItem)> = Vec::new();
+    for name in all_names {
+        let q = QueryEngine::open(store, name.as_str());
+        for rec in q.questions()? {
+            let repo_match = rec.repo.is_empty()
+                || anchor_repos.is_empty()
+                || anchor_repos.contains(rec.repo.as_str());
+            if !repo_match {
+                continue;
+            }
+            let threshold = if rec.repo.is_empty() { 2 } else { 1 };
+            let overlap = rec
+                .tags
+                .iter()
+                .filter(|t| match_tokens.contains(t.as_str()))
+                .count();
+            if overlap >= threshold {
+                scored.push((
+                    overlap,
+                    GuidanceItem {
+                        id: rec.id,
+                        question: rec.question,
+                        answer: rec.answer,
+                    },
+                ));
+            }
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.dedup_by_key(|a| a.1.id.clone());
+    scored.truncate(5);
     Ok(scored.into_iter().map(|(_, r)| r).collect())
 }
 
