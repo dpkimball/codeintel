@@ -496,12 +496,13 @@ impl Architecture {
         let prefer_files = !matched_files.is_empty();
         let prefer_config = !prefer_files && !matched_configs.is_empty();
         // matched_kind reflects the actual impact granularity used, not just what was found.
-        // Symbols only drive symbol-level impact when no crate also matched (crates win).
+        // Symbols beat crates: when a symbol matches, use symbol-level impact even if the
+        // enclosing crate also matched by name (crate names are too broad to win).
         let matched_kind = if prefer_files {
             "file"
         } else if prefer_config {
             "config"
-        } else if !matched_symbols.is_empty() && matched_crates.is_empty() {
+        } else if !matched_symbols.is_empty() {
             "symbol"
         } else if !matched_crates.is_empty() {
             "crate"
@@ -612,7 +613,7 @@ impl Architecture {
         } else {
             let impact_targets: Vec<(String, String)> = if prefer_files {
                 matched_files
-            } else if !matched_symbols.is_empty() && matched_crates.is_empty() {
+            } else if !matched_symbols.is_empty() {
                 matched_symbols.clone()
             } else {
                 matched_crates.clone()
