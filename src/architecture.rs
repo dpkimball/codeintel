@@ -487,7 +487,19 @@ impl Architecture {
         let mut rules = BTreeSet::new();
         let mut repos = BTreeSet::new();
 
+        // Repo-anchor scoping: when a query token exactly matches a known repo name,
+        // restrict the search to only those repos. This prevents "codeintel index_prs"
+        // from matching binder-ai's knowledge/codeintel.rs module and polluting results.
+        let anchor_repos: BTreeSet<&str> = names
+            .iter()
+            .filter(|n| tokens.contains(n.as_str()))
+            .map(|n| n.as_str())
+            .collect();
+
         for name in &names {
+            if !anchor_repos.is_empty() && !anchor_repos.contains(name.as_str()) {
+                continue;
+            }
             let q = QueryEngine::open(&self.store, name);
             let crates = q.crates()?;
             let crate_names: Vec<String> = crates.iter().map(|c| c.name.clone()).collect();
