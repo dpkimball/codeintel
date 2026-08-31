@@ -459,9 +459,9 @@ impl Architecture {
                     }
                 }
             }
-            // Symbol name matching: only when no crate matched yet (symbols provide
-            // focused impact vs. whole-crate; if a crate already matched, crate wins).
-            if matched_files.is_empty() && matched_configs.is_empty() && matched_crates.is_empty() {
+            // Symbol name matching. Always runs (symbols beat crates in priority; see
+            // matched_kind and impact_targets selection below).
+            if matched_files.is_empty() && matched_configs.is_empty() {
                 for s in q.symbols()? {
                     let name_lc = s.name.to_lowercase();
                     for tok in &tokens {
