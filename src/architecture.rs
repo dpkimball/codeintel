@@ -7,12 +7,12 @@ use crate::federation::{self, CrossRepoDep, FederatedCrate, FederationReport};
 use crate::ids::PREFIX_ALL_REPOS;
 use crate::impact::{self, ImpactReport, Neighbor};
 use crate::indexer::{decode_obj, open_store};
-use crate::model::RepoRecord;
+use crate::model::{FileRecord, RepoRecord, SymbolRecord};
 use crate::query::{Cycle, LayerViolation, PatternHit, QueryEngine};
-use bindb::BinderStore;
+use bindb::{BinderStore, ObjectId};
 use serde::Serialize;
 use std::cmp::Reverse;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::Path;
 
 /// Semantic architecture surface for autonomous agents.
@@ -143,6 +143,68 @@ pub struct MatchReason {
     pub repo: String,
 }
 
+/// Role of a file in the inspection set relative to the matched symbol.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RoleKind {
+    Definition,
+    CallSite,
+    Implementation,
+    Test,
+    EntryPoint,
+    Dependency,
+}
+
+impl RoleKind {
+    fn as_str(&self) -> &'static str {
+        match self {
+            RoleKind::Definition => "definition",
+            RoleKind::CallSite => "call_site",
+            RoleKind::Implementation => "implementation",
+            RoleKind::Test => "test",
+            RoleKind::EntryPoint => "entry_point",
+            RoleKind::Dependency => "dependency",
+        }
+    }
+
+    fn priority(&self) -> u8 {
+        match self {
+            RoleKind::Definition => 0,
+            RoleKind::Implementation => 1,
+            RoleKind::CallSite => 2,
+            RoleKind::Test => 3,
+            RoleKind::EntryPoint => 4,
+            RoleKind::Dependency => 5,
+        }
+    }
+
+    fn action(&self) -> &'static str {
+        match self {
+            RoleKind::Definition => "extend or add here",
+            RoleKind::Implementation => "add impl",
+            RoleKind::CallSite => "handle new case",
+            RoleKind::Test => "add test coverage",
+            RoleKind::EntryPoint => "wire up",
+            RoleKind::Dependency => "context only",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct FileRole {
+    pub path: String,
+    pub role: String,
+    pub note: String,
+}
+
+/// An ordered change site for structural task patterns.
+#[derive(Debug, Clone, Serialize)]
+pub struct TouchPoint {
+    pub file: String,
+    pub role: String,
+    pub action: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct DriftedFile {
     pub path: String,
@@ -177,6 +239,18 @@ pub struct PlanReport {
     /// with the inspection set. Absent when `since_sha` is not provided.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub recent_changes: Vec<DriftedFile>,
+    /// Per-file role classification relative to the matched symbol.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub file_roles: Vec<FileRole>,
+    /// Ordered change sites for structural task patterns (symbol/module matches only).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub touch_sequence: Vec<TouchPoint>,
+    /// One-sentence summary of the primary definition and top call sites.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub matched_summary: String,
+    /// Present when touch_sequence is non-empty; notes that action text assumes a structural change.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub task_hint: String,
     pub primary_source: &'static str,
     pub source_files_opened: usize,
 }
@@ -749,6 +823,13 @@ impl Architecture {
             Vec::new()
         };
 
+        let (file_roles, touch_sequence, matched_summary, task_hint) = enrich_file_roles(
+            &self.store,
+            &smallest_file_set,
+            &matched_symbols,
+            matched_kind,
+        );
+
         Ok(PlanReport {
             request: request.to_string(),
             interpretation,
@@ -765,10 +846,229 @@ impl Architecture {
             reasoning,
             origin_issues,
             recent_changes,
+            file_roles,
+            touch_sequence,
+            matched_summary,
+            task_hint,
             primary_source: "bindb",
             source_files_opened: 0,
         })
     }
+}
+
+/// Classify every file in the inspection set by its role relative to matched symbols.
+/// Returns (file_roles, touch_sequence, matched_summary, task_hint).
+fn enrich_file_roles(
+    store: &BinderStore,
+    smallest_file_set: &[String],
+    matched_symbols: &[(String, String)],
+    matched_kind: &str,
+) -> (Vec<FileRole>, Vec<TouchPoint>, String, String) {
+    if matched_symbols.is_empty() || smallest_file_set.is_empty() {
+        return (Vec::new(), Vec::new(), String::new(), String::new());
+    }
+
+    // Build per-qualified-path sets: definition, call_site (non-test), call_site (test),
+    // implementation (non-test), implementation (test).
+    let mut definition_paths: HashSet<String> = HashSet::new();
+    let mut call_site_paths: HashSet<String> = HashSet::new();
+    let mut call_site_test_paths: HashSet<String> = HashSet::new();
+    let mut impl_paths: HashSet<String> = HashSet::new();
+    let mut impl_test_paths: HashSet<String> = HashSet::new();
+
+    for (repo, qualname) in matched_symbols {
+        let q = QueryEngine::open(store, repo);
+        let sym_id = crate::ids::symbol_id(repo, qualname);
+
+        // Definition: file whose symbol_ids contains this symbol's object ID.
+        for full_path in smallest_file_set {
+            let Some((file_repo, file_path)) = full_path.split_once(':') else {
+                continue;
+            };
+            if file_repo != repo {
+                continue;
+            }
+            let fid = crate::ids::file_id(repo, file_path);
+            if let Ok(Some(raw)) = store.get(&fid) {
+                if let Ok(rec) = decode_obj::<FileRecord>(&raw) {
+                    if rec.symbol_ids.contains(&sym_id.0) {
+                        definition_paths.insert(full_path.clone());
+                    }
+                }
+            }
+        }
+
+        // Call sites: symbols with REL_CALLS → matched symbol; resolve to file_path.
+        if let Ok(caller_ids) = q.callers(qualname) {
+            for caller_id in caller_ids {
+                if let Ok(Some(raw)) = store.get(&ObjectId(caller_id)) {
+                    if let Ok(sym_rec) = decode_obj::<SymbolRecord>(&raw) {
+                        let full = qualify_path(repo, &sym_rec.file_path);
+                        if sym_rec.in_test {
+                            call_site_test_paths.insert(full);
+                        } else {
+                            call_site_paths.insert(full);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Implementations: symbols with REL_IMPLEMENTS → matched symbol.
+        if let Ok(impl_ids) = q.trait_impls(qualname) {
+            for impl_id in impl_ids {
+                if let Ok(Some(raw)) = store.get(&ObjectId(impl_id)) {
+                    if let Ok(sym_rec) = decode_obj::<SymbolRecord>(&raw) {
+                        let full = qualify_path(repo, &sym_rec.file_path);
+                        if sym_rec.in_test {
+                            impl_test_paths.insert(full);
+                        } else {
+                            impl_paths.insert(full);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Classify each file in priority order.
+    let mut file_roles: Vec<FileRole> = smallest_file_set
+        .iter()
+        .map(|full_path| {
+            let role = if definition_paths.contains(full_path) {
+                RoleKind::Definition
+            } else if call_site_test_paths.contains(full_path)
+                || impl_test_paths.contains(full_path)
+            {
+                RoleKind::Test
+            } else if call_site_paths.contains(full_path) {
+                RoleKind::CallSite
+            } else if impl_paths.contains(full_path) {
+                RoleKind::Implementation
+            } else if is_entry_point(full_path) {
+                RoleKind::EntryPoint
+            } else {
+                RoleKind::Dependency
+            };
+            let sym_name = matched_symbols
+                .first()
+                .map(|(_, q)| q.rsplit("::").next().unwrap_or(q.as_str()))
+                .unwrap_or("");
+            let note = match role {
+                RoleKind::Definition => format!("defines {sym_name}"),
+                RoleKind::CallSite => format!("calls {sym_name}"),
+                RoleKind::Implementation => format!("implements {sym_name}"),
+                RoleKind::Test => format!("tests {sym_name}"),
+                RoleKind::EntryPoint => "binary entry point".into(),
+                RoleKind::Dependency => "transitive dependency".into(),
+            };
+            FileRole {
+                path: full_path.clone(),
+                role: role.as_str().into(),
+                note,
+            }
+        })
+        .collect();
+
+    // Build touch_sequence for symbol/module matches only (skip Dependency entries).
+    let touch_sequence = if matched_kind == "symbol" || matched_kind == "module" {
+        let mut ordered: Vec<(u8, &FileRole)> = file_roles
+            .iter()
+            .filter(|fr| fr.role != "dependency")
+            .filter_map(|fr| {
+                let prio = match fr.role.as_str() {
+                    "definition" => Some(RoleKind::Definition.priority()),
+                    "implementation" => Some(RoleKind::Implementation.priority()),
+                    "call_site" => Some(RoleKind::CallSite.priority()),
+                    "test" => Some(RoleKind::Test.priority()),
+                    "entry_point" => Some(RoleKind::EntryPoint.priority()),
+                    _ => None,
+                }?;
+                Some((prio, fr))
+            })
+            .collect();
+        ordered.sort_by_key(|(p, _)| *p);
+        ordered
+            .into_iter()
+            .map(|(_, fr)| {
+                let action = match fr.role.as_str() {
+                    "definition" => RoleKind::Definition.action(),
+                    "implementation" => RoleKind::Implementation.action(),
+                    "call_site" => RoleKind::CallSite.action(),
+                    "test" => RoleKind::Test.action(),
+                    "entry_point" => RoleKind::EntryPoint.action(),
+                    _ => "review",
+                };
+                TouchPoint {
+                    file: fr.path.clone(),
+                    role: fr.role.clone(),
+                    action: action.into(),
+                }
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    // One-sentence summary: definition + top call site + top test.
+    let def_path = file_roles
+        .iter()
+        .find(|fr| fr.role == "definition")
+        .map(|fr| fr.path.split_once(':').map(|(_, p)| p).unwrap_or(&fr.path));
+    let call_path = file_roles
+        .iter()
+        .find(|fr| fr.role == "call_site")
+        .map(|fr| fr.path.split_once(':').map(|(_, p)| p).unwrap_or(&fr.path));
+    let test_path = file_roles
+        .iter()
+        .find(|fr| fr.role == "test")
+        .map(|fr| fr.path.split_once(':').map(|(_, p)| p).unwrap_or(&fr.path));
+    let sym_name = matched_symbols
+        .first()
+        .map(|(_, q)| q.rsplit("::").next().unwrap_or(q.as_str()))
+        .unwrap_or("");
+    let matched_summary = match (def_path, call_path, test_path) {
+        (Some(d), Some(c), Some(t)) => {
+            format!("{sym_name} defined in {d}; called from {c}; tested in {t}")
+        }
+        (Some(d), Some(c), None) => format!("{sym_name} defined in {d}; called from {c}"),
+        (Some(d), None, Some(t)) => format!("{sym_name} defined in {d}; tested in {t}"),
+        (Some(d), None, None) => format!("{sym_name} defined in {d}"),
+        (None, Some(c), _) => format!("{sym_name} called from {c}"),
+        _ => {
+            if sym_name.is_empty() {
+                String::new()
+            } else {
+                format!("matched {sym_name}")
+            }
+        }
+    };
+
+    let task_hint = if !touch_sequence.is_empty() {
+        "touch_sequence assumes a structural change (add/extend); for read-only investigation, ignore action text".into()
+    } else {
+        String::new()
+    };
+
+    // Sort file_roles: definitions first, then by priority, keeping stability.
+    file_roles.sort_by_key(|fr| match fr.role.as_str() {
+        "definition" => 0u8,
+        "implementation" => 1,
+        "call_site" => 2,
+        "test" => 3,
+        "entry_point" => 4,
+        _ => 5,
+    });
+
+    (file_roles, touch_sequence, matched_summary, task_hint)
+}
+
+fn is_entry_point(full_path: &str) -> bool {
+    let path = full_path
+        .split_once(':')
+        .map(|(_, p)| p)
+        .unwrap_or(full_path);
+    path.contains("/src/bin/") || path.ends_with("/main.rs") || path == "main.rs"
 }
 
 /// `repo:path` so colliding filenames across repositories stay distinct.
