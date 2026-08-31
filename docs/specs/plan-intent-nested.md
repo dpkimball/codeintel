@@ -1,9 +1,10 @@
 ---
 title: Plan intent, Helm env, nested index
+description: Plan intent for Helm/env keys and nested monorepo index paths.
 status: active
 github_issue: https://github.com/dpkimball/codeintel/issues/15
+category: specs
 ---
-
 # Plan intent, Helm env, nested index
 
 Issue #13 shipped `repo:path` inspect sets and `dpk.toml` keys. Agents still got an empty set for Docker-shipping English, a crate dump when a crate name appeared in a question, no `OLLAMA_HOST`, and no way to index a monorepo subdirectory such as `repo-dashboard`.

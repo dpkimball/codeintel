@@ -1,9 +1,10 @@
 ---
 title: Historical architectural drift
+description: Architectural drift between two indexed SHAs via bindb as_of.
 status: poc
 github_issue: https://github.com/dpkimball/codeintel/issues/5
+category: specs
 ---
-
 # Historical architectural drift (POC #3)
 
 POC #1 keeps the graph in sync with Git. POC #2 answers doctrine and impact from the **live** graph. This spec is about **time**.

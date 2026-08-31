@@ -1,9 +1,10 @@
 ---
 title: Agent-first architectural API
+description: Stable agent-facing Architecture API over bindb (plan, doctrine, impact, drift, federation).
 status: poc
 github_issue: https://github.com/dpkimball/codeintel/issues/9
+category: specs
 ---
-
 # Agent-first architectural reasoning
 
 Indexing, doctrine, impact, drift, and federation already write and read bindb. This spec is the **stable agent surface**. Agents call semantic operations. They do not walk the repository and they do not depend on bindb object-id layout.

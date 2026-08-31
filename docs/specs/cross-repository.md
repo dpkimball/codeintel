@@ -1,9 +1,10 @@
 ---
 title: Cross-repository analysis
+description: Federation and cross-repo DEPENDS_ON in one bindb store.
 status: poc
 github_issue: https://github.com/dpkimball/codeintel/issues/7
+category: specs
 ---
-
 # Cross-repository analysis (POC #4)
 
 POCs #1–#3 reason inside one Git repository. This spec is about **more than one repo in the same bindb store**.

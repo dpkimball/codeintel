@@ -1,3 +1,9 @@
+---
+title: Agent workflows (bindb first)
+description: Example agent sequences for workflow start/finish against bindb.
+category: examples
+---
+
 # Agent workflows (bindb first)
 
 These sequences are what an autonomous agent should run. None of them start with `find` / `rg` over the application tree.
@@ -11,8 +17,6 @@ These sequences are what an autonomous agent should run. None of them start with
 5. `codeintel workflow finish --session /tmp/wf.json --opened src/lib.rs --modified src/lib.rs --validation pass`
 
 Planning, doctrine, and impact never walk the tree. `opened_outside_inspection_set` is non-empty if the agent read a graph file the plan did not name.
-
-## Review a PR for layering
 
 ## Review a PR for layering
 

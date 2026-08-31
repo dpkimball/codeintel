@@ -1,9 +1,11 @@
 ---
+title: Plan — Nightly store refresh (#703)
+description: Implementation plan for binder-ai-serve store-refresh sidecar (dpk-infra#703).
 spec: ../specs/nightly-store-refresh.md
 github_issue: https://github.com/dpkimball/dpk-infra/issues/703
 created: 2026-08-31
+category: plans
 ---
-
 # Plan — Nightly store refresh (#703)
 
 ## Approach

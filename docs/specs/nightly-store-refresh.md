@@ -1,12 +1,13 @@
 ---
 title: Nightly codeintel store refresh + doc-compliance (QA)
+description: QA daily store refresh sidecar + doc-compliance report (replaces dpk-docs nightly).
 status: spec
 github_issue: https://github.com/dpkimball/dpk-infra/issues/703
 parents:
   - https://github.com/dpkimball/binder-workspace/issues/154
   - https://github.com/dpkimball/binder-ai/issues/33
+category: specs
 ---
-
 # Nightly store refresh (replaces dpk-docs nightly)
 
 ## Agent briefing

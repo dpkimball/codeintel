@@ -1,9 +1,10 @@
 ---
 title: Plan inspect-set fidelity
+description: Plan() inspect-set fidelity: repo:path, keys, and crate matching.
 status: active
 github_issue: https://github.com/dpkimball/codeintel/issues/13
+category: specs
 ---
-
 # Plan inspect-set fidelity
 
 `Architecture::plan` is the agent inspection set. Paths must be unambiguous across repositories, crate-wide matches must not dump repo clutter, and `dpk.toml` keys must be in the graph so Docker/`extra_args` questions resolve without a source walk.

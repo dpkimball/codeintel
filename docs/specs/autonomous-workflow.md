@@ -1,9 +1,10 @@
 ---
 title: Autonomous engineering workflow
+description: Workflow start/finish loop so agents implement from graph inspection sets.
 status: poc
 github_issue: https://github.com/dpkimball/codeintel/issues/11
+category: specs
 ---
-
 # Autonomous engineering workflow
 
 The Architecture API can plan, evaluate doctrine, and compute impact. This spec is the **execution loop** an agent runs so bindb stays the primary substrate. Source files are opened only to implement or verify.

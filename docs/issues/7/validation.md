@@ -1,3 +1,9 @@
+---
+title: Validation — issue #7
+description: Validation evidence for codeintel issue #7.
+category: reviews
+---
+
 # Validation — issue #7
 
 Two real repositories indexed into one throwaway store, then queried with no further source walk.
@@ -9,7 +15,7 @@ Two real repositories indexed into one throwaway store, then queried with no fur
 
 Commands:
 
-```
+```text
 codeintel index ../bindb --store ./fed-store --name bindb
 codeintel index . --store ./fed-store --name codeintel
 codeintel federation --store ./fed-store

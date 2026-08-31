@@ -1,3 +1,9 @@
+---
+title: Validation — issue #5
+description: Validation evidence for codeintel issue #5.
+category: reviews
+---
+
 # Validation — issue #5
 
 Two Binder Desktop Git SHAs were indexed into a throwaway store (worktree for the older SHA, then the live tree). The worktree was removed **before** drift. Drift did not open application source.
@@ -9,7 +15,7 @@ Two Binder Desktop Git SHAs were indexed into a throwaway store (worktree for th
 
 Commands:
 
-```
+```text
 codeintel index <worktree-at-from> --store ./drift-store --name binder-desktop
 codeintel index ../binder-desktop --store ./drift-store --name binder-desktop
 # remove worktree
