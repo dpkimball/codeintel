@@ -161,12 +161,21 @@ pub struct IssueRecord {
 pub struct DocRecord {
     pub path: String,
     pub repo: String,
-    /// First `# Heading` or the filename stem.
+    /// First `# Heading`, frontmatter `title:`, or the filename stem.
     pub title: String,
     /// "spec", "claude_md", "readme", or "doc".
     pub kind: String,
     /// Words (≥ 4 chars) extracted from headings and body text.
     pub tokens: Vec<String>,
+    /// First non-heading paragraph, or frontmatter `description:`.
+    #[serde(default)]
+    pub description: String,
+    /// Frontmatter `category:` or path-inferred category.
+    #[serde(default)]
+    pub category: String,
+    /// Frontmatter `use_cases:` list.
+    #[serde(default)]
+    pub use_cases: Vec<String>,
 }
 
 /// Pre-authored Q&A pair for pre-implementation guidance.

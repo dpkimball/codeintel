@@ -433,14 +433,28 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
     // index markdown files as DocRecord for content-based semantic search
     if file.path.to_lowercase().ends_with(".md") {
         if let Ok(text) = std::str::from_utf8(&bytes) {
+            let fm = parse_md_frontmatter(text);
             let (title, tokens) = extract_md_tokens(text, &file.path);
+            let title = if !fm.title.is_empty() {
+                fm.title
+            } else {
+                title
+            };
             let kind = doc_kind(&file.path);
+            let category = if !fm.category.is_empty() {
+                fm.category
+            } else {
+                infer_category(&file.path, &kind)
+            };
             let rec = DocRecord {
                 path: file.path.clone(),
                 repo: name.to_string(),
                 title,
                 kind,
                 tokens,
+                description: fm.description,
+                category,
+                use_cases: fm.use_cases,
             };
             put_json(
                 &mut tx,
@@ -457,8 +471,11 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
                 path: file.path.clone(),
                 repo: name.to_string(),
                 title,
-                kind,
+                kind: kind.clone(),
                 tokens,
+                description: String::new(),
+                category: infer_category(&file.path, &kind),
+                use_cases: Vec::new(),
             };
             put_json(
                 &mut tx,
@@ -881,11 +898,124 @@ pub fn all_of(store: &BinderStore, prefix: &str) -> Result<Vec<bindb::BinderObje
 }
 
 /// Extract title and content tokens from a markdown file for semantic search.
+struct MdFrontmatter {
+    title: String,
+    description: String,
+    category: String,
+    use_cases: Vec<String>,
+}
+
+/// Parse YAML frontmatter from a `---` block at the top of a markdown file.
+/// Handles `key: value` and `key: [a, b]` / block-list styles for the fields we care about.
+fn parse_md_frontmatter(text: &str) -> MdFrontmatter {
+    let mut fm = MdFrontmatter {
+        title: String::new(),
+        description: String::new(),
+        category: String::new(),
+        use_cases: Vec::new(),
+    };
+    let text = text.trim_start();
+    if !text.starts_with("---") {
+        return fm;
+    }
+    let rest = &text[3..];
+    let end = match rest.find("\n---") {
+        Some(i) => i,
+        None => return fm,
+    };
+    let block = &rest[..end];
+
+    let mut in_use_cases = false;
+    for line in block.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Block list item under use_cases
+        if in_use_cases {
+            if let Some(item) = trimmed.strip_prefix("- ") {
+                fm.use_cases
+                    .push(item.trim().trim_matches('"').trim_matches('\'').to_string());
+                continue;
+            } else if trimmed.contains(':') {
+                in_use_cases = false;
+                // fall through to key parsing
+            } else {
+                continue;
+            }
+        }
+        if let Some((key, val)) = trimmed.split_once(':') {
+            let key = key.trim();
+            let val = val.trim();
+            match key {
+                "title" => fm.title = val.trim_matches('"').trim_matches('\'').to_string(),
+                "description" => {
+                    fm.description = val.trim_matches('"').trim_matches('\'').to_string()
+                }
+                "category" => fm.category = val.trim_matches('"').trim_matches('\'').to_string(),
+                "use_cases" => {
+                    if val.starts_with('[') {
+                        // Inline list: [item1, item2]
+                        let inner = val.trim_matches(|c| c == '[' || c == ']');
+                        fm.use_cases = inner
+                            .split(',')
+                            .map(|s| s.trim().trim_matches('"').trim_matches('\'').to_string())
+                            .filter(|s| !s.is_empty())
+                            .collect();
+                    } else if val.is_empty() {
+                        in_use_cases = true;
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    fm
+}
+
+fn infer_category(path: &str, kind: &str) -> String {
+    let lower = path.to_lowercase();
+    for seg in &[
+        "deployment",
+        "architecture",
+        "configuration",
+        "troubleshooting",
+        "development",
+        "vision",
+    ] {
+        if lower.contains(&format!("/{seg}/")) || lower.contains(&format!("/{seg}.")) {
+            return seg.to_string();
+        }
+    }
+    if lower.contains("/specs/") || lower.contains("/plans/") || lower.contains("/reviews/") {
+        return "specs".to_string();
+    }
+    match kind {
+        "claude_md" => "architecture".to_string(),
+        "readme" => "overview".to_string(),
+        _ => "doc".to_string(),
+    }
+}
+
 pub(crate) fn extract_md_tokens(text: &str, path: &str) -> (String, Vec<String>) {
     use std::collections::BTreeSet;
     let mut title = String::new();
     let mut tokens: BTreeSet<String> = BTreeSet::new();
-    for line in text.lines() {
+    // Skip frontmatter block so YAML keys don't pollute tokens
+    let body = if text.trim_start().starts_with("---") {
+        let rest = text
+            .trim_start()
+            .trim_start_matches('-')
+            .trim_start_matches('\n');
+        if let Some(end) = rest.find("\n---") {
+            rest[end + 4..].trim_start_matches('\n')
+        } else {
+            text
+        }
+    } else {
+        text
+    };
+    for line in body.lines() {
         let trimmed = line.trim();
         if let Some(heading) = trimmed.strip_prefix('#') {
             let heading = heading.trim_start_matches('#').trim();

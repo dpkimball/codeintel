@@ -134,6 +134,10 @@ pub struct DocRef {
     pub title: String,
     pub repo: String,
     pub kind: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub category: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1389,6 +1393,8 @@ fn semantic_docs(
                         title: doc.title,
                         repo: name.clone(),
                         kind: doc.kind,
+                        description: doc.description,
+                        category: doc.category,
                     },
                 ));
             }
