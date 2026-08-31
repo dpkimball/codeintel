@@ -1,10 +1,16 @@
+---
+title: Validation — issue #3
+description: Validation evidence for codeintel issue #3.
+category: reviews
+---
+
 # Validation — issue #3
 
 Store: existing Binder Desktop index (`./validation-store`, no re-index, no Git walk).
 
 Commands:
 
-```
+```text
 codeintel doctrine --store ./validation-store --name binder-desktop
 codeintel impact --store ./validation-store --name binder-desktop --target binder-storage
 ```

@@ -1,10 +1,16 @@
+---
+title: Validation — issue #11
+description: Validation evidence for codeintel issue #11.
+category: reviews
+---
+
 # Validation — issue #11
 
 Throwaway store `/tmp/codeintel-wf-poc4`. Indexed Git HEAD **before** the workflow commit (`990812c`, 49 files), then `workflow start` against that graph. Implementation used the inspection set plus new files. After commit `5bf302c`, `workflow finish` re-indexed the same store.
 
 Request:
 
-```
+```text
 wire workflow start and finish into src/lib.rs and src/main.rs using Architecture
 in src/architecture.rs; update tests/architecture.rs README.md CLAUDE.md
 docs/examples/agent-workflows.md docs/specs/agent-architecture-api.md

@@ -1,3 +1,9 @@
+---
+title: Validation — issue #9
+description: Validation evidence for codeintel issue #9.
+category: reviews
+---
+
 # Validation — issue #9
 
 Store: throwaway `/tmp/codeintel-poc-agent-store`. Agent API only (`codeintel architecture`).

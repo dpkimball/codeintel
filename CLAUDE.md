@@ -10,7 +10,7 @@ Git is the source of truth. bindb is the derived semantic representation.
 
 ## Layout
 
-```
+```text
 src/
   git_sync.rs      # incremental git ls-tree / blob hashes (nested subdirectory scope)
   parser.rs        # language-agnostic FileIr

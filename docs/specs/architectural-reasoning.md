@@ -1,9 +1,10 @@
 ---
 title: Architectural reasoning on the semantic layer
+description: Answer doctrine and impact from bindb without walking source trees.
 status: poc
 github_issue: https://github.com/dpkimball/codeintel/issues/3
+category: specs
 ---
-
 # Architectural reasoning (POC #2)
 
 POC #1 proved the graph can stay in sync with Git. This spec is about **answering from bindb**.

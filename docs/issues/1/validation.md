@@ -1,3 +1,9 @@
+---
+title: Validation — issue #1
+description: Validation evidence for codeintel issue #1.
+category: reviews
+---
+
 # Validation — issue #1
 
 Target: Binder Desktop at `/Volumes/SSD/dpk-workspace/binder-desktop`  

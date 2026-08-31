@@ -1,9 +1,10 @@
 ---
 title: Code Intelligence Domain
+description: codeintel domain: Git-synced semantic graph in bindb for architectural questions.
 status: poc
 github_issue: https://github.com/dpkimball/codeintel/issues/1
+category: specs
 ---
-
 # Code Intelligence Domain
 
 Git remains the source of truth. **codeintel** is a bindb consumer that maintains a continuously synchronized semantic graph of one Git repository so agents can answer architectural questions without re-reading the tree.

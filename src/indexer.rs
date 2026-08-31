@@ -441,7 +441,8 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
             } else {
                 infer_category(&file.path, &kind)
             };
-            let compliance_issues = validate_doc_compliance(&kind, text, &fm, &category);
+            let compliance_issues =
+                validate_doc_compliance(&kind, &file.path, text, &fm, &category);
             let title = if !fm.title.is_empty() {
                 fm.title
             } else {
@@ -1011,6 +1012,45 @@ fn body_without_frontmatter(text: &str) -> &str {
     }
 }
 
+/// Path prefixes and filenames that are workflow artifacts, not canonical documentation.
+/// These files are indexed for search but exempt from structural compliance checks.
+const WORKFLOW_ARTIFACT_PREFIXES: &[&str] = &[
+    ".github/",
+    ".claude/",
+    "tests/",
+    "codev/",
+    "backend/codev/",
+    "docs/issues/",
+    "docs/defects/",
+    "specs/",
+    "reviews/",
+    "plans/",
+    "resources/",
+    "prompts/",
+    "backend/tests/",
+    "mcp-docs-server/",
+    "tasks/",
+];
+
+const WORKFLOW_ARTIFACT_NAMES: &[&str] = &[
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "PR_CHECKLIST.md",
+    "PULL_REQUEST_TEMPLATE.md",
+    "AGENTS.md",
+    "compliance-report.md",
+];
+
+fn is_workflow_artifact(path: &str) -> bool {
+    let name = path.rsplit('/').next().unwrap_or(path);
+    if WORKFLOW_ARTIFACT_NAMES.contains(&name) {
+        return true;
+    }
+    WORKFLOW_ARTIFACT_PREFIXES
+        .iter()
+        .any(|prefix| path.starts_with(prefix))
+}
+
 /// Structural compliance checks run at index time against every indexed markdown document.
 ///
 /// Returns a list of human-readable issue strings. An empty vec means the doc is compliant.
@@ -1023,10 +1063,15 @@ fn body_without_frontmatter(text: &str) -> &str {
 ///   - fenced code blocks must name a language
 fn validate_doc_compliance(
     kind: &str,
+    path: &str,
     text: &str,
     fm: &MdFrontmatter,
     category: &str,
 ) -> Vec<String> {
+    if is_workflow_artifact(path) {
+        return Vec::new();
+    }
+
     let mut issues: Vec<String> = Vec::new();
 
     // Frontmatter field checks (not applicable to orientation or YAML docs)
@@ -1434,14 +1479,14 @@ mod doc_compliance_tests {
     fn clean_spec_doc_produces_no_issues() {
         let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\nBody.\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(issues.is_empty(), "unexpected issues: {issues:?}");
     }
 
     #[test]
     fn missing_frontmatter_block_flagged_for_spec() {
         let text = "# Title\n\nBody.\n";
-        let issues = validate_doc_compliance("spec", text, &empty_fm(), "");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &empty_fm(), "");
         assert!(
             issues.iter().any(|i| i.contains("missing --- block")),
             "{issues:?}"
@@ -1452,7 +1497,7 @@ mod doc_compliance_tests {
     fn missing_title_description_category_flagged() {
         let text = "---\n---\n# Title\n";
         let f = empty_fm();
-        let issues = validate_doc_compliance("doc", text, &f, "");
+        let issues = validate_doc_compliance("doc", "docs/doc.md", text, &f, "");
         assert!(
             issues.iter().any(|i| i.contains("missing title")),
             "{issues:?}"
@@ -1471,7 +1516,7 @@ mod doc_compliance_tests {
     fn readme_skips_frontmatter_check() {
         // README.md kind never requires frontmatter
         let text = "# My Readme\n\nContent.\n";
-        let issues = validate_doc_compliance("readme", text, &empty_fm(), "overview");
+        let issues = validate_doc_compliance("readme", "README.md", text, &empty_fm(), "overview");
         assert!(
             !issues.iter().any(|i| i.contains("frontmatter")),
             "{issues:?}"
@@ -1481,7 +1526,8 @@ mod doc_compliance_tests {
     #[test]
     fn claude_md_skips_frontmatter_check() {
         let text = "# CLAUDE.md\n\n## What this is\n\nSomething.\n";
-        let issues = validate_doc_compliance("claude_md", text, &empty_fm(), "architecture");
+        let issues =
+            validate_doc_compliance("claude_md", "CLAUDE.md", text, &empty_fm(), "architecture");
         assert!(
             !issues.iter().any(|i| i.contains("frontmatter")),
             "{issues:?}"
@@ -1494,7 +1540,7 @@ mod doc_compliance_tests {
     fn invalid_category_flagged() {
         let text = "---\ntitle: T\ndescription: D\ncategory: banana\n---\n# Title\n";
         let f = fm("T", "D", "banana");
-        let issues = validate_doc_compliance("spec", text, &f, "banana");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "banana");
         assert!(
             issues.iter().any(|i| i.contains("not in standard set")),
             "{issues:?}"
@@ -1505,7 +1551,7 @@ mod doc_compliance_tests {
     fn valid_category_not_flagged() {
         let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(!issues.iter().any(|i| i.contains("category")), "{issues:?}");
     }
 
@@ -1516,7 +1562,7 @@ mod doc_compliance_tests {
         let text =
             "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n\n## Section\n\nBody.\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(issues.iter().any(|i| i.contains("no H1")), "{issues:?}");
     }
 
@@ -1525,7 +1571,7 @@ mod doc_compliance_tests {
         let text =
             "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n## Section\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(!issues.iter().any(|i| i.contains("H1")), "{issues:?}");
     }
 
@@ -1536,7 +1582,7 @@ mod doc_compliance_tests {
         let text =
             "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n### Skipped\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(
             issues.iter().any(|i| i.contains("jumps from H1 to H3")),
             "{issues:?}"
@@ -1547,7 +1593,7 @@ mod doc_compliance_tests {
     fn heading_h1_to_h2_to_h3_is_valid() {
         let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n## Section\n\n### Sub\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(!issues.iter().any(|i| i.contains("jumps")), "{issues:?}");
     }
 
@@ -1556,7 +1602,7 @@ mod doc_compliance_tests {
         // H3 → H2 is fine (going shallower is never a violation)
         let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n## A\n\n### Sub\n\n## B\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(!issues.iter().any(|i| i.contains("jumps")), "{issues:?}");
     }
 
@@ -1567,7 +1613,7 @@ mod doc_compliance_tests {
 # Real Title\n\n## Examples\n\n### Sample\n\n\
 ```markdown\n# TODO: Example\n\n### Nested sample heading\n```\n";
         let f = fm("T", "D", "architecture");
-        let issues = validate_doc_compliance("spec", text, &f, "architecture");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "architecture");
         assert!(
             !issues.iter().any(|i| i.contains("jumps")),
             "fenced example headings must not count: {issues:?}"
@@ -1581,7 +1627,7 @@ mod doc_compliance_tests {
     fn unlabeled_code_block_flagged() {
         let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n```\nsome code\n```\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(
             issues.iter().any(|i| i.contains("without language")),
             "{issues:?}"
@@ -1592,7 +1638,7 @@ mod doc_compliance_tests {
     fn labeled_code_block_not_flagged() {
         let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n```bash\necho hi\n```\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(!issues.iter().any(|i| i.contains("language")), "{issues:?}");
     }
 
@@ -1600,7 +1646,7 @@ mod doc_compliance_tests {
     fn multiple_unlabeled_blocks_counted() {
         let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n```\na\n```\n\n```\nb\n```\n";
         let f = fm("T", "D", "deployment");
-        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        let issues = validate_doc_compliance("spec", "docs/doc.md", text, &f, "deployment");
         assert!(
             issues.iter().any(|i| i.contains("2 block(s)")),
             "{issues:?}"
@@ -1612,11 +1658,50 @@ mod doc_compliance_tests {
     #[test]
     fn ci_workflow_skips_structure_checks() {
         // YAML docs shouldn't be checked for H1 or heading hierarchy
-        let issues = validate_doc_compliance("ci_workflow", "name: CI\n", &empty_fm(), "");
+        let issues = validate_doc_compliance(
+            "ci_workflow",
+            ".github/workflows/ci.yml",
+            "name: CI\n",
+            &empty_fm(),
+            "",
+        );
         assert!(!issues.iter().any(|i| i.contains("H1")), "{issues:?}");
         assert!(
             !issues.iter().any(|i| i.contains("frontmatter")),
             "{issues:?}"
         );
+    }
+
+    // --- workflow artifact exemptions ---
+
+    #[test]
+    fn github_template_exempt() {
+        let issues = validate_doc_compliance(
+            "doc",
+            ".github/PULL_REQUEST_TEMPLATE.md",
+            "## Summary\n\n- item\n",
+            &empty_fm(),
+            "",
+        );
+        assert!(issues.is_empty(), "expected exempt, got: {issues:?}");
+    }
+
+    #[test]
+    fn docs_issues_path_exempt() {
+        let issues = validate_doc_compliance(
+            "doc",
+            "docs/issues/42/validation.md",
+            "# Validation\n\nSome notes.\n",
+            &empty_fm(),
+            "",
+        );
+        assert!(issues.is_empty(), "expected exempt, got: {issues:?}");
+    }
+
+    #[test]
+    fn codev_path_exempt() {
+        let issues =
+            validate_doc_compliance("doc", "codev/specs/my-spec.md", "# Spec\n", &empty_fm(), "");
+        assert!(issues.is_empty(), "expected exempt, got: {issues:?}");
     }
 }
