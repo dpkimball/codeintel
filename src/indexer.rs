@@ -1526,7 +1526,8 @@ mod doc_compliance_tests {
     #[test]
     fn claude_md_skips_frontmatter_check() {
         let text = "# CLAUDE.md\n\n## What this is\n\nSomething.\n";
-        let issues = validate_doc_compliance("claude_md", "CLAUDE.md", text, &empty_fm(), "architecture");
+        let issues =
+            validate_doc_compliance("claude_md", "CLAUDE.md", text, &empty_fm(), "architecture");
         assert!(
             !issues.iter().any(|i| i.contains("frontmatter")),
             "{issues:?}"
@@ -1699,13 +1700,8 @@ mod doc_compliance_tests {
 
     #[test]
     fn codev_path_exempt() {
-        let issues = validate_doc_compliance(
-            "doc",
-            "codev/specs/my-spec.md",
-            "# Spec\n",
-            &empty_fm(),
-            "",
-        );
+        let issues =
+            validate_doc_compliance("doc", "codev/specs/my-spec.md", "# Spec\n", &empty_fm(), "");
         assert!(issues.is_empty(), "expected exempt, got: {issues:?}");
     }
 }
