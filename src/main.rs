@@ -170,6 +170,8 @@ enum ArchOp {
         #[arg(long)]
         since_sha: Option<String>,
     },
+    /// All indexed markdown docs with structural compliance violations.
+    DocCompliance,
 }
 
 #[derive(Subcommand)]
@@ -354,6 +356,7 @@ fn run() -> codeintel::Result<()> {
                     };
                     serde_json::to_value(report)?
                 }
+                ArchOp::DocCompliance => serde_json::to_value(arch.doc_compliance()?)?,
             };
             println!("{}", serde_json::to_string_pretty(&out)?);
             arch.close()?;
