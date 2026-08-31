@@ -449,6 +449,24 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
                 Some(provenance.clone()),
             )?;
         }
+    } else if is_infra_yaml(&file.path) {
+        if let Ok(text) = std::str::from_utf8(&bytes) {
+            let (title, tokens) = extract_yaml_tokens(text, &file.path);
+            let kind = yaml_doc_kind(&file.path);
+            let rec = DocRecord {
+                path: file.path.clone(),
+                repo: name.to_string(),
+                title,
+                kind,
+                tokens,
+            };
+            put_json(
+                &mut tx,
+                doc_id(name, &file.path),
+                &rec,
+                Some(provenance.clone()),
+            )?;
+        }
     }
 
     if !tx.is_empty() {
@@ -910,5 +928,180 @@ fn doc_kind(path: &str) -> String {
         "spec".into()
     } else {
         "doc".into()
+    }
+}
+
+fn path_contains_segment(lower: &str, segment: &str) -> bool {
+    lower.contains(&format!("/{segment}/"))
+        || lower.starts_with(&format!("{segment}/"))
+        || lower == segment
+}
+
+/// True for YAML files that describe CI/CD or infrastructure configuration.
+fn is_infra_yaml(path: &str) -> bool {
+    let lower = path.to_lowercase();
+    if !lower.ends_with(".yaml") && !lower.ends_with(".yml") {
+        return false;
+    }
+    if lower.contains(".github/workflows/") || lower.contains(".github/actions/") {
+        return true;
+    }
+    for seg in &["charts", "argo-cd", "argocd", "k8s", "kubernetes", "deploy"] {
+        if path_contains_segment(&lower, seg) {
+            return true;
+        }
+    }
+    let name = path.rsplit('/').next().unwrap_or(path);
+    if name.starts_with("values") && (name.ends_with(".yaml") || name.ends_with(".yml")) {
+        return true;
+    }
+    false
+}
+
+fn yaml_doc_kind(path: &str) -> String {
+    let lower = path.to_lowercase();
+    if lower.contains(".github/workflows/") || lower.contains(".github/actions/") {
+        "ci_workflow".into()
+    } else if lower.contains("/templates/") {
+        "helm_template".into()
+    } else {
+        "helm_values".into()
+    }
+}
+
+const YAML_SCALAR_SKIP: &[&str] = &["true", "false", "null", "yes", "no", "on", "off"];
+
+/// Extract searchable tokens from a YAML file.
+/// Tokenizes string keys and values; skips YAML scalars, anchors, and pure-numeric tokens.
+fn extract_yaml_tokens(text: &str, path: &str) -> (String, Vec<String>) {
+    let mut tokens = std::collections::BTreeSet::new();
+    for line in text.lines() {
+        let trimmed = line.trim();
+        // Skip comments, anchors, aliases, document markers, and blank lines
+        if trimmed.starts_with('#')
+            || trimmed.starts_with('*')
+            || trimmed.starts_with('&')
+            || trimmed.starts_with("---")
+            || trimmed.starts_with("...")
+            || trimmed.is_empty()
+        {
+            continue;
+        }
+        // Strip list item prefix and inline comments
+        let content = trimmed.strip_prefix("- ").unwrap_or(trimmed);
+        let content = content.split(" #").next().unwrap_or(content).trim();
+        // Tokenize then filter scalars and pure-numeric tokens word-by-word
+        for word in content.split(|c: char| !c.is_alphanumeric() && c != '-' && c != '_') {
+            let w = word.to_lowercase();
+            let w = w.trim_matches(|c: char| c == '-' || c == '_');
+            if w.is_empty() {
+                continue;
+            }
+            if YAML_SCALAR_SKIP.contains(&w) {
+                continue;
+            }
+            if w.parse::<f64>().is_ok() {
+                continue;
+            }
+            if w.len() >= 4 || crate::ids::SHORT_TECHNICAL_TERMS.contains(&w) {
+                tokens.insert(w.to_string());
+            }
+        }
+    }
+    // Also tokenize path components so filenames like "deploy.yaml" and directory
+    // names like "workflows" or "charts" contribute to matching.
+    for segment in path.split('/') {
+        let seg = segment
+            .trim_end_matches(".yaml")
+            .trim_end_matches(".yml")
+            .to_lowercase();
+        let seg = seg.trim_matches(|c: char| c == '.' || c == '-' || c == '_');
+        if !seg.is_empty() && (seg.len() >= 4 || crate::ids::SHORT_TECHNICAL_TERMS.contains(&seg)) {
+            tokens.insert(seg.to_string());
+        }
+    }
+    let title = path
+        .rsplit('/')
+        .next()
+        .unwrap_or(path)
+        .trim_end_matches(".yaml")
+        .trim_end_matches(".yml")
+        .to_string();
+    (title, tokens.into_iter().collect())
+}
+
+#[cfg(test)]
+mod yaml_tests {
+    use super::*;
+
+    #[test]
+    fn is_infra_yaml_matches_workflows() {
+        assert!(is_infra_yaml(".github/workflows/deploy.yaml"));
+        assert!(is_infra_yaml(".github/actions/configure-cargo/action.yml"));
+        assert!(is_infra_yaml("charts/binder-ai-serve/values-qa.yaml"));
+        assert!(is_infra_yaml(
+            "charts/binder-server/templates/deployment.yaml"
+        ));
+        assert!(is_infra_yaml("argo-cd/applications/binder-ai-serve.yaml"));
+    }
+
+    #[test]
+    fn is_infra_yaml_rejects_non_infra() {
+        assert!(!is_infra_yaml("src/main.rs"));
+        assert!(!is_infra_yaml("Cargo.toml"));
+        assert!(!is_infra_yaml("README.md"));
+    }
+
+    #[test]
+    fn yaml_doc_kind_classifies_correctly() {
+        assert_eq!(
+            yaml_doc_kind(".github/workflows/deploy.yaml"),
+            "ci_workflow"
+        );
+        assert_eq!(
+            yaml_doc_kind("charts/binder-ai-serve/templates/deployment.yaml"),
+            "helm_template"
+        );
+        assert_eq!(
+            yaml_doc_kind("charts/binder-ai-serve/values-qa.yaml"),
+            "helm_values"
+        );
+    }
+
+    #[test]
+    fn extract_yaml_tokens_surfaces_deploy_keywords() {
+        let yaml = r#"
+name: CI/CD (Helm)
+jobs:
+  build-and-push:
+    runs-on: self-hosted
+  update-helm-values:
+    steps:
+      - name: Bump image tag in Helm values
+        run: yq -i '.image.tag = env(TAG)' values-qa.yaml
+env:
+  IMAGE_REPO: ghcr.io/dpkimball/binder-server
+  SERVICE_NAME: binder-server
+"#;
+        let (title, tokens) = extract_yaml_tokens(yaml, ".github/workflows/deploy.yaml");
+        assert_eq!(title, "deploy");
+        assert!(tokens.iter().any(|t| t.contains("deploy")));
+        assert!(tokens.iter().any(|t| t.contains("image")));
+        assert!(tokens.iter().any(|t| t.contains("helm")));
+        assert!(tokens.iter().any(|t| t.contains("binder")));
+    }
+
+    #[test]
+    fn extract_yaml_tokens_skips_comments_and_booleans() {
+        let yaml = r#"
+# This is a comment
+enabled: true
+count: 42
+name: keepsake-backend
+"#;
+        let (_, tokens) = extract_yaml_tokens(yaml, "values.yaml");
+        assert!(!tokens.contains(&"true".to_string()));
+        assert!(!tokens.contains(&"42".to_string()));
+        assert!(tokens.iter().any(|t| t.contains("keepsake")));
     }
 }
