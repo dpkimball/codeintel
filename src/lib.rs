@@ -34,9 +34,9 @@ pub use federation::{
     analyze as federation_analyze, impact as federation_impact, FederationImpact, FederationReport,
 };
 pub use github_issues::{index_issues, index_prs};
-pub use question_bank::index_questions;
 pub use impact::{analyze as impact_analyze, ImpactReport};
 pub use indexer::{index, IndexOptions, IndexStats};
 pub use query::QueryEngine;
+pub use question_bank::index_questions;
 pub use report::{run_validation, ValidationReport};
 pub use workflow::{finish as workflow_finish, start as workflow_start, WorkflowReport};

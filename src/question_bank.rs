@@ -18,7 +18,10 @@ pub fn index_questions(store: &BinderStore, bank_path: &std::path::Path) -> Resu
     store.register_namespace(NAMESPACE, ACTOR)?;
 
     let content = std::fs::read_to_string(bank_path).map_err(|e| {
-        CodeintelError::Other(format!("cannot read question bank {}: {e}", bank_path.display()))
+        CodeintelError::Other(format!(
+            "cannot read question bank {}: {e}",
+            bank_path.display()
+        ))
     })?;
 
     let records = parse_question_bank(&content);
@@ -72,10 +75,7 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
             continue;
         }
 
-        let cells: Vec<&str> = trimmed
-            .split('|')
-            .map(|c| c.trim())
-            .collect();
+        let cells: Vec<&str> = trimmed.split('|').map(|c| c.trim()).collect();
 
         // Need at least: ["", ID, Question, Answer, ""]  → 5 elements
         if cells.len() < 5 {
@@ -87,7 +87,12 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
         let answer = cells[3];
 
         // Skip header rows (ID = "#" or "ID") and separator rows ("---")
-        if id.is_empty() || id == "#" || id == "ID" || id.starts_with('-') || question.starts_with('-') {
+        if id.is_empty()
+            || id == "#"
+            || id == "ID"
+            || id.starts_with('-')
+            || question.starts_with('-')
+        {
             continue;
         }
         // Skip rows with empty question or answer
