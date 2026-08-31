@@ -128,6 +128,17 @@ pub fn prefix_doc(name: &str) -> String {
     format!("code://doc/{name}/")
 }
 
+pub fn question_id(repo: &str, id: &str) -> ObjectId {
+    let repo_seg = if repo.is_empty() { "cross" } else { repo };
+    ObjectId::new(format!("code://question/{repo_seg}/{id}"))
+}
+
+pub fn prefix_question(repo: &str) -> String {
+    let repo_seg = if repo.is_empty() { "cross" } else { repo };
+    format!("code://question/{repo_seg}/")
+}
+
+pub const PREFIX_ALL_QUESTIONS: &str = "code://question/";
 pub const PREFIX_ALL_CRATES: &str = "code://crate/";
 pub const PREFIX_ALL_REPOS: &str = "code://repo/";
 pub const PREFIX_ALL_COMMITS: &str = "code://commit/";
