@@ -47,9 +47,9 @@ seed.repos / prefixIndexes
 
 - Container `store-refresh` in the same pod as `binder-ai-serve`
 - Same image, same PVC mount, same github-token mount when enabled
-- Loop: sleep until next `refresh.hourUtc` (default **3**), run refresh once, sleep ≥1h to avoid double-run
+- Loop: optional `runOnStart` catch-up; then sleep until next `refresh.hourUtc` (default **3**), run refresh once, sleep ≥1h to avoid double-run
 - Missing workspace dir → `git clone --depth 1` (recover partial seed); existing → fetch/reset
-- Failures on one repo log and continue (`set +e` per repo or `|| true` on non-fatal steps)
+- Failures on one repo log and continue (`||` / `return 0` on non-fatal steps)
 - After all indexes: write compliance report; non-zero violation count is **not** a pod crash (report-only)
 
 ### Non-goals
