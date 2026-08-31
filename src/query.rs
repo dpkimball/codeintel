@@ -448,6 +448,16 @@ impl<'a> QueryEngine<'a> {
     pub fn questions(&self) -> Result<Vec<QuestionRecord>> {
         decode_list(self.store, &prefix_question(&self.name))
     }
+
+    pub fn doc_violations(&self) -> Result<Vec<(String, Vec<String>)>> {
+        let mut out = Vec::new();
+        for doc in self.docs()? {
+            if !doc.compliance_issues.is_empty() {
+                out.push((doc.path, doc.compliance_issues));
+            }
+        }
+        Ok(out)
+    }
 }
 
 fn decode_list<T: serde::de::DeserializeOwned>(

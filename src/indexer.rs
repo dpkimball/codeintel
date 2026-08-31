@@ -433,14 +433,30 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
     // index markdown files as DocRecord for content-based semantic search
     if file.path.to_lowercase().ends_with(".md") {
         if let Ok(text) = std::str::from_utf8(&bytes) {
-            let (title, tokens) = extract_md_tokens(text, &file.path);
+            let fm = parse_md_frontmatter(text);
+            let (extracted_title, tokens) = extract_md_tokens(text, &file.path);
             let kind = doc_kind(&file.path);
+            let category = if !fm.category.is_empty() {
+                fm.category.clone()
+            } else {
+                infer_category(&file.path, &kind)
+            };
+            let compliance_issues = validate_doc_compliance(&kind, text, &fm, &category);
+            let title = if !fm.title.is_empty() {
+                fm.title
+            } else {
+                extracted_title
+            };
             let rec = DocRecord {
                 path: file.path.clone(),
                 repo: name.to_string(),
                 title,
                 kind,
                 tokens,
+                description: fm.description,
+                category,
+                use_cases: fm.use_cases,
+                compliance_issues,
             };
             put_json(
                 &mut tx,
@@ -457,8 +473,12 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
                 path: file.path.clone(),
                 repo: name.to_string(),
                 title,
-                kind,
+                kind: kind.clone(),
                 tokens,
+                description: String::new(),
+                category: infer_category(&file.path, &kind),
+                use_cases: Vec::new(),
+                compliance_issues: Vec::new(),
             };
             put_json(
                 &mut tx,
@@ -881,11 +901,261 @@ pub fn all_of(store: &BinderStore, prefix: &str) -> Result<Vec<bindb::BinderObje
 }
 
 /// Extract title and content tokens from a markdown file for semantic search.
+struct MdFrontmatter {
+    title: String,
+    description: String,
+    category: String,
+    use_cases: Vec<String>,
+}
+
+/// Parse YAML frontmatter from a `---` block at the top of a markdown file.
+/// Handles `key: value` and `key: [a, b]` / block-list styles for the fields we care about.
+fn parse_md_frontmatter(text: &str) -> MdFrontmatter {
+    let mut fm = MdFrontmatter {
+        title: String::new(),
+        description: String::new(),
+        category: String::new(),
+        use_cases: Vec::new(),
+    };
+    let text = text.trim_start();
+    if !text.starts_with("---") {
+        return fm;
+    }
+    let rest = &text[3..];
+    let end = match rest.find("\n---") {
+        Some(i) => i,
+        None => return fm,
+    };
+    let block = &rest[..end];
+
+    let mut in_use_cases = false;
+    for line in block.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Block list item under use_cases
+        if in_use_cases {
+            if let Some(item) = trimmed.strip_prefix("- ") {
+                fm.use_cases
+                    .push(item.trim().trim_matches('"').trim_matches('\'').to_string());
+                continue;
+            } else if trimmed.contains(':') {
+                in_use_cases = false;
+                // fall through to key parsing
+            } else {
+                continue;
+            }
+        }
+        if let Some((key, val)) = trimmed.split_once(':') {
+            let key = key.trim();
+            let val = val.trim();
+            match key {
+                "title" => fm.title = val.trim_matches('"').trim_matches('\'').to_string(),
+                "description" => {
+                    fm.description = val.trim_matches('"').trim_matches('\'').to_string()
+                }
+                "category" => fm.category = val.trim_matches('"').trim_matches('\'').to_string(),
+                "use_cases" => {
+                    if val.starts_with('[') {
+                        // Inline list: [item1, item2]
+                        let inner = val.trim_matches(|c| c == '[' || c == ']');
+                        fm.use_cases = inner
+                            .split(',')
+                            .map(|s| s.trim().trim_matches('"').trim_matches('\'').to_string())
+                            .filter(|s| !s.is_empty())
+                            .collect();
+                    } else if val.is_empty() {
+                        in_use_cases = true;
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    fm
+}
+
+const VALID_DOC_CATEGORIES: &[&str] = &[
+    "deployment",
+    "development",
+    "architecture",
+    "configuration",
+    "troubleshooting",
+    "testing",
+    "tasks",
+    "vision",
+    "design",
+    "specs",
+    "plans",
+    "reviews",
+    "api",
+    "setup",
+    "usage",
+    "examples",
+    "overview",
+    "doc",
+];
+
+/// Return the markdown body with the leading `---` frontmatter block stripped.
+fn body_without_frontmatter(text: &str) -> &str {
+    let text = text.trim_start();
+    if !text.starts_with("---") {
+        return text;
+    }
+    let rest = &text[3..];
+    if let Some(end) = rest.find("\n---") {
+        rest[end + 4..].trim_start_matches('\n')
+    } else {
+        text
+    }
+}
+
+/// Structural compliance checks run at index time against every indexed markdown document.
+///
+/// Returns a list of human-readable issue strings. An empty vec means the doc is compliant.
+/// Checks vary by `kind`:
+///   - frontmatter fields (title, description, category) required for spec/doc; skipped for
+///     readme, claude_md, and YAML kinds
+///   - category must be in the standard set when present
+///   - H1 heading must be present
+///   - heading levels must not skip (e.g. H1 → H3)
+///   - fenced code blocks must name a language
+fn validate_doc_compliance(
+    kind: &str,
+    text: &str,
+    fm: &MdFrontmatter,
+    category: &str,
+) -> Vec<String> {
+    let mut issues: Vec<String> = Vec::new();
+
+    // Frontmatter field checks (not applicable to orientation or YAML docs)
+    if !matches!(
+        kind,
+        "readme" | "claude_md" | "ci_workflow" | "helm_template" | "helm_values"
+    ) {
+        if !text.trim_start().starts_with("---") {
+            issues.push("frontmatter: missing --- block".into());
+        } else {
+            if fm.title.is_empty() {
+                issues.push("frontmatter: missing title".into());
+            }
+            if fm.description.is_empty() {
+                issues.push("frontmatter: missing description".into());
+            }
+            if fm.category.is_empty() {
+                issues.push("frontmatter: missing category".into());
+            }
+        }
+    }
+
+    // Category must be in the standard set when populated
+    if !category.is_empty() && !VALID_DOC_CATEGORIES.contains(&category) {
+        issues.push(format!("category: '{}' not in standard set", category));
+    }
+
+    // YAML-indexed docs have no markdown structure to validate
+    if matches!(kind, "ci_workflow" | "helm_template" | "helm_values") {
+        return issues;
+    }
+
+    let body = body_without_frontmatter(text);
+
+    // H1 presence
+    if !body
+        .lines()
+        .any(|l| l.trim_start().strip_prefix("# ").is_some() || l.trim_start() == "#")
+    {
+        issues.push("structure: no H1 heading".into());
+    }
+
+    // Heading level continuity: no jumps greater than one level
+    let mut prev_level: u32 = 0;
+    for line in body.lines() {
+        let t = line.trim_start();
+        if !t.starts_with('#') {
+            continue;
+        }
+        let level = t.chars().take_while(|c| *c == '#').count() as u32;
+        if prev_level > 0 && level > prev_level + 1 {
+            issues.push(format!(
+                "structure: heading jumps from H{} to H{}",
+                prev_level, level
+            ));
+            break;
+        }
+        prev_level = level;
+    }
+
+    // Fenced code blocks must declare a language
+    let mut in_block = false;
+    let mut unlabeled: u32 = 0;
+    for line in body.lines() {
+        let t = line.trim_start();
+        if let Some(rest) = t.strip_prefix("```") {
+            if !in_block {
+                if rest.trim().is_empty() {
+                    unlabeled += 1;
+                }
+                in_block = true;
+            } else {
+                in_block = false;
+            }
+        }
+    }
+    if unlabeled > 0 {
+        issues.push(format!(
+            "code: {} block(s) without language specifier",
+            unlabeled
+        ));
+    }
+
+    issues
+}
+
+fn infer_category(path: &str, kind: &str) -> String {
+    let lower = path.to_lowercase();
+    for seg in &[
+        "deployment",
+        "architecture",
+        "configuration",
+        "troubleshooting",
+        "development",
+        "vision",
+    ] {
+        if lower.contains(&format!("/{seg}/")) || lower.contains(&format!("/{seg}.")) {
+            return seg.to_string();
+        }
+    }
+    if lower.contains("/specs/") || lower.contains("/plans/") || lower.contains("/reviews/") {
+        return "specs".to_string();
+    }
+    match kind {
+        "claude_md" => "architecture".to_string(),
+        "readme" => "overview".to_string(),
+        _ => "doc".to_string(),
+    }
+}
+
 pub(crate) fn extract_md_tokens(text: &str, path: &str) -> (String, Vec<String>) {
     use std::collections::BTreeSet;
     let mut title = String::new();
     let mut tokens: BTreeSet<String> = BTreeSet::new();
-    for line in text.lines() {
+    // Skip frontmatter block so YAML keys don't pollute tokens
+    let body = if text.trim_start().starts_with("---") {
+        let rest = text
+            .trim_start()
+            .trim_start_matches('-')
+            .trim_start_matches('\n');
+        if let Some(end) = rest.find("\n---") {
+            rest[end + 4..].trim_start_matches('\n')
+        } else {
+            text
+        }
+    } else {
+        text
+    };
+    for line in body.lines() {
         let trimmed = line.trim();
         if let Some(heading) = trimmed.strip_prefix('#') {
             let heading = heading.trim_start_matches('#').trim();
@@ -1103,5 +1373,221 @@ name: keepsake-backend
         assert!(!tokens.contains(&"true".to_string()));
         assert!(!tokens.contains(&"42".to_string()));
         assert!(tokens.iter().any(|t| t.contains("keepsake")));
+    }
+}
+
+#[cfg(test)]
+mod doc_compliance_tests {
+    use super::*;
+
+    fn fm(title: &str, description: &str, category: &str) -> MdFrontmatter {
+        MdFrontmatter {
+            title: title.into(),
+            description: description.into(),
+            category: category.into(),
+            use_cases: Vec::new(),
+        }
+    }
+
+    fn empty_fm() -> MdFrontmatter {
+        fm("", "", "")
+    }
+
+    // --- body_without_frontmatter ---
+
+    #[test]
+    fn body_strips_frontmatter_block() {
+        let text = "---\ntitle: Foo\n---\n# Hello\n";
+        assert_eq!(body_without_frontmatter(text), "# Hello\n");
+    }
+
+    #[test]
+    fn body_passthrough_when_no_frontmatter() {
+        let text = "# Hello\n\nSome text.\n";
+        assert_eq!(body_without_frontmatter(text), text);
+    }
+
+    #[test]
+    fn body_passthrough_when_unclosed_frontmatter() {
+        let text = "---\ntitle: Foo\n# Hello\n";
+        // no closing ---, returns original text
+        assert_eq!(body_without_frontmatter(text), text);
+    }
+
+    // --- validate_doc_compliance: frontmatter checks ---
+
+    #[test]
+    fn clean_spec_doc_produces_no_issues() {
+        let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\nBody.\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(issues.is_empty(), "unexpected issues: {issues:?}");
+    }
+
+    #[test]
+    fn missing_frontmatter_block_flagged_for_spec() {
+        let text = "# Title\n\nBody.\n";
+        let issues = validate_doc_compliance("spec", text, &empty_fm(), "");
+        assert!(
+            issues.iter().any(|i| i.contains("missing --- block")),
+            "{issues:?}"
+        );
+    }
+
+    #[test]
+    fn missing_title_description_category_flagged() {
+        let text = "---\n---\n# Title\n";
+        let f = empty_fm();
+        let issues = validate_doc_compliance("doc", text, &f, "");
+        assert!(
+            issues.iter().any(|i| i.contains("missing title")),
+            "{issues:?}"
+        );
+        assert!(
+            issues.iter().any(|i| i.contains("missing description")),
+            "{issues:?}"
+        );
+        assert!(
+            issues.iter().any(|i| i.contains("missing category")),
+            "{issues:?}"
+        );
+    }
+
+    #[test]
+    fn readme_skips_frontmatter_check() {
+        // README.md kind never requires frontmatter
+        let text = "# My Readme\n\nContent.\n";
+        let issues = validate_doc_compliance("readme", text, &empty_fm(), "overview");
+        assert!(
+            !issues.iter().any(|i| i.contains("frontmatter")),
+            "{issues:?}"
+        );
+    }
+
+    #[test]
+    fn claude_md_skips_frontmatter_check() {
+        let text = "# CLAUDE.md\n\n## What this is\n\nSomething.\n";
+        let issues = validate_doc_compliance("claude_md", text, &empty_fm(), "architecture");
+        assert!(
+            !issues.iter().any(|i| i.contains("frontmatter")),
+            "{issues:?}"
+        );
+    }
+
+    // --- validate_doc_compliance: category checks ---
+
+    #[test]
+    fn invalid_category_flagged() {
+        let text = "---\ntitle: T\ndescription: D\ncategory: banana\n---\n# Title\n";
+        let f = fm("T", "D", "banana");
+        let issues = validate_doc_compliance("spec", text, &f, "banana");
+        assert!(
+            issues.iter().any(|i| i.contains("not in standard set")),
+            "{issues:?}"
+        );
+    }
+
+    #[test]
+    fn valid_category_not_flagged() {
+        let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(!issues.iter().any(|i| i.contains("category")), "{issues:?}");
+    }
+
+    // --- validate_doc_compliance: H1 checks ---
+
+    #[test]
+    fn missing_h1_flagged() {
+        let text =
+            "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n\n## Section\n\nBody.\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(issues.iter().any(|i| i.contains("no H1")), "{issues:?}");
+    }
+
+    #[test]
+    fn h1_present_not_flagged() {
+        let text =
+            "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n## Section\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(!issues.iter().any(|i| i.contains("H1")), "{issues:?}");
+    }
+
+    // --- validate_doc_compliance: heading hierarchy ---
+
+    #[test]
+    fn heading_skip_h1_to_h3_flagged() {
+        let text =
+            "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n### Skipped\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(
+            issues.iter().any(|i| i.contains("jumps from H1 to H3")),
+            "{issues:?}"
+        );
+    }
+
+    #[test]
+    fn heading_h1_to_h2_to_h3_is_valid() {
+        let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n## Section\n\n### Sub\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(!issues.iter().any(|i| i.contains("jumps")), "{issues:?}");
+    }
+
+    #[test]
+    fn heading_going_back_up_is_valid() {
+        // H3 → H2 is fine (going shallower is never a violation)
+        let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n## A\n\n### Sub\n\n## B\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(!issues.iter().any(|i| i.contains("jumps")), "{issues:?}");
+    }
+
+    // --- validate_doc_compliance: code blocks ---
+
+    #[test]
+    fn unlabeled_code_block_flagged() {
+        let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n```\nsome code\n```\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(
+            issues.iter().any(|i| i.contains("without language")),
+            "{issues:?}"
+        );
+    }
+
+    #[test]
+    fn labeled_code_block_not_flagged() {
+        let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n```bash\necho hi\n```\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(!issues.iter().any(|i| i.contains("language")), "{issues:?}");
+    }
+
+    #[test]
+    fn multiple_unlabeled_blocks_counted() {
+        let text = "---\ntitle: T\ndescription: D\ncategory: deployment\n---\n# Title\n\n```\na\n```\n\n```\nb\n```\n";
+        let f = fm("T", "D", "deployment");
+        let issues = validate_doc_compliance("spec", text, &f, "deployment");
+        assert!(
+            issues.iter().any(|i| i.contains("2 block(s)")),
+            "{issues:?}"
+        );
+    }
+
+    // --- yaml kinds skip markdown checks ---
+
+    #[test]
+    fn ci_workflow_skips_structure_checks() {
+        // YAML docs shouldn't be checked for H1 or heading hierarchy
+        let issues = validate_doc_compliance("ci_workflow", "name: CI\n", &empty_fm(), "");
+        assert!(!issues.iter().any(|i| i.contains("H1")), "{issues:?}");
+        assert!(
+            !issues.iter().any(|i| i.contains("frontmatter")),
+            "{issues:?}"
+        );
     }
 }

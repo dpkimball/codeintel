@@ -134,6 +134,10 @@ pub struct DocRef {
     pub title: String,
     pub repo: String,
     pub kind: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub category: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -263,6 +267,13 @@ pub struct GuidanceItem {
     pub id: String,
     pub question: String,
     pub answer: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DocViolation {
+    pub repo: String,
+    pub path: String,
+    pub issues: Vec<String>,
 }
 
 impl Architecture {
@@ -464,6 +475,23 @@ impl Architecture {
             primary_source: "bindb",
             source_files_opened: 0,
         })
+    }
+
+    /// All indexed markdown documents with compliance violations, sorted by repo then path.
+    pub fn doc_compliance(&self) -> Result<Vec<DocViolation>> {
+        let mut out = Vec::new();
+        for name in repo_names(&self.store)? {
+            let q = QueryEngine::open(&self.store, &name);
+            for (path, issues) in q.doc_violations()? {
+                out.push(DocViolation {
+                    repo: name.clone(),
+                    path,
+                    issues,
+                });
+            }
+        }
+        out.sort_by(|a, b| a.repo.cmp(&b.repo).then(a.path.cmp(&b.path)));
+        Ok(out)
     }
 
     /// Graph-first implementation plan with drift context.
@@ -1389,6 +1417,8 @@ fn semantic_docs(
                         title: doc.title,
                         repo: name.clone(),
                         kind: doc.kind,
+                        description: doc.description,
+                        category: doc.category,
                     },
                 ));
             }
