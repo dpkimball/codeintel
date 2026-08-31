@@ -434,17 +434,18 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
     if file.path.to_lowercase().ends_with(".md") {
         if let Ok(text) = std::str::from_utf8(&bytes) {
             let fm = parse_md_frontmatter(text);
-            let (title, tokens) = extract_md_tokens(text, &file.path);
+            let (extracted_title, tokens) = extract_md_tokens(text, &file.path);
+            let kind = doc_kind(&file.path);
+            let category = if !fm.category.is_empty() {
+                fm.category.clone()
+            } else {
+                infer_category(&file.path, &kind)
+            };
+            let compliance_issues = validate_doc_compliance(&kind, text, &fm, &category);
             let title = if !fm.title.is_empty() {
                 fm.title
             } else {
-                title
-            };
-            let kind = doc_kind(&file.path);
-            let category = if !fm.category.is_empty() {
-                fm.category
-            } else {
-                infer_category(&file.path, &kind)
+                extracted_title
             };
             let rec = DocRecord {
                 path: file.path.clone(),
@@ -455,6 +456,7 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
                 description: fm.description,
                 category,
                 use_cases: fm.use_cases,
+                compliance_issues,
             };
             put_json(
                 &mut tx,
@@ -476,6 +478,7 @@ fn index_one_file(ctx: &IndexFileCtx<'_>) -> Result<Option<(FileIr, usize)>> {
                 description: String::new(),
                 category: infer_category(&file.path, &kind),
                 use_cases: Vec::new(),
+                compliance_issues: Vec::new(),
             };
             put_json(
                 &mut tx,
@@ -971,6 +974,143 @@ fn parse_md_frontmatter(text: &str) -> MdFrontmatter {
         }
     }
     fm
+}
+
+const VALID_DOC_CATEGORIES: &[&str] = &[
+    "deployment",
+    "development",
+    "architecture",
+    "configuration",
+    "troubleshooting",
+    "testing",
+    "tasks",
+    "vision",
+    "design",
+    "specs",
+    "plans",
+    "reviews",
+    "api",
+    "setup",
+    "usage",
+    "examples",
+    "overview",
+    "doc",
+];
+
+/// Return the markdown body with the leading `---` frontmatter block stripped.
+fn body_without_frontmatter(text: &str) -> &str {
+    let text = text.trim_start();
+    if !text.starts_with("---") {
+        return text;
+    }
+    let rest = &text[3..];
+    if let Some(end) = rest.find("\n---") {
+        rest[end + 4..].trim_start_matches('\n')
+    } else {
+        text
+    }
+}
+
+/// Structural compliance checks run at index time against every indexed markdown document.
+///
+/// Returns a list of human-readable issue strings. An empty vec means the doc is compliant.
+/// Checks vary by `kind`:
+///   - frontmatter fields (title, description, category) required for spec/doc; skipped for
+///     readme, claude_md, and YAML kinds
+///   - category must be in the standard set when present
+///   - H1 heading must be present
+///   - heading levels must not skip (e.g. H1 → H3)
+///   - fenced code blocks must name a language
+fn validate_doc_compliance(
+    kind: &str,
+    text: &str,
+    fm: &MdFrontmatter,
+    category: &str,
+) -> Vec<String> {
+    let mut issues: Vec<String> = Vec::new();
+
+    // Frontmatter field checks (not applicable to orientation or YAML docs)
+    if !matches!(
+        kind,
+        "readme" | "claude_md" | "ci_workflow" | "helm_template" | "helm_values"
+    ) {
+        if !text.trim_start().starts_with("---") {
+            issues.push("frontmatter: missing --- block".into());
+        } else {
+            if fm.title.is_empty() {
+                issues.push("frontmatter: missing title".into());
+            }
+            if fm.description.is_empty() {
+                issues.push("frontmatter: missing description".into());
+            }
+            if fm.category.is_empty() {
+                issues.push("frontmatter: missing category".into());
+            }
+        }
+    }
+
+    // Category must be in the standard set when populated
+    if !category.is_empty() && !VALID_DOC_CATEGORIES.contains(&category) {
+        issues.push(format!("category: '{}' not in standard set", category));
+    }
+
+    // YAML-indexed docs have no markdown structure to validate
+    if matches!(kind, "ci_workflow" | "helm_template" | "helm_values") {
+        return issues;
+    }
+
+    let body = body_without_frontmatter(text);
+
+    // H1 presence
+    if !body
+        .lines()
+        .any(|l| l.trim_start().strip_prefix("# ").is_some() || l.trim_start() == "#")
+    {
+        issues.push("structure: no H1 heading".into());
+    }
+
+    // Heading level continuity: no jumps greater than one level
+    let mut prev_level: u32 = 0;
+    for line in body.lines() {
+        let t = line.trim_start();
+        if !t.starts_with('#') {
+            continue;
+        }
+        let level = t.chars().take_while(|c| *c == '#').count() as u32;
+        if prev_level > 0 && level > prev_level + 1 {
+            issues.push(format!(
+                "structure: heading jumps from H{} to H{}",
+                prev_level, level
+            ));
+            break;
+        }
+        prev_level = level;
+    }
+
+    // Fenced code blocks must declare a language
+    let mut in_block = false;
+    let mut unlabeled: u32 = 0;
+    for line in body.lines() {
+        let t = line.trim_start();
+        if let Some(rest) = t.strip_prefix("```") {
+            if !in_block {
+                if rest.trim().is_empty() {
+                    unlabeled += 1;
+                }
+                in_block = true;
+            } else {
+                in_block = false;
+            }
+        }
+    }
+    if unlabeled > 0 {
+        issues.push(format!(
+            "code: {} block(s) without language specifier",
+            unlabeled
+        ));
+    }
+
+    issues
 }
 
 fn infer_category(path: &str, kind: &str) -> String {

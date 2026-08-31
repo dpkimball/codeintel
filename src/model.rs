@@ -176,6 +176,9 @@ pub struct DocRecord {
     /// Frontmatter `use_cases:` list.
     #[serde(default)]
     pub use_cases: Vec<String>,
+    /// Structural compliance issues detected at index time (missing frontmatter, bad headings, etc.).
+    #[serde(default)]
+    pub compliance_issues: Vec<String>,
 }
 
 /// Pre-authored Q&A pair for pre-implementation guidance.

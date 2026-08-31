@@ -269,6 +269,13 @@ pub struct GuidanceItem {
     pub answer: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct DocViolation {
+    pub repo: String,
+    pub path: String,
+    pub issues: Vec<String>,
+}
+
 impl Architecture {
     /// Open an existing bindb store. This is the only storage detail agents need.
     pub fn open(store_path: impl AsRef<Path>) -> Result<Self> {
@@ -468,6 +475,23 @@ impl Architecture {
             primary_source: "bindb",
             source_files_opened: 0,
         })
+    }
+
+    /// All indexed markdown documents with compliance violations, sorted by repo then path.
+    pub fn doc_compliance(&self) -> Result<Vec<DocViolation>> {
+        let mut out = Vec::new();
+        for name in repo_names(&self.store)? {
+            let q = QueryEngine::open(&self.store, &name);
+            for (path, issues) in q.doc_violations()? {
+                out.push(DocViolation {
+                    repo: name.clone(),
+                    path,
+                    issues,
+                });
+            }
+        }
+        out.sort_by(|a, b| a.repo.cmp(&b.repo).then(a.path.cmp(&b.path)));
+        Ok(out)
     }
 
     /// Graph-first implementation plan with drift context.
