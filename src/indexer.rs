@@ -1061,47 +1061,61 @@ fn validate_doc_compliance(
 
     let body = body_without_frontmatter(text);
 
-    // H1 presence
-    if !body
-        .lines()
-        .any(|l| l.trim_start().strip_prefix("# ").is_some() || l.trim_start() == "#")
-    {
-        issues.push("structure: no H1 heading".into());
-    }
-
-    // Heading level continuity: no jumps greater than one level
+    // Walk body once: fence awareness applies to H1, hierarchy, and unlabeled fences.
+    let mut in_fence = false;
+    let mut has_h1 = false;
     let mut prev_level: u32 = 0;
-    for line in body.lines() {
-        let t = line.trim_start();
-        if !t.starts_with('#') {
-            continue;
-        }
-        let level = t.chars().take_while(|c| *c == '#').count() as u32;
-        if prev_level > 0 && level > prev_level + 1 {
-            issues.push(format!(
-                "structure: heading jumps from H{} to H{}",
-                prev_level, level
-            ));
-            break;
-        }
-        prev_level = level;
-    }
-
-    // Fenced code blocks must declare a language
-    let mut in_block = false;
+    let mut hierarchy_issue: Option<String> = None;
     let mut unlabeled: u32 = 0;
     for line in body.lines() {
         let t = line.trim_start();
         if let Some(rest) = t.strip_prefix("```") {
-            if !in_block {
+            if !in_fence {
                 if rest.trim().is_empty() {
                     unlabeled += 1;
                 }
-                in_block = true;
+                in_fence = true;
             } else {
-                in_block = false;
+                in_fence = false;
             }
+            continue;
         }
+        if in_fence {
+            continue;
+        }
+        // CommonMark: ATX heading needs `#` then space (or end of line for bare `#`).
+        let level = if t == "#" {
+            1
+        } else if let Some(rest) = t.strip_prefix('#') {
+            let hashes = 1 + rest.chars().take_while(|c| *c == '#').count();
+            let after = &t[hashes..];
+            if after.is_empty() || after.starts_with(' ') {
+                hashes as u32
+            } else {
+                0
+            }
+        } else {
+            0
+        };
+        if level == 0 {
+            continue;
+        }
+        if level == 1 {
+            has_h1 = true;
+        }
+        if hierarchy_issue.is_none() && prev_level > 0 && level > prev_level + 1 {
+            hierarchy_issue = Some(format!(
+                "structure: heading jumps from H{} to H{}",
+                prev_level, level
+            ));
+        }
+        prev_level = level;
+    }
+    if !has_h1 {
+        issues.push("structure: no H1 heading".into());
+    }
+    if let Some(msg) = hierarchy_issue {
+        issues.push(msg);
     }
     if unlabeled > 0 {
         issues.push(format!(
@@ -1544,6 +1558,21 @@ mod doc_compliance_tests {
         let f = fm("T", "D", "deployment");
         let issues = validate_doc_compliance("spec", text, &f, "deployment");
         assert!(!issues.iter().any(|i| i.contains("jumps")), "{issues:?}");
+    }
+
+    #[test]
+    fn headings_inside_fenced_examples_ignored_for_hierarchy() {
+        // Real docs embed sample markdown (with its own H1→H3) inside ```markdown fences.
+        let text = "---\ntitle: T\ndescription: D\ncategory: architecture\n---\n\
+# Real Title\n\n## Examples\n\n### Sample\n\n\
+```markdown\n# TODO: Example\n\n### Nested sample heading\n```\n";
+        let f = fm("T", "D", "architecture");
+        let issues = validate_doc_compliance("spec", text, &f, "architecture");
+        assert!(
+            !issues.iter().any(|i| i.contains("jumps")),
+            "fenced example headings must not count: {issues:?}"
+        );
+        assert!(!issues.iter().any(|i| i.contains("no H1")), "{issues:?}");
     }
 
     // --- validate_doc_compliance: code blocks ---
