@@ -209,6 +209,9 @@ pub struct QuestionRecord {
     pub status: QuestionStatus,
     #[serde(default = "default_question_version")]
     pub version: u64,
+    /// Alternate phrasings that share the canonical answer (S1b).
+    #[serde(default)]
+    pub aliases: Vec<String>,
 }
 
 /// GitHub pull request fetched via `gh pr list`. Stored per codeintel repo name.
