@@ -14,6 +14,38 @@ use std::time::SystemTime;
 
 /// Parse `question-bank.md` and upsert all Q&A rows into the store.
 /// Returns the count of questions indexed.
+/// Upsert one Q&A row into bindb (same object id as bulk `index-questions`).
+pub fn put_question(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    question: &str,
+    answer: &str,
+) -> Result<()> {
+    store.register_namespace(NAMESPACE, ACTOR)?;
+    let tags = compute_tags(question, answer);
+    let rec = QuestionRecord {
+        id: id.to_string(),
+        repo: repo.to_string(),
+        question: question.to_string(),
+        answer: answer.to_string(),
+        tags,
+    };
+    let provenance = Provenance {
+        source: ProvenanceSource::Import("put-question".into()),
+        source_ref: format!("{repo}/{id}"),
+        imported_at_ms: SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64,
+    };
+    let oid = question_id(repo, id);
+    let mut tx = Transaction::new();
+    put_json(&mut tx, oid, &rec, Some(provenance))?;
+    store.commit_buffered(tx, ACTOR, format!("question {repo}/{id}"))?;
+    Ok(())
+}
+
 pub fn index_questions(store: &BinderStore, bank_path: &std::path::Path) -> Result<usize> {
     store.register_namespace(NAMESPACE, ACTOR)?;
 
@@ -152,6 +184,23 @@ mod tests {
         assert_eq!(recs.len(), 1);
         assert_eq!(recs[0].id, "X1");
         assert_eq!(recs[0].repo, "");
+    }
+
+    #[test]
+    fn put_question_round_trips_in_store() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        put_question(
+            &store,
+            "codeintel",
+            "T99",
+            "What is the write boundary?",
+            "codeintel writes to bindb only.",
+        )
+        .unwrap();
+        let q = crate::query::QueryEngine::open(&store, "codeintel");
+        let all = q.questions().unwrap();
+        assert!(all.iter().any(|r| r.id == "T99" && r.answer.contains("bindb")));
     }
 
     #[test]
