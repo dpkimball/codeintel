@@ -268,6 +268,8 @@ pub struct GuidanceItem {
     pub question: String,
     pub answer: String,
     pub version: u64,
+    /// Token overlap count: |match_tokens ∩ record.tags|.
+    pub match_score: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1469,6 +1471,7 @@ fn semantic_guidance(
                         question: rec.question,
                         answer: rec.answer,
                         version: rec.version,
+                        match_score: overlap as u32,
                     },
                 ));
             }
