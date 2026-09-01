@@ -28,6 +28,13 @@ pub enum CodeintelError {
 
     #[error("{0}")]
     Other(String),
+
+    #[error("stale_version")]
+    StaleVersion {
+        repo: String,
+        id: String,
+        current_version: u64,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, CodeintelError>;

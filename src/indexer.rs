@@ -795,6 +795,7 @@ fn git_provenance(head: &GitHead) -> Provenance {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_millis() as u64,
+        ..Default::default()
     }
 }
 

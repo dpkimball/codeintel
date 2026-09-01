@@ -139,6 +139,16 @@ enum Cmd {
         /// Path to question-bank.md.
         #[arg(long)]
         bank: PathBuf,
+        /// Replace active rows even when import_base_version mismatches (never reactivates retired/deleted).
+        #[arg(long)]
+        force: bool,
+    },
+    /// Export indexed questions to markdown and refresh import provenance.
+    ExportQuestions {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        bank: PathBuf,
     },
     /// Upsert one Q&A pair into bindb (API / manual authoring without re-indexing the bank file).
     PutQuestion {
@@ -155,6 +165,10 @@ enum Cmd {
         question: String,
         #[arg(long)]
         answer: String,
+        #[arg(long)]
+        reason: Option<String>,
+        #[arg(long)]
+        expected_version: Option<u64>,
     },
     /// Update only the answer on an existing question (question text unchanged).
     PatchQuestion {
@@ -166,6 +180,46 @@ enum Cmd {
         id: String,
         #[arg(long)]
         answer: String,
+        #[arg(long)]
+        reason: Option<String>,
+        #[arg(long)]
+        expected_version: Option<u64>,
+    },
+    RetireQuestion {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        repo: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long)]
+        reason: Option<String>,
+        #[arg(long)]
+        expected_version: Option<u64>,
+    },
+    ReactivateQuestion {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        repo: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long)]
+        reason: Option<String>,
+        #[arg(long)]
+        expected_version: Option<u64>,
+    },
+    DeleteQuestion {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        repo: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long)]
+        reason: Option<String>,
+        #[arg(long)]
+        expected_version: Option<u64>,
     },
 }
 
@@ -482,15 +536,29 @@ fn run() -> codeintel::Result<()> {
                 }))?
             );
         }
-        Cmd::IndexQuestions { store, bank } => {
+        Cmd::IndexQuestions { store, bank, force } => {
             let db = open_store(&store)?;
-            let count = codeintel::index_questions(&db, &bank)?;
+            let report = codeintel::index_questions_with_opts(&db, &bank, force)?;
             db.close()?;
             println!(
                 "{}",
                 serde_json::to_string_pretty(&serde_json::json!({
                     "bank": bank.display().to_string(),
-                    "questions_indexed": count,
+                    "questions_indexed": report.indexed,
+                    "provenance_synced": report.synced,
+                    "conflicts": report.conflicts,
+                }))?
+            );
+        }
+        Cmd::ExportQuestions { store, bank } => {
+            let db = open_store(&store)?;
+            let count = codeintel::export_questions(&db, &bank)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "bank": bank.display().to_string(),
+                    "questions_exported": count,
                 }))?
             );
         }
@@ -500,39 +568,96 @@ fn run() -> codeintel::Result<()> {
             id,
             question,
             answer,
-        } => {
-            let repo_name = if repo == "cross" { String::new() } else { repo };
+            reason,
+            expected_version,
+        } => run_question_write(|| {
+            let repo_name = normalize_repo(&repo);
             let db = open_store(&store)?;
-            codeintel::put_question(&db, &repo_name, &id, &question, &answer)?;
+            let rec = codeintel::put_question_with_opts(
+                &db,
+                &repo_name,
+                &id,
+                &question,
+                &answer,
+                question_write_opts(reason.as_deref(), expected_version),
+            )?;
             db.close()?;
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({
-                    "repo": repo_name,
-                    "id": id,
-                    "stored": true,
-                }))?
-            );
-        }
+            print_question_record(&repo_name, &id, rec, "stored")
+        })?,
         Cmd::PatchQuestion {
             store,
             repo,
             id,
             answer,
-        } => {
-            let repo_name = if repo == "cross" { String::new() } else { repo };
+            reason,
+            expected_version,
+        } => run_question_write(|| {
+            let repo_name = normalize_repo(&repo);
             let db = open_store(&store)?;
-            codeintel::patch_question_answer(&db, &repo_name, &id, &answer)?;
+            let rec = codeintel::patch_question_with_opts(
+                &db,
+                &repo_name,
+                &id,
+                &answer,
+                question_write_opts(reason.as_deref(), expected_version),
+            )?;
             db.close()?;
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({
-                    "repo": repo_name,
-                    "id": id,
-                    "updated": true,
-                }))?
-            );
-        }
+            print_question_record(&repo_name, &id, rec, "updated")
+        })?,
+        Cmd::RetireQuestion {
+            store,
+            repo,
+            id,
+            reason,
+            expected_version,
+        } => run_question_write(|| {
+            let repo_name = normalize_repo(&repo);
+            let db = open_store(&store)?;
+            let rec = codeintel::retire_question(
+                &db,
+                &repo_name,
+                &id,
+                question_write_opts(reason.as_deref(), expected_version),
+            )?;
+            db.close()?;
+            print_question_record(&repo_name, &id, rec, "retired")
+        })?,
+        Cmd::ReactivateQuestion {
+            store,
+            repo,
+            id,
+            reason,
+            expected_version,
+        } => run_question_write(|| {
+            let repo_name = normalize_repo(&repo);
+            let db = open_store(&store)?;
+            let rec = codeintel::reactivate_question(
+                &db,
+                &repo_name,
+                &id,
+                question_write_opts(reason.as_deref(), expected_version),
+            )?;
+            db.close()?;
+            print_question_record(&repo_name, &id, rec, "reactivated")
+        })?,
+        Cmd::DeleteQuestion {
+            store,
+            repo,
+            id,
+            reason,
+            expected_version,
+        } => run_question_write(|| {
+            let repo_name = normalize_repo(&repo);
+            let db = open_store(&store)?;
+            let rec = codeintel::delete_question(
+                &db,
+                &repo_name,
+                &id,
+                question_write_opts(reason.as_deref(), expected_version),
+            )?;
+            db.close()?;
+            print_question_record(&repo_name, &id, rec, "deleted")
+        })?,
         Cmd::Validate { repo, store, name } => {
             let name = name.or_else(|| repo.file_name().map(|s| s.to_string_lossy().into_owned()));
             let opts = IndexOptions {
@@ -554,6 +679,65 @@ fn run() -> codeintel::Result<()> {
         }
     }
     Ok(())
+}
+
+fn normalize_repo(repo: &str) -> String {
+    if repo == "cross" {
+        String::new()
+    } else {
+        repo.to_string()
+    }
+}
+
+fn question_write_opts<'a>(
+    reason: Option<&'a str>,
+    expected_version: Option<u64>,
+) -> codeintel::QuestionWriteOpts<'a> {
+    codeintel::QuestionWriteOpts {
+        reason,
+        expected_version,
+    }
+}
+
+fn run_question_write(
+    op: impl FnOnce() -> codeintel::Result<serde_json::Value>,
+) -> codeintel::Result<()> {
+    match op() {
+        Ok(v) => {
+            println!("{}", serde_json::to_string_pretty(&v)?);
+            Ok(())
+        }
+        Err(codeintel::CodeintelError::StaleVersion {
+            repo,
+            id,
+            current_version,
+        }) => {
+            let body = serde_json::json!({
+                "error": "stale_version",
+                "repo": repo,
+                "id": id,
+                "current_version": current_version,
+            });
+            eprintln!("{}", serde_json::to_string_pretty(&body)?);
+            std::process::exit(2);
+        }
+        Err(err) => Err(err),
+    }
+}
+
+fn print_question_record(
+    repo: &str,
+    id: &str,
+    rec: codeintel::model::QuestionRecord,
+    action: &str,
+) -> codeintel::Result<serde_json::Value> {
+    Ok(serde_json::json!({
+        "repo": repo,
+        "id": id,
+        action: true,
+        "version": rec.version,
+        "status": rec.status,
+    }))
 }
 
 fn json_stats(s: &codeintel::IndexStats) -> serde_json::Value {

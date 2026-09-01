@@ -267,6 +267,7 @@ pub struct GuidanceItem {
     pub id: String,
     pub question: String,
     pub answer: String,
+    pub version: u64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1445,6 +1446,9 @@ fn semantic_guidance(
     for name in all_names {
         let q = QueryEngine::open(store, name.as_str());
         for rec in q.questions()? {
+            if rec.status != crate::model::QuestionStatus::Active {
+                continue;
+            }
             let repo_match = rec.repo.is_empty()
                 || anchor_repos.is_empty()
                 || anchor_repos.contains(rec.repo.as_str());
@@ -1464,6 +1468,7 @@ fn semantic_guidance(
                         id: rec.id,
                         question: rec.question,
                         answer: rec.answer,
+                        version: rec.version,
                     },
                 ));
             }

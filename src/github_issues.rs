@@ -37,6 +37,7 @@ pub fn index_issues(store: &BinderStore, github_repo: &str, repo_name: &str) -> 
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_millis() as u64,
+        ..Default::default()
     };
 
     let mut count = 0;
@@ -177,6 +178,7 @@ pub fn index_prs(store: &BinderStore, github_repo: &str, repo_name: &str) -> Res
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_millis() as u64,
+        ..Default::default()
     };
 
     let mut count = 0;

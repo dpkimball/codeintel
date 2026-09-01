@@ -46,6 +46,7 @@ pub fn link_issues_from_commits(
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_millis() as u64,
+        ..Default::default()
     };
 
     // Parse: lines starting with 40 hex chars + space are commit headers;

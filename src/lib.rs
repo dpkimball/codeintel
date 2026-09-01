@@ -37,6 +37,10 @@ pub use github_issues::{index_issues, index_prs};
 pub use impact::{analyze as impact_analyze, ImpactReport};
 pub use indexer::{index, IndexOptions, IndexStats};
 pub use query::QueryEngine;
-pub use question_bank::{get_question, index_questions, patch_question_answer, put_question};
+pub use question_bank::{
+    content_hash, delete_question, export_questions, get_question, index_questions,
+    index_questions_with_opts, patch_question_answer, patch_question_with_opts, put_question,
+    put_question_with_opts, reactivate_question, retire_question, QuestionWriteOpts,
+};
 pub use report::{run_validation, ValidationReport};
 pub use workflow::{finish as workflow_finish, start as workflow_start, WorkflowReport};
