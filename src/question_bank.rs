@@ -380,17 +380,11 @@ fn upsert_import_row(
         return Ok("indexed");
     };
 
-    if current.status == QuestionStatus::Retired || current.status == QuestionStatus::Deleted {
+    if current.status == QuestionStatus::Deleted {
         if force {
             return Err(CodeintelError::Other(format!(
-                "import --force cannot reactivate {} status {}/{}",
-                if current.status == QuestionStatus::Deleted {
-                    "deleted"
-                } else {
-                    "retired"
-                },
-                rec.repo,
-                rec.id
+                "import --force cannot reactivate deleted {}/{}",
+                rec.repo, rec.id
             )));
         }
         eprintln!(
@@ -398,6 +392,22 @@ fn upsert_import_row(
             rec.repo, rec.id, current.status
         );
         return Ok("conflict");
+    }
+
+    if current.status == QuestionStatus::Retired {
+        current.status = QuestionStatus::Active;
+        current.question = rec.question.clone();
+        current.answer = rec.answer.clone();
+        current.tags = rec.tags.clone();
+        current.aliases = rec.aliases.clone();
+        current.version += 1;
+        commit_record(
+            store,
+            &current,
+            import_provenance(bank_path, &incoming_hash, current.version),
+            &format!("question import reactivate {}/{}", rec.repo, rec.id),
+        )?;
+        return Ok("indexed");
     }
 
     let canonical_hash = content_hash(&current.question, &current.answer);
@@ -814,6 +824,43 @@ mod tests {
         .unwrap();
         let loaded = get_question(&store, "codeintel", "G1").unwrap().unwrap();
         assert_eq!(loaded.status, QuestionStatus::Retired);
+    }
+
+    #[test]
+    fn bank_import_reactivates_retired_row() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let bank = dir.path().join("bank.md");
+        put_question(
+            &store,
+            "codeintel",
+            "G1",
+            "What is bindb boundary?",
+            "codeintel writes bindb only.",
+        )
+        .unwrap();
+        let retired = retire_question(
+            &store,
+            "codeintel",
+            "G1",
+            QuestionWriteOpts {
+                reason: Some("retire"),
+                expected_version: Some(1),
+            },
+        )
+        .unwrap();
+        assert_eq!(retired.status, QuestionStatus::Retired);
+        std::fs::write(
+            &bank,
+            "## codeintel\n| ID | Question | Answer |\n|---|---|---|\n\
+             | G1 | What is bindb boundary? | codeintel writes bindb only. |\n",
+        )
+        .unwrap();
+        let report = index_questions_with_opts(&store, &bank, false).unwrap();
+        assert_eq!(report.rows_active, 1);
+        assert_eq!(report.conflicts, 0);
+        let loaded = get_question(&store, "codeintel", "G1").unwrap().unwrap();
+        assert_eq!(loaded.status, QuestionStatus::Active);
     }
 
     #[test]
