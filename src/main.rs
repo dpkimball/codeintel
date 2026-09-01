@@ -170,7 +170,7 @@ enum Cmd {
         #[arg(long)]
         expected_version: Option<u64>,
     },
-    /// Update only the answer on an existing question (question text unchanged).
+    /// Update answer and/or append aliases on an existing question.
     PatchQuestion {
         #[arg(long)]
         store: PathBuf,
@@ -179,7 +179,10 @@ enum Cmd {
         #[arg(long)]
         id: String,
         #[arg(long)]
-        answer: String,
+        answer: Option<String>,
+        /// Comma-separated alias strings to append.
+        #[arg(long, value_delimiter = ',')]
+        aliases: Vec<String>,
         #[arg(long)]
         reason: Option<String>,
         #[arg(long)]
@@ -547,6 +550,8 @@ fn run() -> codeintel::Result<()> {
                     "questions_indexed": report.indexed,
                     "provenance_synced": report.synced,
                     "conflicts": report.conflicts,
+                    "rows_parsed": report.rows_parsed,
+                    "rows_active": report.rows_active,
                 }))?
             );
         }
@@ -589,16 +594,24 @@ fn run() -> codeintel::Result<()> {
             repo,
             id,
             answer,
+            aliases,
             reason,
             expected_version,
         } => run_question_write(|| {
             let repo_name = normalize_repo(&repo);
             let db = open_store(&store)?;
+            let answer_ref = answer.as_deref();
+            let aliases_ref = if aliases.is_empty() {
+                None
+            } else {
+                Some(aliases.as_slice())
+            };
             let rec = codeintel::patch_question_with_opts(
                 &db,
                 &repo_name,
                 &id,
-                &answer,
+                answer_ref,
+                aliases_ref,
                 question_write_opts(reason.as_deref(), expected_version),
             )?;
             db.close()?;

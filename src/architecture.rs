@@ -270,6 +270,8 @@ pub struct GuidanceItem {
     pub version: u64,
     /// Token overlap count: |match_tokens ∩ record.tags|.
     pub match_score: u32,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub aliases: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1472,6 +1474,7 @@ fn semantic_guidance(
                         answer: rec.answer,
                         version: rec.version,
                         match_score: overlap as u32,
+                        aliases: rec.aliases.clone(),
                     },
                 ));
             }

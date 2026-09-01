@@ -28,6 +28,10 @@ pub struct IndexQuestionsReport {
     pub indexed: usize,
     pub synced: usize,
     pub conflicts: usize,
+    /// Rows parsed from the bank markdown file.
+    pub rows_parsed: usize,
+    /// Rows successfully indexed or provenance-synced.
+    pub rows_active: usize,
 }
 
 fn now_ms() -> u64 {
@@ -158,7 +162,7 @@ pub fn put_question_with_opts(
         check_expected_version(Some(&rec), opts.expected_version, repo, id)?;
         rec.question = question.to_string();
         rec.answer = answer.to_string();
-        rec.tags = compute_tags(question, answer);
+        rec.tags = compute_tags(question, answer, &rec.aliases);
         rec.version += 1;
         commit_record(
             store,
@@ -174,9 +178,10 @@ pub fn put_question_with_opts(
             repo: repo.to_string(),
             question: question.to_string(),
             answer: answer.to_string(),
-            tags: compute_tags(question, answer),
+            tags: compute_tags(question, answer, &[]),
             status: QuestionStatus::Active,
             version: 1,
+            aliases: Vec::new(),
         };
         commit_record(
             store,
@@ -199,7 +204,8 @@ pub fn patch_question_answer(
         store,
         repo,
         id,
-        answer,
+        Some(answer),
+        None,
         QuestionWriteOpts {
             reason: None,
             expected_version: None,
@@ -211,9 +217,15 @@ pub fn patch_question_with_opts(
     store: &BinderStore,
     repo: &str,
     id: &str,
-    answer: &str,
+    answer: Option<&str>,
+    aliases_append: Option<&[String]>,
     opts: QuestionWriteOpts<'_>,
 ) -> Result<QuestionRecord> {
+    if answer.is_none() && aliases_append.map(|a| a.is_empty()).unwrap_or(true) {
+        return Err(CodeintelError::Other(
+            "patch requires at least one of answer or aliases".into(),
+        ));
+    }
     let reason = require_reason(opts.reason, "patch")?;
     let existing = get_question(store, repo, id)?
         .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
@@ -224,8 +236,22 @@ pub fn patch_question_with_opts(
     }
     check_expected_version(Some(&existing), opts.expected_version, repo, id)?;
     let mut rec = existing;
-    rec.answer = answer.to_string();
-    rec.tags = compute_tags(&rec.question, answer);
+    if let Some(answer) = answer {
+        rec.answer = answer.to_string();
+    }
+    if let Some(append) = aliases_append {
+        for alias in append {
+            let trimmed = alias.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            let dup = rec.aliases.iter().any(|a| a.eq_ignore_ascii_case(trimmed));
+            if !dup {
+                rec.aliases.push(trimmed.to_string());
+            }
+        }
+    }
+    rec.tags = compute_tags(&rec.question, &rec.answer, &rec.aliases);
     rec.version += 1;
     commit_record(
         store,
@@ -312,7 +338,7 @@ pub fn delete_question(
     let mut rec = existing;
     rec.status = QuestionStatus::Deleted;
     rec.answer = DELETED_TOMBSTONE.to_string();
-    rec.tags = compute_tags(&rec.question, DELETED_TOMBSTONE);
+    rec.tags = compute_tags(&rec.question, DELETED_TOMBSTONE, &[]);
     rec.version += 1;
     commit_record(
         store,
@@ -429,7 +455,10 @@ pub fn index_questions_with_opts(
 
     let records = parse_question_bank(&content);
     let bank_ref = bank_path.display().to_string();
-    let mut report = IndexQuestionsReport::default();
+    let mut report = IndexQuestionsReport {
+        rows_parsed: records.len(),
+        ..IndexQuestionsReport::default()
+    };
 
     for rec in &records {
         match upsert_import_row(store, rec, &bank_ref, force)? {
@@ -439,6 +468,7 @@ pub fn index_questions_with_opts(
             _ => {}
         }
     }
+    report.rows_active = report.indexed + report.synced;
 
     Ok(report)
 }
@@ -467,14 +497,32 @@ pub fn export_questions(store: &BinderStore, bank_path: &std::path::Path) -> Res
             format!("## {repo}")
         };
         lines.push(section);
-        lines.push("| ID | Question | Answer |".to_string());
-        lines.push("|---|---|---|".to_string());
+        let section_has_aliases = recs.iter().any(|r| !r.aliases.is_empty());
+        if section_has_aliases {
+            lines.push("| ID | Question | Answer | Aliases |".to_string());
+            lines.push("|---|---|---|---|".to_string());
+        } else {
+            lines.push("| ID | Question | Answer |".to_string());
+            lines.push("|---|---|---|".to_string());
+        }
         recs.sort_by(|a, b| a.id.cmp(&b.id));
         for rec in &recs {
-            lines.push(format!(
-                "| {} | {} | {} |",
-                rec.id, rec.question, rec.answer
-            ));
+            if section_has_aliases {
+                let aliases = if rec.aliases.is_empty() {
+                    String::new()
+                } else {
+                    format!("also: {}", rec.aliases.join("; "))
+                };
+                lines.push(format!(
+                    "| {} | {} | {} | {} |",
+                    rec.id, rec.question, rec.answer, aliases
+                ));
+            } else {
+                lines.push(format!(
+                    "| {} | {} | {} |",
+                    rec.id, rec.question, rec.answer
+                ));
+            }
             count += 1;
             let hash = content_hash(&rec.question, &rec.answer);
             commit_record(
@@ -526,6 +574,11 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
         let id = cells[1];
         let question = cells[2];
         let answer = cells[3];
+        let aliases = if cells.len() >= 6 && !cells[4].is_empty() {
+            parse_aliases_cell(cells[4])
+        } else {
+            Vec::new()
+        };
 
         if id.is_empty()
             || id == "#"
@@ -539,7 +592,7 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
             continue;
         }
 
-        let tags = compute_tags(question, answer);
+        let tags = compute_tags(question, answer, &aliases);
 
         records.push(QuestionRecord {
             id: id.to_string(),
@@ -549,14 +602,32 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
             tags,
             status: QuestionStatus::Active,
             version: 1,
+            aliases,
         });
     }
 
     records
 }
 
-fn compute_tags(question: &str, answer: &str) -> Vec<String> {
-    let combined = format!("{question} {answer}").to_lowercase();
+fn parse_aliases_cell(cell: &str) -> Vec<String> {
+    let mut s = cell.trim();
+    if let Some(rest) = s.strip_prefix("also:") {
+        s = rest.trim();
+    }
+    s.split(';')
+        .map(str::trim)
+        .filter(|part| !part.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+fn compute_tags(question: &str, answer: &str, aliases: &[String]) -> Vec<String> {
+    let mut combined = format!("{question} {answer}");
+    for alias in aliases {
+        combined.push(' ');
+        combined.push_str(alias);
+    }
+    let combined = combined.to_lowercase();
     let mut tags: Vec<String> = request_tokens(&combined)
         .into_iter()
         .filter(|t| t.len() >= 4)
@@ -600,7 +671,8 @@ mod tests {
             &store,
             "codeintel",
             "T98",
-            "B.",
+            Some("B."),
+            None,
             QuestionWriteOpts {
                 reason: Some("correction"),
                 expected_version: Some(99),
@@ -608,6 +680,39 @@ mod tests {
         )
         .unwrap_err();
         assert!(matches!(err, CodeintelError::StaleVersion { .. }));
+    }
+
+    #[test]
+    fn parses_optional_aliases_column() {
+        let md = "## codeintel\n\
+                  | ID | Question | Answer | Aliases |\n\
+                  |---|---|---|---|\n\
+                  | C7 | Canonical? | Answer text. | also: paraphrase one; paraphrase two |\n";
+        let recs = parse_question_bank(md);
+        assert_eq!(recs.len(), 1);
+        assert_eq!(recs[0].aliases.len(), 2);
+        assert_eq!(recs[0].aliases[0], "paraphrase one");
+    }
+
+    #[test]
+    fn patch_appends_aliases_without_answer() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let created = put_question(&store, "codeintel", "T99", "Q?", "A.").unwrap();
+        let updated = patch_question_with_opts(
+            &store,
+            "codeintel",
+            "T99",
+            None,
+            Some(&["also phrasing".into()]),
+            QuestionWriteOpts {
+                reason: Some("enrichment"),
+                expected_version: Some(created.version),
+            },
+        )
+        .unwrap();
+        assert_eq!(updated.aliases, vec!["also phrasing"]);
+        assert_eq!(updated.answer, "A.");
     }
 
     #[test]
@@ -619,7 +724,8 @@ mod tests {
             &store,
             "codeintel",
             "T98",
-            "New authoritative answer.",
+            Some("New authoritative answer."),
+            None,
             QuestionWriteOpts {
                 reason: Some("correction"),
                 expected_version: Some(created.version),
