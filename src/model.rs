@@ -183,6 +183,19 @@ pub struct DocRecord {
 
 /// Pre-authored Q&A pair for pre-implementation guidance.
 /// Stored under `code://question/{repo}/{id}` or `code://question/cross/{id}`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum QuestionStatus {
+    #[default]
+    Active,
+    Retired,
+    Deleted,
+}
+
+fn default_question_version() -> u64 {
+    1
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuestionRecord {
     pub id: String,
@@ -192,6 +205,10 @@ pub struct QuestionRecord {
     pub answer: String,
     /// Tokens (≥ 4 chars) from question + answer text for overlap matching.
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub status: QuestionStatus,
+    #[serde(default = "default_question_version")]
+    pub version: u64,
 }
 
 /// GitHub pull request fetched via `gh pr list`. Stored per codeintel repo name.

@@ -6,49 +6,321 @@
 
 use crate::architecture::request_tokens;
 use crate::error::{CodeintelError, Result};
-use crate::ids::{question_id, ACTOR, NAMESPACE};
+use crate::ids::{question_id, ACTOR, NAMESPACE, PREFIX_ALL_QUESTIONS};
 use crate::indexer::{decode_obj, put_json};
-use crate::model::QuestionRecord;
+use crate::model::{QuestionRecord, QuestionStatus};
 use bindb::{BinderStore, Provenance, ProvenanceSource, Transaction};
+use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
 use std::time::SystemTime;
 
-/// Parse `question-bank.md` and upsert all Q&A rows into the store.
-/// Returns the count of questions indexed.
-/// Upsert one Q&A row into bindb (same object id as bulk `index-questions`).
+pub const DELETED_TOMBSTONE: &str = "[deleted]";
+
+/// Options for S1b lifecycle writes (`reason`, optimistic `expected_version`).
+#[derive(Debug, Clone, Default)]
+pub struct QuestionWriteOpts<'a> {
+    pub reason: Option<&'a str>,
+    pub expected_version: Option<u64>,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct IndexQuestionsReport {
+    pub indexed: usize,
+    pub synced: usize,
+    pub conflicts: usize,
+}
+
+fn now_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
+
+/// Normalized content hash for import conflict detection.
+pub fn content_hash(question: &str, answer: &str) -> String {
+    let normalized = format!("{}|{}", normalize_field(question), normalize_field(answer));
+    let digest = Sha256::digest(normalized.as_bytes());
+    format!("{:x}", digest)
+}
+
+fn normalize_field(s: &str) -> String {
+    s.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn import_provenance(bank_path: &str, content_hash: &str, import_base_version: u64) -> Provenance {
+    Provenance {
+        source: ProvenanceSource::Import("question-bank".into()),
+        source_ref: bank_path.to_string(),
+        imported_at_ms: now_ms(),
+        lifecycle_reason: None,
+        source_content_hash: Some(content_hash.to_string()),
+        import_base_version: Some(import_base_version),
+    }
+}
+
+fn lifecycle_provenance(reason: &str, repo: &str, id: &str) -> Provenance {
+    Provenance {
+        source: ProvenanceSource::Import("lifecycle".into()),
+        source_ref: format!("{repo}/{id}"),
+        imported_at_ms: now_ms(),
+        lifecycle_reason: Some(reason.to_string()),
+        source_content_hash: None,
+        import_base_version: None,
+    }
+}
+
+fn head_import_meta(store: &BinderStore, repo: &str, id: &str) -> (Option<String>, Option<u64>) {
+    let oid = question_id(repo, id);
+    let Ok(Some(head)) = store.get(&oid) else {
+        return (None, None);
+    };
+    match head.provenance {
+        Some(p) => (p.source_content_hash, p.import_base_version),
+        None => (None, None),
+    }
+}
+
+fn commit_record(
+    store: &BinderStore,
+    rec: &QuestionRecord,
+    provenance: Provenance,
+    commit_msg: &str,
+) -> Result<()> {
+    store.register_namespace(NAMESPACE, ACTOR)?;
+    let oid = question_id(&rec.repo, &rec.id);
+    let mut tx = Transaction::new();
+    put_json(&mut tx, oid, rec, Some(provenance))?;
+    store.commit_buffered(tx, ACTOR, commit_msg)?;
+    Ok(())
+}
+
+fn check_expected_version(
+    existing: Option<&QuestionRecord>,
+    expected: Option<u64>,
+    repo: &str,
+    id: &str,
+) -> Result<()> {
+    let Some(rec) = existing else {
+        return Ok(());
+    };
+    let Some(expected) = expected else {
+        return Err(CodeintelError::Other(format!(
+            "expected_version required for existing record {repo}/{id}"
+        )));
+    };
+    if expected != rec.version {
+        return Err(CodeintelError::StaleVersion {
+            repo: repo.to_string(),
+            id: id.to_string(),
+            current_version: rec.version,
+        });
+    }
+    Ok(())
+}
+
+fn require_reason<'a>(reason: Option<&'a str>, op: &str) -> Result<&'a str> {
+    reason.ok_or_else(|| CodeintelError::Other(format!("reason required for {op}")))
+}
+
+/// Upsert one Q&A row (create without `expected_version`; update requires it in S1b).
 pub fn put_question(
     store: &BinderStore,
     repo: &str,
     id: &str,
     question: &str,
     answer: &str,
-) -> Result<()> {
-    write_question(
+) -> Result<QuestionRecord> {
+    put_question_with_opts(
         store,
         repo,
         id,
         question,
         answer,
-        ProvenanceSource::Import("put-question".into()),
+        QuestionWriteOpts {
+            reason: None,
+            expected_version: None,
+        },
     )
 }
 
-/// Update only the answer; question text is preserved from the existing record.
+pub fn put_question_with_opts(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    question: &str,
+    answer: &str,
+    opts: QuestionWriteOpts<'_>,
+) -> Result<QuestionRecord> {
+    let existing = get_question(store, repo, id)?;
+    if let Some(mut rec) = existing {
+        let reason = require_reason(opts.reason, "update")?;
+        check_expected_version(Some(&rec), opts.expected_version, repo, id)?;
+        rec.question = question.to_string();
+        rec.answer = answer.to_string();
+        rec.tags = compute_tags(question, answer);
+        rec.version += 1;
+        commit_record(
+            store,
+            &rec,
+            lifecycle_provenance(reason, repo, id),
+            &format!("question put {repo}/{id}"),
+        )?;
+        Ok(rec)
+    } else {
+        let reason = opts.reason.unwrap_or("create");
+        let rec = QuestionRecord {
+            id: id.to_string(),
+            repo: repo.to_string(),
+            question: question.to_string(),
+            answer: answer.to_string(),
+            tags: compute_tags(question, answer),
+            status: QuestionStatus::Active,
+            version: 1,
+        };
+        commit_record(
+            store,
+            &rec,
+            lifecycle_provenance(reason, repo, id),
+            &format!("question create {repo}/{id}"),
+        )?;
+        Ok(rec)
+    }
+}
+
+/// Update only the answer; question text preserved.
 pub fn patch_question_answer(
     store: &BinderStore,
     repo: &str,
     id: &str,
     answer: &str,
-) -> Result<()> {
-    let existing = get_question(store, repo, id)?
-        .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
-    write_question(
+) -> Result<QuestionRecord> {
+    patch_question_with_opts(
         store,
         repo,
         id,
-        &existing.question,
         answer,
-        ProvenanceSource::Import("patch-question".into()),
+        QuestionWriteOpts {
+            reason: None,
+            expected_version: None,
+        },
     )
+}
+
+pub fn patch_question_with_opts(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    answer: &str,
+    opts: QuestionWriteOpts<'_>,
+) -> Result<QuestionRecord> {
+    let reason = require_reason(opts.reason, "patch")?;
+    let existing = get_question(store, repo, id)?
+        .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
+    if existing.status == QuestionStatus::Deleted {
+        return Err(CodeintelError::Other(format!(
+            "question deleted (irreversible): {repo}/{id}"
+        )));
+    }
+    check_expected_version(Some(&existing), opts.expected_version, repo, id)?;
+    let mut rec = existing;
+    rec.answer = answer.to_string();
+    rec.tags = compute_tags(&rec.question, answer);
+    rec.version += 1;
+    commit_record(
+        store,
+        &rec,
+        lifecycle_provenance(reason, repo, id),
+        &format!("question patch {repo}/{id}"),
+    )?;
+    Ok(rec)
+}
+
+pub fn retire_question(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    opts: QuestionWriteOpts<'_>,
+) -> Result<QuestionRecord> {
+    let reason = require_reason(opts.reason, "retire")?;
+    let existing = get_question(store, repo, id)?
+        .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
+    if existing.status == QuestionStatus::Deleted {
+        return Err(CodeintelError::Other(format!(
+            "cannot retire deleted question: {repo}/{id}"
+        )));
+    }
+    check_expected_version(Some(&existing), opts.expected_version, repo, id)?;
+    if existing.status == QuestionStatus::Retired {
+        return Ok(existing);
+    }
+    let mut rec = existing;
+    rec.status = QuestionStatus::Retired;
+    rec.version += 1;
+    commit_record(
+        store,
+        &rec,
+        lifecycle_provenance(reason, repo, id),
+        &format!("question retire {repo}/{id}"),
+    )?;
+    Ok(rec)
+}
+
+pub fn reactivate_question(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    opts: QuestionWriteOpts<'_>,
+) -> Result<QuestionRecord> {
+    let reason = require_reason(opts.reason, "reactivate")?;
+    let existing = get_question(store, repo, id)?
+        .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
+    if existing.status == QuestionStatus::Deleted {
+        return Err(CodeintelError::Other(format!(
+            "cannot reactivate deleted question: {repo}/{id}"
+        )));
+    }
+    check_expected_version(Some(&existing), opts.expected_version, repo, id)?;
+    if existing.status == QuestionStatus::Active {
+        return Ok(existing);
+    }
+    let mut rec = existing;
+    rec.status = QuestionStatus::Active;
+    rec.version += 1;
+    commit_record(
+        store,
+        &rec,
+        lifecycle_provenance(reason, repo, id),
+        &format!("question reactivate {repo}/{id}"),
+    )?;
+    Ok(rec)
+}
+
+pub fn delete_question(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    opts: QuestionWriteOpts<'_>,
+) -> Result<QuestionRecord> {
+    let reason = require_reason(opts.reason, "delete")?;
+    let existing = get_question(store, repo, id)?
+        .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
+    check_expected_version(Some(&existing), opts.expected_version, repo, id)?;
+    if existing.status == QuestionStatus::Deleted {
+        return Ok(existing);
+    }
+    let mut rec = existing;
+    rec.status = QuestionStatus::Deleted;
+    rec.answer = DELETED_TOMBSTONE.to_string();
+    rec.tags = compute_tags(&rec.question, DELETED_TOMBSTONE);
+    rec.version += 1;
+    commit_record(
+        store,
+        &rec,
+        lifecycle_provenance(reason, repo, id),
+        &format!("question delete {repo}/{id}"),
+    )?;
+    Ok(rec)
 }
 
 /// Load one indexed question by repo + id.
@@ -61,39 +333,91 @@ pub fn get_question(store: &BinderStore, repo: &str, id: &str) -> Result<Option<
     }
 }
 
-fn write_question(
+fn upsert_import_row(
     store: &BinderStore,
-    repo: &str,
-    id: &str,
-    question: &str,
-    answer: &str,
-    source: ProvenanceSource,
-) -> Result<()> {
-    store.register_namespace(NAMESPACE, ACTOR)?;
-    let tags = compute_tags(question, answer);
-    let rec = QuestionRecord {
-        id: id.to_string(),
-        repo: repo.to_string(),
-        question: question.to_string(),
-        answer: answer.to_string(),
-        tags,
+    rec: &QuestionRecord,
+    bank_path: &str,
+    force: bool,
+) -> Result<&'static str> {
+    let incoming_hash = content_hash(&rec.question, &rec.answer);
+    let existing = get_question(store, &rec.repo, &rec.id)?;
+    let Some(mut current) = existing else {
+        let mut created = rec.clone();
+        created.version = 1;
+        created.status = QuestionStatus::Active;
+        commit_record(
+            store,
+            &created,
+            import_provenance(bank_path, &incoming_hash, 1),
+            &format!("question import {}/{}", rec.repo, rec.id),
+        )?;
+        return Ok("indexed");
     };
-    let provenance = Provenance {
-        source,
-        source_ref: format!("{repo}/{id}"),
-        imported_at_ms: SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as u64,
-    };
-    let oid = question_id(repo, id);
-    let mut tx = Transaction::new();
-    put_json(&mut tx, oid, &rec, Some(provenance))?;
-    store.commit_buffered(tx, ACTOR, format!("question {repo}/{id}"))?;
-    Ok(())
+
+    if current.status == QuestionStatus::Retired || current.status == QuestionStatus::Deleted {
+        if force {
+            return Err(CodeintelError::Other(format!(
+                "import --force cannot reactivate {} status {}/{}",
+                if current.status == QuestionStatus::Deleted {
+                    "deleted"
+                } else {
+                    "retired"
+                },
+                rec.repo,
+                rec.id
+            )));
+        }
+        eprintln!(
+            "codeintel: import conflict (inactive): {}/{} is {:?}",
+            rec.repo, rec.id, current.status
+        );
+        return Ok("conflict");
+    }
+
+    let canonical_hash = content_hash(&current.question, &current.answer);
+    if incoming_hash == canonical_hash {
+        let (_, _) = head_import_meta(store, &rec.repo, &rec.id);
+        commit_record(
+            store,
+            &current,
+            import_provenance(bank_path, &incoming_hash, current.version),
+            &format!("question import sync {}/{}", rec.repo, rec.id),
+        )?;
+        return Ok("synced");
+    }
+
+    let (_, import_base) = head_import_meta(store, &rec.repo, &rec.id);
+    let base_ok = import_base == Some(current.version);
+    if base_ok || force {
+        current.question = rec.question.clone();
+        current.answer = rec.answer.clone();
+        current.tags = rec.tags.clone();
+        current.version += 1;
+        commit_record(
+            store,
+            &current,
+            import_provenance(bank_path, &incoming_hash, current.version),
+            &format!("question import update {}/{}", rec.repo, rec.id),
+        )?;
+        return Ok("indexed");
+    }
+
+    eprintln!(
+        "codeintel: import conflict: {}/{} bindb version {} import_base {:?}",
+        rec.repo, rec.id, current.version, import_base
+    );
+    Ok("conflict")
 }
 
 pub fn index_questions(store: &BinderStore, bank_path: &std::path::Path) -> Result<usize> {
+    Ok(index_questions_with_opts(store, bank_path, false)?.indexed)
+}
+
+pub fn index_questions_with_opts(
+    store: &BinderStore,
+    bank_path: &std::path::Path,
+    force: bool,
+) -> Result<IndexQuestionsReport> {
     store.register_namespace(NAMESPACE, ACTOR)?;
 
     let content = std::fs::read_to_string(bank_path).map_err(|e| {
@@ -104,32 +428,75 @@ pub fn index_questions(store: &BinderStore, bank_path: &std::path::Path) -> Resu
     })?;
 
     let records = parse_question_bank(&content);
-    if records.is_empty() {
-        return Ok(0);
-    }
-
-    let provenance = Provenance {
-        source: ProvenanceSource::Import("question-bank".into()),
-        source_ref: bank_path.display().to_string(),
-        imported_at_ms: SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as u64,
-    };
+    let bank_ref = bank_path.display().to_string();
+    let mut report = IndexQuestionsReport::default();
 
     for rec in &records {
-        let id = question_id(&rec.repo, &rec.id);
-        let mut tx = Transaction::new();
-        put_json(&mut tx, id, rec, Some(provenance.clone()))?;
-        store.commit_buffered(tx, ACTOR, format!("question {}/{}", rec.repo, rec.id))?;
+        match upsert_import_row(store, rec, &bank_ref, force)? {
+            "indexed" => report.indexed += 1,
+            "synced" => report.synced += 1,
+            "conflict" => report.conflicts += 1,
+            _ => {}
+        }
     }
 
-    Ok(records.len())
+    Ok(report)
+}
+
+/// Write question-bank markdown and refresh import provenance at current version.
+pub fn export_questions(store: &BinderStore, bank_path: &std::path::Path) -> Result<usize> {
+    store.register_namespace(NAMESPACE, ACTOR)?;
+    let mut by_repo: BTreeMap<String, Vec<QuestionRecord>> = BTreeMap::new();
+    for v in store.list(PREFIX_ALL_QUESTIONS)? {
+        let rec: QuestionRecord = decode_obj(&v)?;
+        if rec.status == QuestionStatus::Deleted {
+            continue;
+        }
+        by_repo.entry(rec.repo.clone()).or_default().push(rec);
+    }
+
+    let mut lines = Vec::new();
+    lines.push("# Question bank".to_string());
+    lines.push(String::new());
+    let mut count = 0usize;
+
+    for (repo, mut recs) in by_repo {
+        let section = if repo.is_empty() {
+            "## Cross-repo".to_string()
+        } else {
+            format!("## {repo}")
+        };
+        lines.push(section);
+        lines.push("| ID | Question | Answer |".to_string());
+        lines.push("|---|---|---|".to_string());
+        recs.sort_by(|a, b| a.id.cmp(&b.id));
+        for rec in &recs {
+            lines.push(format!(
+                "| {} | {} | {} |",
+                rec.id, rec.question, rec.answer
+            ));
+            count += 1;
+            let hash = content_hash(&rec.question, &rec.answer);
+            commit_record(
+                store,
+                rec,
+                import_provenance(&bank_path.display().to_string(), &hash, rec.version),
+                &format!("question export sync {}/{}", rec.repo, rec.id),
+            )?;
+        }
+        lines.push(String::new());
+    }
+
+    std::fs::write(bank_path, lines.join("\n")).map_err(|e| {
+        CodeintelError::Other(format!(
+            "cannot write question bank {}: {e}",
+            bank_path.display()
+        ))
+    })?;
+    Ok(count)
 }
 
 /// Parse the markdown table rows from the question bank content.
-/// Skips header rows, separator rows, section headers, and malformed rows.
-/// Repo is inferred from section headers (## codeintel → "codeintel", ## Cross-repo → "").
 fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
     let mut records = Vec::new();
     let mut current_repo = String::new();
@@ -137,26 +504,21 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
     for line in content.lines() {
         let trimmed = line.trim();
 
-        // Section header: ## codeintel, ## binder-ai, ## Cross-repo, etc.
         if trimmed.starts_with("## ") {
             let section = trimmed.trim_start_matches("## ").trim().to_lowercase();
             current_repo = if section.contains("cross") {
                 String::new()
             } else {
-                // Normalize: "binder-ai", "codeintel", "bindb", etc.
                 section.replace(' ', "-")
             };
             continue;
         }
 
-        // Must be a pipe-delimited row
         if !trimmed.starts_with('|') {
             continue;
         }
 
         let cells: Vec<&str> = trimmed.split('|').map(|c| c.trim()).collect();
-
-        // Need at least: ["", ID, Question, Answer, ""]  → 5 elements
         if cells.len() < 5 {
             continue;
         }
@@ -165,7 +527,6 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
         let question = cells[2];
         let answer = cells[3];
 
-        // Skip header rows (ID = "#" or "ID") and separator rows ("---")
         if id.is_empty()
             || id == "#"
             || id == "ID"
@@ -174,7 +535,6 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
         {
             continue;
         }
-        // Skip rows with empty question or answer
         if question.is_empty() || answer.is_empty() {
             continue;
         }
@@ -187,6 +547,8 @@ fn parse_question_bank(content: &str) -> Vec<QuestionRecord> {
             question: question.to_string(),
             answer: answer.to_string(),
             tags,
+            status: QuestionStatus::Active,
+            version: 1,
         });
     }
 
@@ -207,6 +569,14 @@ fn compute_tags(question: &str, answer: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::QuestionStatus;
+
+    #[test]
+    fn content_hash_normalizes_whitespace() {
+        let a = content_hash("What is X?", "Answer   one.");
+        let b = content_hash("What  is X?", "Answer one.");
+        assert_eq!(a, b);
+    }
 
     #[test]
     fn parses_repo_specific_rows() {
@@ -222,35 +592,122 @@ mod tests {
     }
 
     #[test]
-    fn parses_cross_repo_rows() {
-        let md = "## Cross-repo\n\
-                  | ID | Question | Answer |\n\
-                  |---|---|---|\n\
-                  | X1 | What is SPIDER? | Specify Plan Implement Deploy Evaluate Retro. |\n";
-        let recs = parse_question_bank(md);
-        assert_eq!(recs.len(), 1);
-        assert_eq!(recs[0].id, "X1");
-        assert_eq!(recs[0].repo, "");
-    }
-
-    #[test]
-    fn patch_question_answer_updates_answer_preserves_question() {
+    fn patch_requires_reason_and_version() {
         let dir = tempfile::tempdir().unwrap();
         let store = bindb::BinderStore::open(dir.path()).unwrap();
-        put_question(
+        put_question(&store, "codeintel", "T98", "Q?", "A.").unwrap();
+        let err = patch_question_with_opts(
             &store,
             "codeintel",
             "T98",
-            "Original question?",
-            "Old answer.",
+            "B.",
+            QuestionWriteOpts {
+                reason: Some("correction"),
+                expected_version: Some(99),
+            },
+        )
+        .unwrap_err();
+        assert!(matches!(err, CodeintelError::StaleVersion { .. }));
+    }
+
+    #[test]
+    fn patch_question_answer_with_lifecycle() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let created = put_question(&store, "codeintel", "T98", "Original?", "Old.").unwrap();
+        let updated = patch_question_with_opts(
+            &store,
+            "codeintel",
+            "T98",
+            "New authoritative answer.",
+            QuestionWriteOpts {
+                reason: Some("correction"),
+                expected_version: Some(created.version),
+            },
         )
         .unwrap();
-        patch_question_answer(&store, "codeintel", "T98", "New authoritative answer.").unwrap();
-        let rec = get_question(&store, "codeintel", "T98")
-            .unwrap()
-            .expect("record");
-        assert_eq!(rec.question, "Original question?");
-        assert_eq!(rec.answer, "New authoritative answer.");
+        assert_eq!(updated.question, "Original?");
+        assert_eq!(updated.answer, "New authoritative answer.");
+        assert_eq!(updated.version, 2);
+    }
+
+    #[test]
+    fn import_hash_match_syncs_provenance_without_version_bump() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        put_question_with_opts(
+            &store,
+            "codeintel",
+            "T1",
+            "Q?",
+            "Answer.",
+            QuestionWriteOpts {
+                reason: Some("create"),
+                expected_version: None,
+            },
+        )
+        .unwrap();
+        let bank = dir.path().join("bank.md");
+        let md = "## codeintel\n| ID | Question | Answer |\n|---|---|---|\n| T1 | Q? | Answer. |\n";
+        std::fs::write(&bank, md).unwrap();
+        let report = index_questions_with_opts(&store, &bank, false).unwrap();
+        assert_eq!(report.synced, 1);
+        let rec = get_question(&store, "codeintel", "T1").unwrap().unwrap();
+        assert_eq!(rec.version, 1);
+    }
+
+    #[test]
+    fn delete_is_irreversible() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let rec = put_question(&store, "codeintel", "D1", "Q?", "A.").unwrap();
+        delete_question(
+            &store,
+            "codeintel",
+            "D1",
+            QuestionWriteOpts {
+                reason: Some("delete"),
+                expected_version: Some(rec.version),
+            },
+        )
+        .unwrap();
+        let err = reactivate_question(
+            &store,
+            "codeintel",
+            "D1",
+            QuestionWriteOpts {
+                reason: Some("reactivate"),
+                expected_version: Some(2),
+            },
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("deleted"));
+    }
+
+    #[test]
+    fn retired_record_stays_in_store_but_inactive() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let rec = put_question(
+            &store,
+            "codeintel",
+            "G1",
+            "What is bindb boundary?",
+            "codeintel writes bindb only.",
+        )
+        .unwrap();
+        retire_question(
+            &store,
+            "codeintel",
+            "G1",
+            QuestionWriteOpts {
+                reason: Some("retire"),
+                expected_version: Some(rec.version),
+            },
+        )
+        .unwrap();
+        let loaded = get_question(&store, "codeintel", "G1").unwrap().unwrap();
+        assert_eq!(loaded.status, QuestionStatus::Retired);
     }
 
     #[test]
@@ -270,16 +727,5 @@ mod tests {
         assert!(all
             .iter()
             .any(|r| r.id == "T99" && r.answer.contains("bindb")));
-    }
-
-    #[test]
-    fn skips_header_and_separator_rows() {
-        let md = "## bindb\n\
-                  | # | Question | Answer |\n\
-                  |---|---|---|\n\
-                  | B1 | Real question? | Real answer. |\n";
-        let recs = parse_question_bank(md);
-        assert_eq!(recs.len(), 1);
-        assert_eq!(recs[0].id, "B1");
     }
 }

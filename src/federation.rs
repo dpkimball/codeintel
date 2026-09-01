@@ -67,6 +67,7 @@ pub fn link_cross_repo(store: &BinderStore) -> Result<u64> {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_millis() as u64,
+        ..Default::default()
     };
     let mut tx = Transaction::new();
     let mut linked = 0u64;
