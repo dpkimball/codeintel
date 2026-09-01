@@ -156,6 +156,17 @@ enum Cmd {
         #[arg(long)]
         answer: String,
     },
+    /// Update only the answer on an existing question (question text unchanged).
+    PatchQuestion {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        repo: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long)]
+        answer: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -500,6 +511,25 @@ fn run() -> codeintel::Result<()> {
                     "repo": repo_name,
                     "id": id,
                     "stored": true,
+                }))?
+            );
+        }
+        Cmd::PatchQuestion {
+            store,
+            repo,
+            id,
+            answer,
+        } => {
+            let repo_name = if repo == "cross" { String::new() } else { repo };
+            let db = open_store(&store)?;
+            codeintel::patch_question_answer(&db, &repo_name, &id, &answer)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repo": repo_name,
+                    "id": id,
+                    "updated": true,
                 }))?
             );
         }
