@@ -140,6 +140,33 @@ enum Cmd {
         #[arg(long)]
         bank: PathBuf,
     },
+    /// Upsert one Q&A pair into bindb (API / manual authoring without re-indexing the bank file).
+    PutQuestion {
+        /// bindb store path.
+        #[arg(long)]
+        store: PathBuf,
+        /// codeintel repo name, e.g. "codeintel", or "" / "cross" for cross-repo.
+        #[arg(long)]
+        repo: String,
+        /// Question id within the repo section, e.g. "C7".
+        #[arg(long)]
+        id: String,
+        #[arg(long)]
+        question: String,
+        #[arg(long)]
+        answer: String,
+    },
+    /// Update only the answer on an existing question (question text unchanged).
+    PatchQuestion {
+        #[arg(long)]
+        store: PathBuf,
+        #[arg(long)]
+        repo: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long)]
+        answer: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -464,6 +491,45 @@ fn run() -> codeintel::Result<()> {
                 serde_json::to_string_pretty(&serde_json::json!({
                     "bank": bank.display().to_string(),
                     "questions_indexed": count,
+                }))?
+            );
+        }
+        Cmd::PutQuestion {
+            store,
+            repo,
+            id,
+            question,
+            answer,
+        } => {
+            let repo_name = if repo == "cross" { String::new() } else { repo };
+            let db = open_store(&store)?;
+            codeintel::put_question(&db, &repo_name, &id, &question, &answer)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repo": repo_name,
+                    "id": id,
+                    "stored": true,
+                }))?
+            );
+        }
+        Cmd::PatchQuestion {
+            store,
+            repo,
+            id,
+            answer,
+        } => {
+            let repo_name = if repo == "cross" { String::new() } else { repo };
+            let db = open_store(&store)?;
+            codeintel::patch_question_answer(&db, &repo_name, &id, &answer)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repo": repo_name,
+                    "id": id,
+                    "updated": true,
                 }))?
             );
         }

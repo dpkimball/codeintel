@@ -7,13 +7,92 @@
 use crate::architecture::request_tokens;
 use crate::error::{CodeintelError, Result};
 use crate::ids::{question_id, ACTOR, NAMESPACE};
-use crate::indexer::put_json;
+use crate::indexer::{decode_obj, put_json};
 use crate::model::QuestionRecord;
 use bindb::{BinderStore, Provenance, ProvenanceSource, Transaction};
 use std::time::SystemTime;
 
 /// Parse `question-bank.md` and upsert all Q&A rows into the store.
 /// Returns the count of questions indexed.
+/// Upsert one Q&A row into bindb (same object id as bulk `index-questions`).
+pub fn put_question(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    question: &str,
+    answer: &str,
+) -> Result<()> {
+    write_question(
+        store,
+        repo,
+        id,
+        question,
+        answer,
+        ProvenanceSource::Import("put-question".into()),
+    )
+}
+
+/// Update only the answer; question text is preserved from the existing record.
+pub fn patch_question_answer(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    answer: &str,
+) -> Result<()> {
+    let existing = get_question(store, repo, id)?
+        .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
+    write_question(
+        store,
+        repo,
+        id,
+        &existing.question,
+        answer,
+        ProvenanceSource::Import("patch-question".into()),
+    )
+}
+
+/// Load one indexed question by repo + id.
+pub fn get_question(store: &BinderStore, repo: &str, id: &str) -> Result<Option<QuestionRecord>> {
+    let oid = question_id(repo, id);
+    match store.get(&oid) {
+        Ok(Some(v)) => Ok(Some(decode_obj(&v)?)),
+        Ok(None) => Ok(None),
+        Err(e) => Err(e.into()),
+    }
+}
+
+fn write_question(
+    store: &BinderStore,
+    repo: &str,
+    id: &str,
+    question: &str,
+    answer: &str,
+    source: ProvenanceSource,
+) -> Result<()> {
+    store.register_namespace(NAMESPACE, ACTOR)?;
+    let tags = compute_tags(question, answer);
+    let rec = QuestionRecord {
+        id: id.to_string(),
+        repo: repo.to_string(),
+        question: question.to_string(),
+        answer: answer.to_string(),
+        tags,
+    };
+    let provenance = Provenance {
+        source,
+        source_ref: format!("{repo}/{id}"),
+        imported_at_ms: SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64,
+    };
+    let oid = question_id(repo, id);
+    let mut tx = Transaction::new();
+    put_json(&mut tx, oid, &rec, Some(provenance))?;
+    store.commit_buffered(tx, ACTOR, format!("question {repo}/{id}"))?;
+    Ok(())
+}
+
 pub fn index_questions(store: &BinderStore, bank_path: &std::path::Path) -> Result<usize> {
     store.register_namespace(NAMESPACE, ACTOR)?;
 
@@ -152,6 +231,45 @@ mod tests {
         assert_eq!(recs.len(), 1);
         assert_eq!(recs[0].id, "X1");
         assert_eq!(recs[0].repo, "");
+    }
+
+    #[test]
+    fn patch_question_answer_updates_answer_preserves_question() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        put_question(
+            &store,
+            "codeintel",
+            "T98",
+            "Original question?",
+            "Old answer.",
+        )
+        .unwrap();
+        patch_question_answer(&store, "codeintel", "T98", "New authoritative answer.").unwrap();
+        let rec = get_question(&store, "codeintel", "T98")
+            .unwrap()
+            .expect("record");
+        assert_eq!(rec.question, "Original question?");
+        assert_eq!(rec.answer, "New authoritative answer.");
+    }
+
+    #[test]
+    fn put_question_round_trips_in_store() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        put_question(
+            &store,
+            "codeintel",
+            "T99",
+            "What is the write boundary?",
+            "codeintel writes to bindb only.",
+        )
+        .unwrap();
+        let q = crate::query::QueryEngine::open(&store, "codeintel");
+        let all = q.questions().unwrap();
+        assert!(all
+            .iter()
+            .any(|r| r.id == "T99" && r.answer.contains("bindb")));
     }
 
     #[test]
