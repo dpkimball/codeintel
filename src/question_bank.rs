@@ -39,9 +39,8 @@ pub fn patch_question_answer(
     id: &str,
     answer: &str,
 ) -> Result<()> {
-    let existing = get_question(store, repo, id)?.ok_or_else(|| {
-        CodeintelError::Other(format!("question not found: {repo}/{id}"))
-    })?;
+    let existing = get_question(store, repo, id)?
+        .ok_or_else(|| CodeintelError::Other(format!("question not found: {repo}/{id}")))?;
     write_question(
         store,
         repo,
@@ -246,8 +245,7 @@ mod tests {
             "Old answer.",
         )
         .unwrap();
-        patch_question_answer(&store, "codeintel", "T98", "New authoritative answer.")
-            .unwrap();
+        patch_question_answer(&store, "codeintel", "T98", "New authoritative answer.").unwrap();
         let rec = get_question(&store, "codeintel", "T98")
             .unwrap()
             .expect("record");
@@ -269,7 +267,9 @@ mod tests {
         .unwrap();
         let q = crate::query::QueryEngine::open(&store, "codeintel");
         let all = q.questions().unwrap();
-        assert!(all.iter().any(|r| r.id == "T99" && r.answer.contains("bindb")));
+        assert!(all
+            .iter()
+            .any(|r| r.id == "T99" && r.answer.contains("bindb")));
     }
 
     #[test]
