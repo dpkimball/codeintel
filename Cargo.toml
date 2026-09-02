@@ -7,6 +7,7 @@ authors = ["Binder contributors"]
 license = "MIT"
 description = "Code intelligence domain — Git-synced semantic graph stored in bindb"
 repository = "https://github.com/dpkimball/codeintel"
+homepage = "https://github.com/dpkimball/codeintel-releases"
 readme = "README.md"
 # Library stays private; public consumers use codeintel-releases binaries.
 publish = false

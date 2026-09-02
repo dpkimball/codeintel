@@ -9,8 +9,9 @@ This archive contains the public executable only. Source is privately maintained
 Installation
 ------------
 
-1. Verify the archive against checksums from the GitHub Release.
-2. Extract this archive.
+1. Verify the archive against the matching `*.tar.xz.sha256` file from the
+   GitHub Release (or use the release’s `sha256.sum`).
+2. Extract this archive (`tar -xJf …` for `.tar.xz`).
 3. Place `codeintel` on your PATH.
 
 Verify
