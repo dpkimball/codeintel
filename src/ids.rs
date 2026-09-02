@@ -143,6 +143,16 @@ pub const PREFIX_ALL_CRATES: &str = "code://crate/";
 pub const PREFIX_ALL_REPOS: &str = "code://repo/";
 pub const PREFIX_ALL_COMMITS: &str = "code://commit/";
 
+pub fn skill_id(namespace: &str, name: &str) -> ObjectId {
+    ObjectId::new(format!("code://skill/{namespace}/{name}"))
+}
+
+pub fn prefix_skill(namespace: &str) -> String {
+    format!("code://skill/{namespace}/")
+}
+
+pub const PREFIX_ALL_SKILLS: &str = "code://skill/";
+
 /// Short technical terms that are meaningful despite being < 4 chars.
 /// Indexed and matched regardless of the standard length filter.
 pub const SHORT_TECHNICAL_TERMS: &[&str] = &[

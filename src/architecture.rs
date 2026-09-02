@@ -141,6 +141,14 @@ pub struct DocRef {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct SkillRef {
+    pub name: String,
+    pub path: String,
+    pub namespace: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct MatchReason {
     pub kind: String,
     pub label: String,
@@ -235,6 +243,9 @@ pub struct PlanReport {
     pub linked_prs: Vec<PrRef>,
     /// Markdown docs whose content overlaps with the query (top 8 by token overlap).
     pub linked_docs: Vec<DocRef>,
+    /// Cursor/Claude skills whose description overlaps with the query (top 5 by token overlap).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub linked_skills: Vec<SkillRef>,
     /// Structured explanation of what matched and why.
     pub reasoning: Vec<MatchReason>,
     /// Issue numbers linked to the inspection set via REL_RESOLVES edges from git log.
@@ -817,6 +828,7 @@ impl Architecture {
         let linked_issues = semantic_issues(&self.store, &names, &match_tokens)?;
         let linked_prs = semantic_prs(&self.store, &names, &match_tokens)?;
         let linked_docs = semantic_docs(&self.store, &names, &match_tokens)?;
+        let linked_skills = semantic_skills(&self.store, &match_tokens)?;
         let guidance = semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos)?;
 
         let mut reasoning: Vec<MatchReason> = Vec::new();
@@ -917,6 +929,7 @@ impl Architecture {
             linked_issues,
             linked_prs,
             linked_docs,
+            linked_skills,
             reasoning,
             origin_issues,
             recent_changes,
@@ -1449,6 +1462,34 @@ fn semantic_docs(
     }
     scored.sort_by_key(|a| Reverse(a.0));
     scored.truncate(8);
+    Ok(scored.into_iter().map(|(_, r)| r).collect())
+}
+
+fn semantic_skills(store: &BinderStore, match_tokens: &BTreeSet<String>) -> Result<Vec<SkillRef>> {
+    if match_tokens.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut scored: Vec<(usize, SkillRef)> = Vec::new();
+    for skill in crate::query::all_skills(store)? {
+        let overlap = skill
+            .tokens
+            .iter()
+            .filter(|t| match_tokens.contains(t.as_str()))
+            .count();
+        if overlap >= 1 {
+            scored.push((
+                overlap,
+                SkillRef {
+                    name: skill.name,
+                    path: skill.path,
+                    namespace: skill.namespace,
+                    description: skill.description,
+                },
+            ));
+        }
+    }
+    scored.sort_by_key(|a| Reverse(a.0));
+    scored.truncate(5);
     Ok(scored.into_iter().map(|(_, r)| r).collect())
 }
 
