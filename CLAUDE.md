@@ -19,7 +19,7 @@ src/
   indexer.rs       # extract → bindb objects/edges (incl. dpk.toml and Helm/env keys)
   config_keys.rs   # flatten dpk.toml + Helm/env identifier tokens
   query.rs         # agent questions over bindb
-  doctrine.rs      # conformance engine (layering, forbidden, ownership, acyclic)
+  doctrine.rs      # conformance engine; default portable, binder profile opt-in
   impact.rs        # change impact + inspection set from graph
   drift.rs         # historical drift via bindb as_of
   federation.rs    # cross-repo DEPENDS_ON in one store

@@ -1,0 +1,34 @@
+# Opt-in Binder Desktop / platform layer ranks for codeintel doctrine.
+# Not applied unless CODEINTEL_DOCTRINE_PROFILE=binder or `--profile binder`.
+# Third parties: copy and edit, or leave unused (default doctrine is portable/flat).
+
+[layers]
+0 = [
+  "binder-ui",
+  "binder-app",
+  "binder-home",
+  "binder-commands",
+]
+1 = [
+  "binder-runtime",
+  "binder-sdk",
+  "binder-platform",
+  "binder-services",
+  "binder-service-rt",
+  "binder-events",
+  "binder-workspace",
+  "binder-watcher",
+  "binder-ingest",
+  "binder-telemetry",
+  "binder-ai",
+  "binder-ai-mistralrs",
+  "binder-binders",
+  "binder-manifest",
+]
+2 = [
+  "binder-dpk",
+  "binder-core",
+]
+3 = [
+  "binder-storage",
+]

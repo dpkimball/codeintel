@@ -10,7 +10,7 @@ use std::path::Path;
 use std::time::SystemTime;
 
 /// Index all SKILL.md files found under `skills_dir` (walks one level: `*/SKILL.md`).
-/// `namespace` is used as the bindb key prefix, e.g. "dpk-workspace".
+/// `namespace` is used as the bindb key prefix, e.g. "my-workspace".
 pub fn index_skills(store: &BinderStore, skills_dir: &Path, namespace: &str) -> Result<usize> {
     store.register_namespace(NAMESPACE, ACTOR)?;
 

@@ -3,12 +3,20 @@ name = "codeintel"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.82"
-authors = ["DPK Platform Team"]
+authors = ["Binder contributors"]
 license = "MIT"
 description = "Code intelligence domain — Git-synced semantic graph stored in bindb"
 repository = "https://github.com/dpkimball/codeintel"
 readme = "README.md"
+# Library stays private; public consumers use codeintel-releases binaries.
 publish = false
+
+[package.metadata.dist]
+dist = true
+
+[[bin]]
+name = "codeintel"
+path = "src/main.rs"
 
 [dependencies]
 bindb = { path = "../bindb" }
@@ -24,3 +32,8 @@ sha2 = "0.10"
 
 [dev-dependencies]
 tempfile = "3"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

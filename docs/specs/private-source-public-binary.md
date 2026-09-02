@@ -1,0 +1,41 @@
+---
+id: private-source-public-binary
+title: codeintel — private source / public binary + portable doctrine
+status: draft
+created: 2026-09-02
+updated: 2026-09-02
+owner: codeintel
+github_issue: https://github.com/dpkimball/codeintel/issues/45
+related:
+  - https://github.com/dpkimball/codeintel/issues/45
+  - https://github.com/dpkimball/binder-workspace/issues/194
+  - https://github.com/dpkimball/bindb/issues/97
+---
+
+# codeintel — public artifact + portable doctrine
+
+## Purpose
+
+Match 017 Tier B: publish a **public binary** without exposing private source, and ship **no DPK seed inventory / silent product doctrine** in library defaults.
+
+## Doctrine
+
+| Mode | When | Behavior |
+|------|------|----------|
+| Portable (default) | `detect()`, `--profile auto` without env | `workspace` / flat — acyclic only |
+| Binder overlay | `--profile binder` or `CODEINTEL_DOCTRINE_PROFILE=binder` | Layer ranks from `profiles/binder.toml` + Binder forbidden/ownership rules |
+
+No auto-detect based on seeing `binder-ui` in the graph. No `dpk-*` ownership globs in the default path. Index targets are always CLI arguments — never a baked repo URL list.
+
+## Public executable
+
+```text
+codeintel --version
+codeintel --help
+```
+
+cargo-dist → [`dpkimball/codeintel-releases`](https://github.com/dpkimball/codeintel-releases). Release CI clones private `bindb` as `../bindb` (`GH_RELEASES_TOKEN` must read bindb + write releases).
+
+## Out of scope
+
+Open-sourcing private source; renaming `dpk.toml` as a config format (that is the deliver manifest name from the build toolchain).

@@ -12,57 +12,24 @@ pub struct LayerDoctrine {
 }
 
 impl LayerDoctrine {
+    /// Portable default: equal ranks (no product layering).
+    ///
+    /// Opt into Binder Desktop ranks via `CODEINTEL_DOCTRINE_PROFILE=binder`
+    /// or `LayerDoctrine::binder()` / CLI `--profile binder`.
     pub fn detect(crate_names: &[String]) -> Self {
-        if crate_names
-            .iter()
-            .any(|c| c == "binder-ui" || c == "binder-app")
-        {
-            Self::binder()
-        } else {
-            Self::flat(crate_names)
+        match doctrine_profile_env().as_deref() {
+            Some("binder") => Self::binder(),
+            _ => Self::flat(crate_names),
         }
     }
 
+    /// Binder Desktop / platform crate ranks (operator overlay — not the library default).
+    /// Rank map is loaded from `profiles/binder.toml` (see that file).
     pub fn binder() -> Self {
-        let mut crate_rank = BTreeMap::new();
-        for c in ["binder-ui", "binder-app", "binder-home", "binder-commands"] {
-            crate_rank.insert(c.to_string(), 0);
-        }
-        for c in [
-            "binder-runtime",
-            "binder-sdk",
-            "binder-platform",
-            "binder-services",
-            "binder-service-rt",
-            "binder-events",
-            "binder-workspace",
-            "binder-watcher",
-            "binder-ingest",
-            "binder-telemetry",
-            "binder-ai",
-            "binder-ai-mistralrs",
-            "binder-binders",
-            "binder-manifest",
-        ] {
-            crate_rank.insert(c.to_string(), 1);
-        }
-        for c in [
-            "binder-dpk",
-            "binder-core",
-            "dpk-core",
-            "dpk-query",
-            "dpk-graph",
-            "dpk-analytics",
-            "dpk-semantic",
-            "dpk-identity",
-        ] {
-            crate_rank.insert(c.to_string(), 2);
-        }
-        crate_rank.insert("binder-storage".into(), 3);
-        Self {
-            name: "binder".into(),
-            crate_rank,
-        }
+        let raw = include_str!("../profiles/binder.toml");
+        parse_binder_layers(raw).unwrap_or_else(|err| {
+            panic!("profiles/binder.toml must parse: {err}");
+        })
     }
 
     pub fn flat(crate_names: &[String]) -> Self {
@@ -86,6 +53,38 @@ impl LayerDoctrine {
             _ => false,
         }
     }
+}
+
+fn doctrine_profile_env() -> Option<String> {
+    std::env::var("CODEINTEL_DOCTRINE_PROFILE")
+        .ok()
+        .map(|s| s.trim().to_ascii_lowercase())
+        .filter(|s| !s.is_empty())
+}
+
+fn parse_binder_layers(raw: &str) -> std::result::Result<LayerDoctrine, String> {
+    let value: toml::Value = toml::from_str(raw).map_err(|e| e.to_string())?;
+    let table = value
+        .get("layers")
+        .and_then(|v| v.as_table())
+        .ok_or_else(|| "missing [layers]".to_string())?;
+    let mut crate_rank = BTreeMap::new();
+    for (rank_key, crates) in table {
+        let rank: u32 = rank_key.parse().map_err(|_| format!("bad rank key {rank_key}"))?;
+        let list = crates
+            .as_array()
+            .ok_or_else(|| format!("layers.{rank_key} must be an array"))?;
+        for item in list {
+            let name = item
+                .as_str()
+                .ok_or_else(|| format!("layers.{rank_key} entries must be strings"))?;
+            crate_rank.insert(name.to_string(), rank);
+        }
+    }
+    Ok(LayerDoctrine {
+        name: "binder".into(),
+        crate_rank,
+    })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -152,17 +151,18 @@ pub struct Doctrine {
 }
 
 impl Doctrine {
-    pub fn detect(crate_names: &[String]) -> Self {
-        if crate_names
-            .iter()
-            .any(|c| c == "binder-ui" || c == "binder-app")
-        {
-            Self::binder()
-        } else {
-            Self::workspace_default()
+    /// Portable default: acyclic crates only.
+    ///
+    /// Binder Desktop product rules require an explicit opt-in:
+    /// `CODEINTEL_DOCTRINE_PROFILE=binder`, CLI `--profile binder`, or `Doctrine::binder()`.
+    pub fn detect(_crate_names: &[String]) -> Self {
+        match doctrine_profile_env().as_deref() {
+            Some("binder") => Self::binder(),
+            _ => Self::workspace_default(),
         }
     }
 
+    /// Binder Desktop doctrine (operator overlay). Layer ranks from `profiles/binder.toml`.
     pub fn binder() -> Self {
         let layers = LayerDoctrine::binder();
         Self {
@@ -190,14 +190,12 @@ impl Doctrine {
                 Rule::Ownership {
                     id: "binder.domain-isolation".into(),
                     owners: vec![
-                        "dpk-*".into(),
-                        "binder-dpk".into(),
                         "binder-core".into(),
+                        "binder-dpk".into(),
                     ],
                     may_depend_on: vec![
-                        "dpk-*".into(),
-                        "binder-dpk".into(),
                         "binder-core".into(),
+                        "binder-dpk".into(),
                         "binder-sdk".into(),
                         "binder-events".into(),
                         "binder-storage".into(),

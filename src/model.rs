@@ -148,7 +148,7 @@ pub struct IssueRecord {
     pub url: String,
     pub state: String,
     pub labels: Vec<String>,
-    /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+    /// Full GitHub repo name, e.g. "owner/repo".
     pub github_repo: String,
     /// codeintel repo name, e.g. "binder-ai".
     pub repo_name: String,
@@ -226,7 +226,7 @@ pub struct PullRequestRecord {
     pub state: String,
     pub labels: Vec<String>,
     pub merged: bool,
-    /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+    /// Full GitHub repo name, e.g. "owner/repo".
     pub github_repo: String,
     /// codeintel repo name, e.g. "binder-ai".
     pub repo_name: String,
@@ -246,6 +246,6 @@ pub struct SkillRecord {
     pub description: String,
     /// Words (≥ 4 chars) extracted from name + description for token matching.
     pub tokens: Vec<String>,
-    /// Namespace supplied at index time, e.g. "dpk-workspace".
+    /// Namespace supplied at index time, e.g. "my-workspace".
     pub namespace: String,
 }
