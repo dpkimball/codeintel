@@ -256,6 +256,11 @@ enum ArchOp {
     },
     /// All indexed markdown docs with structural compliance violations.
     DocCompliance,
+    /// Question-bank token overlap only (no graph plan).
+    Guidance {
+        #[arg(long)]
+        request: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -441,6 +446,7 @@ fn run() -> codeintel::Result<()> {
                     serde_json::to_value(report)?
                 }
                 ArchOp::DocCompliance => serde_json::to_value(arch.doc_compliance()?)?,
+                ArchOp::Guidance { request } => serde_json::to_value(arch.guidance(&request)?)?,
             };
             println!("{}", serde_json::to_string_pretty(&out)?);
             arch.close()?;

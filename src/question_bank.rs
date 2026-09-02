@@ -444,7 +444,8 @@ fn upsert_import_row(
     }
 
     let (_, import_base) = head_import_meta(store, &rec.repo, &rec.id);
-    let base_ok = import_base == Some(current.version);
+    // Rows created via lifecycle API (put/correct) have no import anchor — git bank wins on refresh.
+    let base_ok = import_base.map(|b| b == current.version).unwrap_or(true);
     if base_ok || force {
         current.question = rec.question.clone();
         current.answer = rec.answer.clone();
@@ -946,6 +947,34 @@ mod tests {
         let loaded = get_question(&store, "codeintel", "G2").unwrap().unwrap();
         assert_eq!(loaded.status, QuestionStatus::Active);
         assert_eq!(loaded.answer, "codeintel writes bindb only.");
+    }
+
+    #[test]
+    fn bank_import_updates_lifecycle_row_when_no_import_anchor() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let bank = dir.path().join("bank.md");
+        put_question(
+            &store,
+            "repo-dashboard",
+            "R14",
+            "How are docs used?",
+            "Lifecycle answer from bootstrap.",
+        )
+        .unwrap();
+        std::fs::write(
+            &bank,
+            "## repo-dashboard\n| ID | Question | Answer |\n|---|---|---|\n\
+             | R14 | How are docs used? | Git bank is source of truth on refresh. |\n",
+        )
+        .unwrap();
+        let report = index_questions_with_opts(&store, &bank, false).unwrap();
+        assert_eq!(report.rows_active, 1);
+        assert_eq!(report.conflicts, 0);
+        let loaded = get_question(&store, "repo-dashboard", "R14")
+            .unwrap()
+            .unwrap();
+        assert_eq!(loaded.answer, "Git bank is source of truth on refresh.");
     }
 
     #[test]

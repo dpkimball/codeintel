@@ -516,6 +516,24 @@ impl Architecture {
         self.plan_impl(request, None)
     }
 
+    /// Question-bank guidance only — no graph walk, impact, or inspect-set resolution.
+    pub fn guidance(&self, request: &str) -> Result<Vec<GuidanceItem>> {
+        let names = repo_names(&self.store)?;
+        let needle = request.to_lowercase();
+        let tokens = request_tokens(&needle);
+        let match_tokens: BTreeSet<String> = tokens
+            .iter()
+            .filter(|t| t.len() >= 4 || crate::ids::SHORT_TECHNICAL_TERMS.contains(&t.as_str()))
+            .cloned()
+            .collect();
+        let anchor_repos: BTreeSet<&str> = names
+            .iter()
+            .filter(|n| tokens.contains(n.as_str()))
+            .map(|n| n.as_str())
+            .collect();
+        semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos)
+    }
+
     fn plan_impl(&self, request: &str, since_sha: Option<&str>) -> Result<PlanReport> {
         let names = repo_names(&self.store)?;
         let needle = request.to_lowercase();
