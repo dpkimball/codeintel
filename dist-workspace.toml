@@ -12,3 +12,5 @@ github-build-setup = "dist-bindb-checkout.yml"
 # Private source — never publish a source archive to the public releases repo.
 source-tarball = false
 pr-run-mode = "skip"
+# release.yml plan job keeps an intentional bindb checkout (path dep for cargo metadata).
+allow-dirty = ["ci"]
