@@ -387,11 +387,20 @@ fn upsert_import_row(
                 rec.repo, rec.id
             )));
         }
-        eprintln!(
-            "codeintel: import conflict (inactive): {}/{} is {:?}",
-            rec.repo, rec.id, current.status
-        );
-        return Ok("conflict");
+        // Git bank is source of truth: row present in markdown reactivates deleted bindb rows.
+        current.status = QuestionStatus::Active;
+        current.question = rec.question.clone();
+        current.answer = rec.answer.clone();
+        current.tags = rec.tags.clone();
+        current.aliases = rec.aliases.clone();
+        current.version += 1;
+        commit_record(
+            store,
+            &current,
+            import_provenance(bank_path, &incoming_hash, current.version),
+            &format!("question import reactivate {}/{}", rec.repo, rec.id),
+        )?;
+        return Ok("indexed");
     }
 
     if current.status == QuestionStatus::Retired {
@@ -412,6 +421,18 @@ fn upsert_import_row(
 
     let canonical_hash = content_hash(&current.question, &current.answer);
     if incoming_hash == canonical_hash {
+        if current.aliases != rec.aliases {
+            current.aliases = rec.aliases.clone();
+            current.tags = rec.tags.clone();
+            current.version += 1;
+            commit_record(
+                store,
+                &current,
+                import_provenance(bank_path, &incoming_hash, current.version),
+                &format!("question import alias sync {}/{}", rec.repo, rec.id),
+            )?;
+            return Ok("indexed");
+        }
         let (_, _) = head_import_meta(store, &rec.repo, &rec.id);
         commit_record(
             store,
@@ -428,6 +449,7 @@ fn upsert_import_row(
         current.question = rec.question.clone();
         current.answer = rec.answer.clone();
         current.tags = rec.tags.clone();
+        current.aliases = rec.aliases.clone();
         current.version += 1;
         commit_record(
             store,
@@ -861,6 +883,69 @@ mod tests {
         assert_eq!(report.conflicts, 0);
         let loaded = get_question(&store, "codeintel", "G1").unwrap().unwrap();
         assert_eq!(loaded.status, QuestionStatus::Active);
+    }
+
+    #[test]
+    fn bank_import_syncs_aliases_when_content_unchanged() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let bank = dir.path().join("bank.md");
+        put_question(
+            &store,
+            "codeintel",
+            "C7",
+            "When PlanReport changes?",
+            "propagate field.",
+        )
+        .unwrap();
+        std::fs::write(
+            &bank,
+            "## codeintel\n| ID | Question | Answer | Aliases |\n|---|---|---|---|\n\
+             | C7 | When PlanReport changes? | propagate field. | also: paraphrase one |\n",
+        )
+        .unwrap();
+        let report = index_questions_with_opts(&store, &bank, false).unwrap();
+        assert_eq!(report.rows_active, 1);
+        assert_eq!(report.indexed, 1);
+        let loaded = get_question(&store, "codeintel", "C7").unwrap().unwrap();
+        assert_eq!(loaded.aliases, vec!["paraphrase one"]);
+    }
+
+    #[test]
+    fn bank_import_reactivates_deleted_row() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let bank = dir.path().join("bank.md");
+        let created = put_question(
+            &store,
+            "codeintel",
+            "G2",
+            "What is bindb boundary?",
+            "codeintel writes bindb only.",
+        )
+        .unwrap();
+        delete_question(
+            &store,
+            "codeintel",
+            "G2",
+            QuestionWriteOpts {
+                reason: Some("delete"),
+                expected_version: Some(created.version),
+            },
+        )
+        .unwrap();
+        std::fs::write(
+            &bank,
+            "## codeintel\n| ID | Question | Answer |\n|---|---|---|\n\
+             | G2 | What is bindb boundary? | codeintel writes bindb only. |\n",
+        )
+        .unwrap();
+        let report = index_questions_with_opts(&store, &bank, false).unwrap();
+        assert_eq!(report.rows_active, 1);
+        assert_eq!(report.conflicts, 0);
+        let loaded = get_question(&store, "codeintel", "G2").unwrap().unwrap();
+        assert_eq!(loaded.status, QuestionStatus::Active);
+        assert_eq!(loaded.answer, "codeintel writes bindb only.");
     }
 
     #[test]
