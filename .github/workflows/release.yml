@@ -267,6 +267,19 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      # Path dep bindb — host also runs cargo metadata via dist host.
+      - name: Checkout bindb as sibling path dependency
+        env:
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOWGITACTION || secrets.GH_RELEASES_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          DEST="${GITHUB_WORKSPACE}/../bindb"
+          if [ -f "${DEST}/Cargo.toml" ]; then
+            echo "bindb already present at ${DEST}"
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
+          test -f "${DEST}/Cargo.toml"
       - name: Install cached dist
         uses: actions/download-artifact@v8
         with:
