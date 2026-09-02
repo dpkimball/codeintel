@@ -96,6 +96,17 @@ enum Cmd {
         #[arg(long)]
         name: Option<String>,
     },
+    /// Walk a skills directory (.cursor/skills/ or .claude/skills/) and index SKILL.md files into bindb for plan() skill discovery.
+    IndexSkills {
+        /// Path to the skills root directory (e.g. /path/to/.cursor/skills).
+        #[arg(long)]
+        dir: PathBuf,
+        #[arg(long)]
+        store: PathBuf,
+        /// Namespace for skill IDs, e.g. "dpk-workspace".
+        #[arg(long, default_value = "dpk-workspace")]
+        name: String,
+    },
     /// Fetch GitHub issues via `gh` CLI and index them for semantic plan() matching.
     IndexIssues {
         /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
@@ -480,6 +491,19 @@ fn run() -> codeintel::Result<()> {
                 println!("{}", serde_json::to_string_pretty(&out)?);
             }
         },
+        Cmd::IndexSkills { dir, store, name } => {
+            let db = open_store(&store)?;
+            let count = codeintel::index_skills(&db, &dir, &name)?;
+            db.close()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "namespace": name,
+                    "dir": dir.display().to_string(),
+                    "skills_indexed": count,
+                }))?
+            );
+        }
         Cmd::IndexIssues {
             github_repo,
             store,

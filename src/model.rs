@@ -233,3 +233,19 @@ pub struct PullRequestRecord {
     /// Words (≥ 4 chars) extracted from title + body for semantic matching.
     pub tokens: Vec<String>,
 }
+
+/// A Cursor/Claude skill file (.cursor/skills/*/SKILL.md or .claude/skills/*/SKILL.md)
+/// indexed for semantic discovery via plan().
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkillRecord {
+    /// The `name:` field from SKILL.md frontmatter.
+    pub name: String,
+    /// Path relative to the skills root dir, e.g. "codeintel-query/SKILL.md".
+    pub path: String,
+    /// The `description:` field from SKILL.md frontmatter (multi-line ok).
+    pub description: String,
+    /// Words (≥ 4 chars) extracted from name + description for token matching.
+    pub tokens: Vec<String>,
+    /// Namespace supplied at index time, e.g. "dpk-workspace".
+    pub namespace: String,
+}

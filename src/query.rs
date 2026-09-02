@@ -7,7 +7,8 @@ use crate::ids::{
 use crate::indexer::decode_obj;
 use crate::model::{
     ConfigKeyRecord, CrateRecord, DocRecord, FileRecord, IssueRecord, ModuleRecord,
-    PullRequestRecord, QuestionRecord, SymbolKind, SymbolRecord, SyncBookmark, Visibility,
+    PullRequestRecord, QuestionRecord, SkillRecord, SymbolKind, SymbolRecord, SyncBookmark,
+    Visibility,
 };
 use bindb::BinderStore;
 use serde::Serialize;
@@ -458,6 +459,11 @@ impl<'a> QueryEngine<'a> {
         }
         Ok(out)
     }
+}
+
+/// Return all indexed skills across all namespaces.
+pub fn all_skills(store: &BinderStore) -> Result<Vec<SkillRecord>> {
+    decode_list(store, crate::ids::PREFIX_ALL_SKILLS)
 }
 
 fn decode_list<T: serde::de::DeserializeOwned>(

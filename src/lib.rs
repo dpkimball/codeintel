@@ -23,6 +23,7 @@ pub mod query;
 pub mod question_bank;
 pub mod report;
 pub mod rust_parser;
+pub mod skills;
 pub mod ts_parser;
 pub mod workflow;
 
@@ -43,4 +44,5 @@ pub use question_bank::{
     put_question_with_opts, reactivate_question, retire_question, QuestionWriteOpts,
 };
 pub use report::{run_validation, ValidationReport};
+pub use skills::index_skills;
 pub use workflow::{finish as workflow_finish, start as workflow_start, WorkflowReport};
