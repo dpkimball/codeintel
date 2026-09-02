@@ -59,9 +59,8 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      # Included by cargo-dist via dist-workspace.toml github-build-setup.
-      # Path dep is `bindb = { path = "../bindb" }` — clone private bindb as a sibling.
-      # Prefer PAT_WORKFLOWGITACTION (same as binder-ai image.yml); else GH_RELEASES_TOKEN.
+      # Path dep bindb — also required for `dist plan` cargo metadata on CI.
+      # (github-build-setup only injects into build jobs; keep this in plan.)
       - name: Checkout bindb as sibling path dependency
         env:
           GH_TOKEN: ${{ secrets.PAT_WORKFLOWGITACTION || secrets.GH_RELEASES_TOKEN || github.token }}

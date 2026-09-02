@@ -14,6 +14,8 @@ publish = false
 
 [package.metadata.dist]
 dist = true
+# release.yml plan job keeps an intentional bindb checkout (path dep).
+allow-dirty = ["ci"]
 
 [[bin]]
 name = "codeintel"
