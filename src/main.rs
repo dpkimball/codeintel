@@ -271,6 +271,9 @@ enum ArchOp {
     Guidance {
         #[arg(long)]
         request: String,
+        /// Limit bank scan to this repo plus cross-repo rows (fast `/ask` path).
+        #[arg(long)]
+        repo: Option<String>,
     },
 }
 
@@ -457,7 +460,9 @@ fn run() -> codeintel::Result<()> {
                     serde_json::to_value(report)?
                 }
                 ArchOp::DocCompliance => serde_json::to_value(arch.doc_compliance()?)?,
-                ArchOp::Guidance { request } => serde_json::to_value(arch.guidance(&request)?)?,
+                ArchOp::Guidance { request, repo } => {
+                    serde_json::to_value(arch.guidance(&request, repo.as_deref())?)?
+                }
             };
             println!("{}", serde_json::to_string_pretty(&out)?);
             arch.close()?;

@@ -528,8 +528,10 @@ impl Architecture {
     }
 
     /// Question-bank guidance only — no graph walk, impact, or inspect-set resolution.
-    pub fn guidance(&self, request: &str) -> Result<Vec<GuidanceItem>> {
-        let names = repo_names(&self.store)?;
+    ///
+    /// When `scope_repo` is set, scan only that repo's bank rows plus cross-repo (`X*`) rows.
+    /// Used by `/ask` fast path to avoid iterating every indexed repo on QA.
+    pub fn guidance(&self, request: &str, scope_repo: Option<&str>) -> Result<Vec<GuidanceItem>> {
         let needle = request.to_lowercase();
         let tokens = request_tokens(&needle);
         let match_tokens: BTreeSet<String> = tokens
@@ -537,12 +539,18 @@ impl Architecture {
             .filter(|t| t.len() >= 4 || crate::ids::SHORT_TECHNICAL_TERMS.contains(&t.as_str()))
             .cloned()
             .collect();
+        if let Some(scope) = scope_repo {
+            let mut anchor_repos = BTreeSet::new();
+            anchor_repos.insert(scope);
+            return semantic_guidance(&self.store, &[], &match_tokens, &anchor_repos, Some(scope));
+        }
+        let names = repo_names(&self.store)?;
         let anchor_repos: BTreeSet<&str> = names
             .iter()
             .filter(|n| tokens.contains(n.as_str()))
             .map(|n| n.as_str())
             .collect();
-        semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos)
+        semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos, None)
     }
 
     fn plan_impl(&self, request: &str, since_sha: Option<&str>) -> Result<PlanReport> {
@@ -829,7 +837,7 @@ impl Architecture {
         let linked_prs = semantic_prs(&self.store, &names, &match_tokens)?;
         let linked_docs = semantic_docs(&self.store, &names, &match_tokens)?;
         let linked_skills = semantic_skills(&self.store, &match_tokens)?;
-        let guidance = semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos)?;
+        let guidance = semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos, None)?;
 
         let mut reasoning: Vec<MatchReason> = Vec::new();
         for (repo, path) in &matched_files_for_reasoning {
@@ -1498,16 +1506,21 @@ fn semantic_guidance(
     names: &[String],
     match_tokens: &BTreeSet<String>,
     anchor_repos: &BTreeSet<&str>,
+    scope_repo: Option<&str>,
 ) -> Result<Vec<GuidanceItem>> {
     if match_tokens.is_empty() {
         return Ok(Vec::new());
     }
     // Iterate repo-specific names plus "" for cross-repo (stored under code://question/cross/).
-    let cross = String::new();
-    let all_names = names.iter().chain(std::iter::once(&cross));
+    let scoped: Vec<&str> = if let Some(scope) = scope_repo {
+        vec![scope]
+    } else {
+        names.iter().map(String::as_str).collect()
+    };
+    let all_names = scoped.into_iter().chain(std::iter::once(""));
     let mut scored: Vec<(usize, GuidanceItem)> = Vec::new();
     for name in all_names {
-        let q = QueryEngine::open(store, name.as_str());
+        let q = QueryEngine::open(store, name);
         for rec in q.questions()? {
             if rec.status != crate::model::QuestionStatus::Active {
                 continue;
