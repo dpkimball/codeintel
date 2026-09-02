@@ -1,19 +1,15 @@
 # Included by cargo-dist via dist-workspace.toml github-build-setup.
 # Path dep is `bindb = { path = "../bindb" }` — clone private bindb as a sibling.
-# `GH_RELEASES_TOKEN` must be able to read dpkimball/bindb and write codeintel-releases.
+# Prefer PAT_WORKFLOWGITACTION (same as binder-ai image.yml); else GH_RELEASES_TOKEN.
 - name: Checkout bindb as sibling path dependency
   env:
-    GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
+    GH_TOKEN: ${{ secrets.PAT_WORKFLOWGITACTION || secrets.GH_RELEASES_TOKEN || github.token }}
   run: |
     set -euo pipefail
     DEST="${GITHUB_WORKSPACE}/../bindb"
     if [ -f "${DEST}/Cargo.toml" ]; then
       echo "bindb already present at ${DEST}"
       exit 0
-    fi
-    if [ -z "${GH_TOKEN:-}" ]; then
-      echo "GH_RELEASES_TOKEN required to clone private bindb for release builds" >&2
-      exit 1
     fi
     git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
     test -f "${DEST}/Cargo.toml"

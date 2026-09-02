@@ -70,7 +70,9 @@ fn parse_binder_layers(raw: &str) -> std::result::Result<LayerDoctrine, String> 
         .ok_or_else(|| "missing [layers]".to_string())?;
     let mut crate_rank = BTreeMap::new();
     for (rank_key, crates) in table {
-        let rank: u32 = rank_key.parse().map_err(|_| format!("bad rank key {rank_key}"))?;
+        let rank: u32 = rank_key
+            .parse()
+            .map_err(|_| format!("bad rank key {rank_key}"))?;
         let list = crates
             .as_array()
             .ok_or_else(|| format!("layers.{rank_key} must be an array"))?;

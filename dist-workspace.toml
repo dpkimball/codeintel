@@ -11,3 +11,4 @@ include = ["packaging/LICENSE.txt", "packaging/README.txt"]
 github-build-setup = "dist-bindb-checkout.yml"
 # Private source — never publish a source archive to the public releases repo.
 source-tarball = false
+pr-run-mode = "skip"
