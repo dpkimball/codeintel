@@ -3,19 +3,24 @@ codeintel
 
 Official compiled release of codeintel.
 
-codeintel indexes Git repositories into a bindb store as a semantic graph.
-This archive contains the public executable only. Source is privately maintained.
+Indexes Git repositories into a bindb store as a semantic graph.
+Public executable only — source is private.
 
-There are no SQL tables. A store is a directory (commits.wal). Point --store
-at YOUR directory and index YOUR git checkouts — nothing DPK-specific is required.
+There are no SQL tables. A store is a directory (commits.wal).
+Use YOUR store path and YOUR git checkouts — nothing DPK-specific required.
+
+Prerequisites
+-------------
+
+Public bindb v0.1.2+ from https://github.com/dpkimball/bindb-releases
+  (bindb init creates the store)
 
 Installation
 ------------
 
-1. Verify the archive against the matching `*.tar.xz.sha256` file from the
-   GitHub Release (or use the release’s `sha256.sum`).
-2. Extract this archive (`tar -xJf …` for `.tar.xz`).
-3. Place `codeintel` on your PATH (and install public `bindb` for store init).
+1. Verify `*.tar.xz.sha256` from the GitHub Release.
+2. Extract (`tar -xJf …`).
+3. Place `codeintel` on your PATH.
 
 Quick start (your repos, your store)
 ------------------------------------
@@ -25,11 +30,14 @@ Quick start (your repos, your store)
     codeintel query --store ./mystore --name my-repo --question summary
     codeintel doctrine --store ./mystore --name my-repo --profile auto
 
+Full guide:
+https://github.com/dpkimball/codeintel-releases/blob/master/GETTING_STARTED.md
+
 Doctrine
 --------
 
-Default doctrine is portable (no product crate preload). Binder Desktop
-layering is opt-in: CODEINTEL_DOCTRINE_PROFILE=binder or --profile binder.
+Default is portable (--profile auto). Binder Desktop ranks are opt-in:
+CODEINTEL_DOCTRINE_PROFILE=binder or --profile binder.
 
 Verify
 ------
@@ -45,4 +53,4 @@ See LICENSE.txt. Proprietary binary distribution — not open-source software.
 Support
 -------
 
-See https://github.com/dpkimball/codeintel-releases
+https://github.com/dpkimball/codeintel-releases
