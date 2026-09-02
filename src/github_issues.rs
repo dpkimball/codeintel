@@ -14,7 +14,7 @@ use std::collections::BTreeSet;
 use std::process::Command;
 use std::time::SystemTime;
 
-/// Fetch all issues for `github_repo` (e.g. "dpkimball/binder-ai") and index them
+/// Fetch all issues for `github_repo` (e.g. "owner/repo") and index them
 /// into `store` under the codeintel `repo_name`.
 ///
 /// Tries `gh issue list` first; falls back to `curl` + `GITHUB_TOKEN` env var.

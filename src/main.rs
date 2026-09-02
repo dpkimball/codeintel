@@ -7,7 +7,15 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(
     name = "codeintel",
-    about = "Git-synced semantic graph in bindb for autonomous agents"
+    about = "Git-synced semantic graph in bindb for autonomous agents",
+    version,
+    long_version = concat!(
+        env!("CARGO_PKG_VERSION"),
+        "\ncommit: ",
+        env!("CODEINTEL_GIT_SHA"),
+        "\nbuilt: ",
+        env!("CODEINTEL_BUILD_DATE"),
+    )
 )]
 struct Cli {
     #[command(subcommand)]
@@ -46,6 +54,8 @@ enum Cmd {
         #[arg(long)]
         name: String,
         #[arg(long, default_value = "auto")]
+        /// Doctrine profile: `auto` (portable workspace default, or binder if
+        /// CODEINTEL_DOCTRINE_PROFILE=binder), `binder` (opt-in overlay), or `workspace`.
         profile: String,
     },
     /// Change impact for a crate, module, file, or symbol — bindb only.
@@ -109,7 +119,7 @@ enum Cmd {
     },
     /// Fetch GitHub issues via `gh` CLI and index them for semantic plan() matching.
     IndexIssues {
-        /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+        /// Full GitHub repo name, e.g. "owner/repo".
         #[arg(long)]
         github_repo: String,
         /// bindb store path.
@@ -132,7 +142,7 @@ enum Cmd {
     },
     /// Fetch GitHub pull requests via `gh` CLI and index them for semantic plan() matching.
     IndexPrs {
-        /// Full GitHub repo name, e.g. "dpkimball/binder-ai".
+        /// Full GitHub repo name, e.g. "owner/repo".
         #[arg(long)]
         github_repo: String,
         /// bindb store path.

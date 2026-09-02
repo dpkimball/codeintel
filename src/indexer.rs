@@ -1410,7 +1410,7 @@ jobs:
       - name: Bump image tag in Helm values
         run: yq -i '.image.tag = env(TAG)' values-qa.yaml
 env:
-  IMAGE_REPO: ghcr.io/dpkimball/binder-server
+  IMAGE_REPO: ghcr.io/example/binder-server
   SERVICE_NAME: binder-server
 "#;
         let (title, tokens) = extract_yaml_tokens(yaml, ".github/workflows/deploy.yaml");

@@ -19,7 +19,7 @@ POC #1: incremental Git sync. POC #2: doctrine and impact. Historical drift and 
 
 ## Build
 
-Requires a sibling `../bindb` checkout (same layout as binder-desktop).
+Requires a sibling `../bindb` checkout (path dependency).
 
 ```bash
 cargo test
@@ -27,32 +27,35 @@ cargo clippy --all-targets -- -D warnings
 make b    # lint + test + release build; no image / no deploy
 ```
 
-## Index Binder Desktop
+**Public binaries:** tag `v*` → [`codeintel-releases`](https://github.com/dpkimball/codeintel-releases). See [`docs/specs/private-source-public-binary.md`](docs/specs/private-source-public-binary.md).
+
+**Doctrine:** default is portable (acyclic / flat). Binder Desktop layering is **opt-in** (`--profile binder` or `CODEINTEL_DOCTRINE_PROFILE=binder`); ranks live in `profiles/binder.toml`. There is no baked seed/repo URL list — pass paths on `index`.
+
+## Index a repository
 
 ```bash
-cargo run --release -- validate ../binder-desktop --store ./store --name binder-desktop
+cargo run --release -- index /path/to/repo --store ./store --name my-repo
+cargo run --release -- validate /path/to/repo --store ./store --name my-repo
 ```
 
-Queries (after index):
+Example queries (after index):
 
 ```bash
-cargo run --release -- query --store ./store --name binder-desktop --question summary
-cargo run --release -- query --store ./store --name binder-desktop --question cycles
-cargo run --release -- query --store ./store --name binder-desktop --question layering
-cargo run --release -- query --store ./store --name binder-desktop --question unused
-cargo run --release -- query --store ./store --name binder-desktop --question diagram
-cargo run --release -- doctrine --store ./store --name binder-desktop
-cargo run --release -- impact --store ./store --name binder-desktop --target binder-storage
-cargo run --release -- drift --store ./store --name binder-desktop --from <sha-a> --to <sha-b>
-cargo run --release -- index ../bindb --store ./store --name bindb
-cargo run --release -- index . --store ./store --name codeintel
-cargo run --release -- index ../repo-dashboard --store ./store --name repo-dashboard
-cargo run --release -- index ../dpk-build --store ./store --name dpk-build
-cargo run --release -- federation --store ./store
+cargo run --release -- query --store ./store --name my-repo --question summary
+cargo run --release -- query --store ./store --name my-repo --question cycles
+cargo run --release -- query --store ./store --name my-repo --question layering
+cargo run --release -- doctrine --store ./store --name my-repo
+cargo run --release -- doctrine --store ./store --name my-repo --profile binder
 cargo run --release -- architecture --store ./store summary
-cargo run --release -- architecture --store ./store plan --request "change binder-storage"
-cargo run --release -- workflow start --store ./store --request "change src/lib.rs" --bind codeintel=. --session /tmp/wf.json
-cargo run --release -- workflow finish --session /tmp/wf.json --opened src/lib.rs --modified src/lib.rs --validation pass
+cargo run --release -- architecture --store ./store plan --request "change src/lib.rs"
+```
+
+Binder Desktop / multi-repo federation examples (operator overlay — not required defaults):
+
+```bash
+cargo run --release -- index ../binder-desktop --store ./store --name binder-desktop
+cargo run --release -- index ../bindb --store ./store --name bindb
+cargo run --release -- federation --store ./store
 ```
 
 Agent API: [docs/specs/agent-architecture-api.md](docs/specs/agent-architecture-api.md). Inspect-set fidelity: [docs/specs/plan-inspect-sets.md](docs/specs/plan-inspect-sets.md). Intent / nested index: [docs/specs/plan-intent-nested.md](docs/specs/plan-intent-nested.md). Workflow: [docs/specs/autonomous-workflow.md](docs/specs/autonomous-workflow.md). Workflows: [docs/examples/agent-workflows.md](docs/examples/agent-workflows.md). Reasoning specs: [architectural-reasoning](docs/specs/architectural-reasoning.md), [historical-drift](docs/specs/historical-drift.md), [cross-repository](docs/specs/cross-repository.md). Discovery uses bindb; open source only at inspection-set paths. Drift requires both SHAs indexed. Federation requires each repo in the **same** store.
