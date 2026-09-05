@@ -113,9 +113,9 @@ enum Cmd {
         dir: PathBuf,
         #[arg(long)]
         store: PathBuf,
-        /// Namespace for skill IDs, e.g. "dpk-workspace".
-        #[arg(long, default_value = "dpk-workspace")]
-        name: String,
+        /// Namespace for skill IDs (defaults to the last path segment of `--dir`).
+        #[arg(long)]
+        name: Option<String>,
     },
     /// Fetch GitHub issues via `gh` CLI and index them for semantic plan() matching.
     IndexIssues {
@@ -507,13 +507,18 @@ fn run() -> codeintel::Result<()> {
             }
         },
         Cmd::IndexSkills { dir, store, name } => {
+            let namespace = name.unwrap_or_else(|| {
+                dir.file_name()
+                    .map(|s| s.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| "skills".to_string())
+            });
             let db = open_store(&store)?;
-            let count = codeintel::index_skills(&db, &dir, &name)?;
+            let count = codeintel::index_skills(&db, &dir, &namespace)?;
             db.close()?;
             println!(
                 "{}",
                 serde_json::to_string_pretty(&serde_json::json!({
-                    "namespace": name,
+                    "namespace": namespace,
                     "dir": dir.display().to_string(),
                     "skills_indexed": count,
                 }))?
