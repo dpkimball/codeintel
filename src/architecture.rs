@@ -296,11 +296,55 @@ pub struct GuidanceItem {
     pub aliases: Vec<String>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DocViolationSeverity {
+    Error,
+    Warning,
+    Info,
+}
+
+impl DocViolationSeverity {
+    fn rank(self) -> u8 {
+        match self {
+            Self::Error => 0,
+            Self::Warning => 1,
+            Self::Info => 2,
+        }
+    }
+}
+
+/// Rank a stored compliance issue string. Indexer text is the source of truth;
+/// this does not re-read the markdown file.
+pub fn severity_for_compliance_issue(issue: &str) -> DocViolationSeverity {
+    if issue.contains("missing --- block") || issue.contains("no H1 heading") {
+        DocViolationSeverity::Error
+    } else if issue.contains("missing title")
+        || issue.contains("missing description")
+        || issue.contains("missing category")
+        || issue.contains("heading jumps")
+    {
+        DocViolationSeverity::Warning
+    } else {
+        DocViolationSeverity::Info
+    }
+}
+
+fn worst_severity(issues: &[String]) -> DocViolationSeverity {
+    issues
+        .iter()
+        .map(|i| severity_for_compliance_issue(i))
+        .min_by_key(|s| s.rank())
+        .unwrap_or(DocViolationSeverity::Info)
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct DocViolation {
     pub repo: String,
     pub path: String,
     pub issues: Vec<String>,
+    /// Highest-severity issue on this doc (`error` > `warning` > `info`).
+    pub severity: DocViolationSeverity,
 }
 
 impl Architecture {
@@ -513,20 +557,30 @@ impl Architecture {
         })
     }
 
-    /// All indexed markdown documents with compliance violations, sorted by repo then path.
+    /// All indexed markdown documents with compliance violations.
+    ///
+    /// Sorted by severity (`error`, then `warning`, then `info`), then repo, then path.
     pub fn doc_compliance(&self) -> Result<Vec<DocViolation>> {
         let mut out = Vec::new();
         for name in repo_names(&self.store)? {
             let q = QueryEngine::open(&self.store, &name);
             for (path, issues) in q.doc_violations()? {
+                let severity = worst_severity(&issues);
                 out.push(DocViolation {
                     repo: name.clone(),
                     path,
                     issues,
+                    severity,
                 });
             }
         }
-        out.sort_by(|a, b| a.repo.cmp(&b.repo).then(a.path.cmp(&b.path)));
+        out.sort_by(|a, b| {
+            a.severity
+                .rank()
+                .cmp(&b.severity.rank())
+                .then(a.repo.cmp(&b.repo))
+                .then(a.path.cmp(&b.path))
+        });
         Ok(out)
     }
 
@@ -1632,4 +1686,63 @@ fn compute_recent_changes(
         }
     }
     out
+}
+
+#[cfg(test)]
+mod doc_severity_tests {
+    use super::{severity_for_compliance_issue, worst_severity, DocViolationSeverity};
+
+    #[test]
+    fn missing_frontmatter_block_and_h1_are_errors() {
+        assert_eq!(
+            severity_for_compliance_issue("frontmatter: missing --- block"),
+            DocViolationSeverity::Error
+        );
+        assert_eq!(
+            severity_for_compliance_issue("structure: no H1 heading"),
+            DocViolationSeverity::Error
+        );
+    }
+
+    #[test]
+    fn missing_fields_and_heading_jumps_are_warnings() {
+        assert_eq!(
+            severity_for_compliance_issue("frontmatter: missing title"),
+            DocViolationSeverity::Warning
+        );
+        assert_eq!(
+            severity_for_compliance_issue("frontmatter: missing description"),
+            DocViolationSeverity::Warning
+        );
+        assert_eq!(
+            severity_for_compliance_issue("frontmatter: missing category"),
+            DocViolationSeverity::Warning
+        );
+        assert_eq!(
+            severity_for_compliance_issue("structure: heading jumps from H1 to H3"),
+            DocViolationSeverity::Warning
+        );
+    }
+
+    #[test]
+    fn unlabeled_code_and_invalid_category_are_info() {
+        assert_eq!(
+            severity_for_compliance_issue("code: 2 block(s) without language specifier"),
+            DocViolationSeverity::Info
+        );
+        assert_eq!(
+            severity_for_compliance_issue("category: 'banana' not in standard set"),
+            DocViolationSeverity::Info
+        );
+    }
+
+    #[test]
+    fn worst_severity_prefers_error() {
+        let issues = vec![
+            "code: 1 block(s) without language specifier".into(),
+            "frontmatter: missing --- block".into(),
+            "frontmatter: missing title".into(),
+        ];
+        assert_eq!(worst_severity(&issues), DocViolationSeverity::Error);
+    }
 }
