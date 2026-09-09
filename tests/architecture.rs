@@ -65,6 +65,11 @@ fn architecture_api_reasons_from_bindb_after_trees_removed() {
     fs::remove_dir_all(&app_path).unwrap();
 
     let arch = Architecture::open(store_dir.path()).unwrap();
+    let health = arch.health().unwrap();
+    assert_eq!(health.source_files_opened, 0);
+    assert!(health.repositories.iter().any(|n| n == "libs"));
+    assert!(health.repositories.iter().any(|n| n == "apps"));
+
     let summary = arch.summary().unwrap();
     assert_eq!(summary.source_files_opened, 0);
     assert!(summary.repositories.iter().any(|r| r.name == "libs"));

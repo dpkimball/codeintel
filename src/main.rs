@@ -249,6 +249,8 @@ enum Cmd {
 
 #[derive(Subcommand)]
 enum ArchOp {
+    /// Open the store and list indexed repositories (no file/symbol materialization).
+    Health,
     Summary,
     Doctrine,
     Impact {
@@ -452,6 +454,7 @@ fn run() -> codeintel::Result<()> {
         Cmd::Architecture { store, op } => {
             let arch = codeintel::Architecture::open(&store)?;
             let out = match op {
+                ArchOp::Health => serde_json::to_value(arch.health()?)?,
                 ArchOp::Summary => serde_json::to_value(arch.summary()?)?,
                 ArchOp::Doctrine => serde_json::to_value(arch.doctrine()?)?,
                 ArchOp::Impact { target } => serde_json::to_value(arch.impact(&target)?)?,
