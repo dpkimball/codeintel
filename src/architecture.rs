@@ -35,6 +35,17 @@ pub struct Summary {
     pub source_files_opened: usize,
 }
 
+/// Cheap store-open check: indexed repo names only.
+///
+/// Does not materialize files, symbols, or federation. Use this for process
+/// health probes. `summary` remains the full architecture document.
+#[derive(Debug, Clone, Serialize)]
+pub struct Health {
+    pub repositories: Vec<String>,
+    pub primary_source: &'static str,
+    pub source_files_opened: usize,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct RepoSummary {
     pub name: String,
@@ -303,6 +314,15 @@ impl Architecture {
     pub fn close(self) -> Result<()> {
         self.store.close()?;
         Ok(())
+    }
+
+    /// Open succeeded and bindb can list indexed repositories.
+    pub fn health(&self) -> Result<Health> {
+        Ok(Health {
+            repositories: repo_names(&self.store)?,
+            primary_source: "bindb",
+            source_files_opened: 0,
+        })
     }
 
     pub fn summary(&self) -> Result<Summary> {
