@@ -1,0 +1,41 @@
+name: Release-plz
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  release-plz:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_WORKFLOWGITACTION }}
+      # bindb is a path dep (`../bindb`) — clone so cargo metadata can resolve it.
+      - name: Checkout bindb as path dependency
+        env:
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOWGITACTION || secrets.GH_RELEASES_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          DEST="${GITHUB_WORKSPACE}/../bindb"
+          if [ ! -f "${DEST}/Cargo.toml" ]; then
+            git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
+          fi
+          test -f "${DEST}/Cargo.toml"
+      - name: Release (create git tag when Cargo.toml version is untagged)
+        uses: release-plz/action@v0.5
+        with:
+          command: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_WORKFLOWGITACTION }}
+      - name: Release PR (open version-bump PR)
+        uses: release-plz/action@v0.5
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_WORKFLOWGITACTION }}
