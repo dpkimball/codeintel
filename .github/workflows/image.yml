@@ -1,0 +1,20 @@
+name: Image
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+concurrency:
+  group: codeintel-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker:
+    uses: dpkimball/dpk-ci/.github/workflows/build-rust-binary-image.yml@master
+    with:
+      project_name: codeintel
+      path_dep_repo: bindb
+    secrets: inherit
