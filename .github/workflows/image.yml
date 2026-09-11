@@ -17,4 +17,5 @@ jobs:
     with:
       project_name: codeintel
       path_dep_repo: bindb
+      runner: product-ci
     secrets: inherit
