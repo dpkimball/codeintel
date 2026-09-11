@@ -6,10 +6,8 @@ cargo-dist-version = "0.32.0"
 ci = "github"
 installers = []
 targets = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu"]
-github-releases-repo = "dpkimball/codeintel-releases"
 include = ["packaging/LICENSE.txt", "packaging/README.txt"]
 github-build-setup = "dist-bindb-checkout.yml"
-# Private source — never publish a source archive to the public releases repo.
 source-tarball = false
 pr-run-mode = "skip"
 # release.yml plan job keeps an intentional bindb checkout (path dep for cargo metadata).
