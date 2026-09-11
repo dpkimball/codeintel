@@ -7,6 +7,10 @@ on:
     branches: [master]
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  packages: write
+
 concurrency:
   group: codeintel-image-${{ github.ref }}
   cancel-in-progress: true
