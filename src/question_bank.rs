@@ -193,6 +193,62 @@ pub fn put_question_with_opts(
     }
 }
 
+/// Stable id for a plan-learned row. Same normalized question always maps here.
+pub fn learned_question_id(question: &str) -> String {
+    let normalized = normalize_field(question).to_lowercase();
+    let digest = Sha256::digest(normalized.as_bytes());
+    let hex = format!("{:x}", digest);
+    format!("L-{}", &hex[..8])
+}
+
+/// Create or refresh an Active row learned from the indexed doc graph.
+///
+/// An unchanged question and answer does not bump `version`. Updates send the
+/// current version as `expected_version`.
+pub fn learn_question(
+    store: &BinderStore,
+    repo: &str,
+    question: &str,
+    answer: &str,
+) -> Result<QuestionRecord> {
+    let id = learned_question_id(question);
+    if let Some(existing) = get_question(store, repo, &id)? {
+        if existing.status == QuestionStatus::Deleted {
+            return Err(CodeintelError::Other(format!(
+                "question deleted (irreversible): {repo}/{id}"
+            )));
+        }
+        if existing.status == QuestionStatus::Active
+            && existing.question == question
+            && existing.answer == answer
+        {
+            return Ok(existing);
+        }
+        return put_question_with_opts(
+            store,
+            repo,
+            &id,
+            question,
+            answer,
+            QuestionWriteOpts {
+                reason: Some("learned from indexed documents"),
+                expected_version: Some(existing.version),
+            },
+        );
+    }
+    put_question_with_opts(
+        store,
+        repo,
+        &id,
+        question,
+        answer,
+        QuestionWriteOpts {
+            reason: Some("learned from indexed documents"),
+            expected_version: None,
+        },
+    )
+}
+
 /// Update only the answer; question text preserved.
 pub fn patch_question_answer(
     store: &BinderStore,
@@ -693,6 +749,32 @@ mod tests {
         assert_eq!(recs[0].id, "C1");
         assert_eq!(recs[0].repo, "codeintel");
         assert!(recs[0].tags.contains(&"boundary".to_string()));
+    }
+
+    #[test]
+    fn learn_question_is_idempotent_until_the_answer_changes() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = bindb::BinderStore::open(dir.path()).unwrap();
+        let q = "Where are nodeport hostport hyperdx documented?";
+        let a = "dpk-infra documents this in docs/setup.md. Do not search a second repo.";
+        let first = learn_question(&store, "dpk-infra", q, a).unwrap();
+        assert!(first.id.starts_with("L-"));
+        assert_eq!(first.version, 1);
+        let again = learn_question(&store, "dpk-infra", q, a).unwrap();
+        assert_eq!(again.version, 1);
+        assert_eq!(again.id, first.id);
+        let updated = learn_question(
+            &store,
+            "dpk-infra",
+            q,
+            "dpk-infra documents this in docs/other.md. Do not search a second repo.",
+        )
+        .unwrap();
+        assert_eq!(updated.version, 2);
+        assert_eq!(
+            learned_question_id(q),
+            learned_question_id("  Where   are nodeport hostport hyperdx documented?  ")
+        );
     }
 
     #[test]
