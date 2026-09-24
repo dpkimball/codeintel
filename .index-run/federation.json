@@ -1,0 +1,1224 @@
+{
+  "architectural_boundaries": [
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-ai",
+      "to_crate": "binder-llm",
+      "to_repo": "binder-llm"
+    },
+    {
+      "from_crate": "binder-core",
+      "from_repo": "binder-core",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-binders",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-commands",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-core-shim",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-events",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-platform",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-sdk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-service-rt",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ui",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-watcher",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-workspace",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "codeintel",
+      "from_repo": "codeintel",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    }
+  ],
+  "dependency_graph": [
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-ai",
+      "to_crate": "binder-llm",
+      "to_repo": "binder-llm"
+    },
+    {
+      "from_crate": "binder-core",
+      "from_repo": "binder-core",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-binders",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-commands",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-core-shim",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-events",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-platform",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-sdk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-service-rt",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ui",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-watcher",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-workspace",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "codeintel",
+      "from_repo": "codeintel",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    }
+  ],
+  "impact_across_repositories": [
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-ai",
+      "to_crate": "binder-llm",
+      "to_repo": "binder-llm"
+    },
+    {
+      "from_crate": "binder-core",
+      "from_repo": "binder-core",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-binders",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-commands",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-core-shim",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-events",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-platform",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-sdk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-service-rt",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ui",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-watcher",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-workspace",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "codeintel",
+      "from_repo": "codeintel",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    }
+  ],
+  "ownership_graph": [
+    {
+      "name": "binder-ai",
+      "repo": "binder-ai"
+    },
+    {
+      "name": "binder-llm",
+      "repo": "binder-llm"
+    },
+    {
+      "name": "dpk-build",
+      "repo": "dpk-build"
+    },
+    {
+      "name": "binder-core-shim",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-services",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "weather-binder",
+      "repo": "weather-binder"
+    },
+    {
+      "name": "xtask",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-app",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "garmin-binder",
+      "repo": "garmin-binder"
+    },
+    {
+      "name": "binder-commands",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-runtime",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-sdk",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-telemetry",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "story-binder",
+      "repo": "story-binder"
+    },
+    {
+      "name": "memory-binder",
+      "repo": "memory-binder"
+    },
+    {
+      "name": "binder-events",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-home",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-ai",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-ai-mistralrs",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "bindb",
+      "repo": "bindb"
+    },
+    {
+      "name": "binder-server",
+      "repo": "binder-server"
+    },
+    {
+      "name": "codeintel",
+      "repo": "codeintel"
+    },
+    {
+      "name": "binder-dpk",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-ui",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-watcher",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "apple-health-binder",
+      "repo": "apple-health-binder"
+    },
+    {
+      "name": "binder-service-rt",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-platform",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-core",
+      "repo": "binder-core"
+    },
+    {
+      "name": "binder-binders",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-workspace",
+      "repo": "binder-desktop"
+    }
+  ],
+  "primary_source": "bindb",
+  "report": {
+    "crates": [
+      {
+        "name": "binder-ai",
+        "repo": "binder-ai"
+      },
+      {
+        "name": "binder-llm",
+        "repo": "binder-llm"
+      },
+      {
+        "name": "dpk-build",
+        "repo": "dpk-build"
+      },
+      {
+        "name": "binder-core-shim",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-services",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "weather-binder",
+        "repo": "weather-binder"
+      },
+      {
+        "name": "xtask",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-app",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "garmin-binder",
+        "repo": "garmin-binder"
+      },
+      {
+        "name": "binder-commands",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-runtime",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-sdk",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-telemetry",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "story-binder",
+        "repo": "story-binder"
+      },
+      {
+        "name": "memory-binder",
+        "repo": "memory-binder"
+      },
+      {
+        "name": "binder-events",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-home",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-ai",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-ai-mistralrs",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "bindb",
+        "repo": "bindb"
+      },
+      {
+        "name": "binder-server",
+        "repo": "binder-server"
+      },
+      {
+        "name": "codeintel",
+        "repo": "codeintel"
+      },
+      {
+        "name": "binder-dpk",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-ui",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-watcher",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "apple-health-binder",
+        "repo": "apple-health-binder"
+      },
+      {
+        "name": "binder-service-rt",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-platform",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-core",
+        "repo": "binder-core"
+      },
+      {
+        "name": "binder-binders",
+        "repo": "binder-desktop"
+      },
+      {
+        "name": "binder-workspace",
+        "repo": "binder-desktop"
+      }
+    ],
+    "cross_repo_deps": [
+      {
+        "from_crate": "apple-health-binder",
+        "from_repo": "apple-health-binder",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "apple-health-binder",
+        "from_repo": "apple-health-binder",
+        "to_crate": "binder-sdk",
+        "to_repo": "binder-desktop"
+      },
+      {
+        "from_crate": "binder-ai",
+        "from_repo": "binder-ai",
+        "to_crate": "binder-llm",
+        "to_repo": "binder-llm"
+      },
+      {
+        "from_crate": "binder-core",
+        "from_repo": "binder-core",
+        "to_crate": "bindb",
+        "to_repo": "bindb"
+      },
+      {
+        "from_crate": "binder-ai",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-ai-mistralrs",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-ai",
+        "to_repo": "binder-ai"
+      },
+      {
+        "from_crate": "binder-ai-mistralrs",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-app",
+        "from_repo": "binder-desktop",
+        "to_crate": "bindb",
+        "to_repo": "bindb"
+      },
+      {
+        "from_crate": "binder-app",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-binders",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-commands",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-core-shim",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-dpk",
+        "from_repo": "binder-desktop",
+        "to_crate": "bindb",
+        "to_repo": "bindb"
+      },
+      {
+        "from_crate": "binder-dpk",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-events",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-home",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-ai",
+        "to_repo": "binder-ai"
+      },
+      {
+        "from_crate": "binder-home",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-platform",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-runtime",
+        "from_repo": "binder-desktop",
+        "to_crate": "bindb",
+        "to_repo": "bindb"
+      },
+      {
+        "from_crate": "binder-runtime",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-ai",
+        "to_repo": "binder-ai"
+      },
+      {
+        "from_crate": "binder-runtime",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-sdk",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-service-rt",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-ui",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-watcher",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-workspace",
+        "from_repo": "binder-desktop",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "binder-server",
+        "from_repo": "binder-server",
+        "to_crate": "bindb",
+        "to_repo": "bindb"
+      },
+      {
+        "from_crate": "binder-server",
+        "from_repo": "binder-server",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "codeintel",
+        "from_repo": "codeintel",
+        "to_crate": "bindb",
+        "to_repo": "bindb"
+      },
+      {
+        "from_crate": "garmin-binder",
+        "from_repo": "garmin-binder",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "garmin-binder",
+        "from_repo": "garmin-binder",
+        "to_crate": "binder-sdk",
+        "to_repo": "binder-desktop"
+      },
+      {
+        "from_crate": "memory-binder",
+        "from_repo": "memory-binder",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "memory-binder",
+        "from_repo": "memory-binder",
+        "to_crate": "binder-sdk",
+        "to_repo": "binder-desktop"
+      },
+      {
+        "from_crate": "story-binder",
+        "from_repo": "story-binder",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "story-binder",
+        "from_repo": "story-binder",
+        "to_crate": "binder-sdk",
+        "to_repo": "binder-desktop"
+      },
+      {
+        "from_crate": "weather-binder",
+        "from_repo": "weather-binder",
+        "to_crate": "binder-core",
+        "to_repo": "binder-core"
+      },
+      {
+        "from_crate": "weather-binder",
+        "from_repo": "weather-binder",
+        "to_crate": "binder-sdk",
+        "to_repo": "binder-desktop"
+      }
+    ],
+    "cycles": [],
+    "linked_this_pass": 0,
+    "primary_source": "bindb",
+    "repos": [
+      "app-registry",
+      "apple-health-binder",
+      "audio_ai",
+      "bindb",
+      "binder-ai",
+      "binder-client",
+      "binder-cloud",
+      "binder-core",
+      "binder-desktop",
+      "binder-ios",
+      "binder-llm",
+      "binder-sdk",
+      "binder-server",
+      "codeintel",
+      "codev",
+      "dpk-agent",
+      "dpk-build",
+      "dpk-ci",
+      "dpk-codev",
+      "dpk-docs",
+      "dpk-infra",
+      "foreman",
+      "garmin-binder",
+      "image-decipher",
+      "image_ai",
+      "keepsake-e2e-tests",
+      "keepsake-image-sd",
+      "keepsake-media",
+      "memory-binder",
+      "pdp",
+      "repo-dashboard",
+      "resume-generate",
+      "resume-pipeline",
+      "security-audit",
+      "stories",
+      "story-binder",
+      "text-decipher",
+      "text_ai",
+      "video-decipher",
+      "video_ai",
+      "weather-binder",
+      "workspace-host"
+    ],
+    "source_files_opened": 0
+  },
+  "shared_libraries": [
+    {
+      "name": "bindb",
+      "repo": "bindb"
+    },
+    {
+      "name": "binder-ai",
+      "repo": "binder-ai"
+    },
+    {
+      "name": "binder-core",
+      "repo": "binder-core"
+    },
+    {
+      "name": "binder-sdk",
+      "repo": "binder-desktop"
+    },
+    {
+      "name": "binder-llm",
+      "repo": "binder-llm"
+    }
+  ],
+  "source_files_opened": 0
+}

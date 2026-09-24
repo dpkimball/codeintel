@@ -1,0 +1,2686 @@
+{
+  "inspect_before_change": [
+    "binder-core:.cargo/config.toml",
+    "binder-core:Cargo.toml",
+    "binder-core:Makefile",
+    "binder-core:dpk.toml",
+    "binder-core:src/adapter/bindb/base.rs",
+    "binder-core:src/adapter/bindb/commerce.rs",
+    "binder-core:src/adapter/bindb/finance.rs",
+    "binder-core:src/adapter/bindb/foundation.rs",
+    "binder-core:src/adapter/bindb/health.rs",
+    "binder-core:src/adapter/bindb/home.rs",
+    "binder-core:src/adapter/bindb/learning.rs",
+    "binder-core:src/adapter/bindb/media.rs",
+    "binder-core:src/adapter/bindb/mod.rs",
+    "binder-core:src/adapter/bindb/personal.rs",
+    "binder-core:src/adapter/bindb/pets.rs",
+    "binder-core:src/adapter/bindb/relationships.rs",
+    "binder-core:src/adapter/bindb/travel.rs",
+    "binder-core:src/adapter/bindb/weather.rs",
+    "binder-core:src/adapter/bindb/work.rs",
+    "binder-core:src/adapter/mod.rs",
+    "binder-core:src/analytics/correlation.rs",
+    "binder-core:src/analytics/insights.rs",
+    "binder-core:src/analytics/loader.rs",
+    "binder-core:src/analytics/mod.rs",
+    "binder-core:src/analytics/typed_finance.rs",
+    "binder-core:src/analytics/typed_health.rs",
+    "binder-core:src/analytics/typed_home.rs",
+    "binder-core:src/analytics/typed_loader.rs",
+    "binder-core:src/analytics/typed_projectors.rs",
+    "binder-core:src/analytics/typed_weather.rs",
+    "binder-core:src/application/health.rs",
+    "binder-core:src/application/mod.rs",
+    "binder-core:src/binder/binder_error.rs",
+    "binder-core:src/binder/capability.rs",
+    "binder-core:src/binder/contributions.rs",
+    "binder-core:src/binder/entity_kind.rs",
+    "binder-core:src/binder/env.rs",
+    "binder-core:src/binder/id.rs",
+    "binder-core:src/binder/manifest.rs",
+    "binder-core:src/binder/mod.rs",
+    "binder-core:src/binder/object.rs",
+    "binder-core:src/binder/permissions.rs",
+    "binder-core:src/binder/provider_id.rs",
+    "binder-core:src/binder/telemetry.rs",
+    "binder-core:src/binder/value.rs",
+    "binder-core:src/binder/version.rs",
+    "binder-core:src/context.rs",
+    "binder-core:src/contribution/builder.rs",
+    "binder-core:src/contribution/events.rs",
+    "binder-core:src/contribution/metric_index.rs",
+    "binder-core:src/contribution/mod.rs",
+    "binder-core:src/contribution/observation_catalog.rs",
+    "binder-core:src/contribution/observation_query.rs",
+    "binder-core:src/contribution/observation_time_index.rs",
+    "binder-core:src/contribution/pipeline.rs",
+    "binder-core:src/contribution/query.rs",
+    "binder-core:src/contribution/reconciler.rs",
+    "binder-core:src/domain/commerce/delivery.rs",
+    "binder-core:src/domain/commerce/mod.rs",
+    "binder-core:src/domain/commerce/order.rs",
+    "binder-core:src/domain/finance/account.rs",
+    "binder-core:src/domain/finance/bill.rs",
+    "binder-core:src/domain/finance/budget.rs",
+    "binder-core:src/domain/finance/institution.rs",
+    "binder-core:src/domain/finance/investment.rs",
+    "binder-core:src/domain/finance/loan.rs",
+    "binder-core:src/domain/finance/mod.rs",
+    "binder-core:src/domain/finance/transaction.rs",
+    "binder-core:src/domain/foundation/account_identity.rs",
+    "binder-core:src/domain/foundation/document.rs",
+    "binder-core:src/domain/foundation/event.rs",
+    "binder-core:src/domain/foundation/location.rs",
+    "binder-core:src/domain/foundation/mod.rs",
+    "binder-core:src/domain/foundation/organization.rs",
+    "binder-core:src/domain/foundation/person.rs",
+    "binder-core:src/domain/foundation/relationship.rs",
+    "binder-core:src/domain/health/body.rs",
+    "binder-core:src/domain/health/condition.rs",
+    "binder-core:src/domain/health/daily_metrics.rs",
+    "binder-core:src/domain/health/lab.rs",
+    "binder-core:src/domain/health/medication.rs",
+    "binder-core:src/domain/health/mod.rs",
+    "binder-core:src/domain/health/nutrition.rs",
+    "binder-core:src/domain/health/provider.rs",
+    "binder-core:src/domain/health/sleep.rs",
+    "binder-core:src/domain/health/vital.rs",
+    "binder-core:src/domain/health/workout.rs",
+    "binder-core:src/domain/home/maintenance.rs",
+    "binder-core:src/domain/home/mod.rs",
+    "binder-core:src/domain/home/property.rs",
+    "binder-core:src/domain/home/vehicle.rs",
+    "binder-core:src/domain/home/warranty.rs",
+    "binder-core:src/domain/id.rs",
+    "binder-core:src/domain/learning/book.rs",
+    "binder-core:src/domain/learning/course.rs",
+    "binder-core:src/domain/learning/mod.rs",
+    "binder-core:src/domain/learning/note.rs",
+    "binder-core:src/domain/learning/reading.rs",
+    "binder-core:src/domain/media/audio.rs",
+    "binder-core:src/domain/media/mod.rs",
+    "binder-core:src/domain/media/photo.rs",
+    "binder-core:src/domain/media/source.rs",
+    "binder-core:src/domain/media/video.rs",
+    "binder-core:src/domain/mod.rs",
+    "binder-core:src/domain/personal/memory.rs",
+    "binder-core:src/domain/personal/mod.rs",
+    "binder-core:src/domain/personal/observation.rs",
+    "binder-core:src/domain/personal/orb.rs",
+    "binder-core:src/domain/personal/perspective.rs",
+    "binder-core:src/domain/personal/reentry.rs",
+    "binder-core:src/domain/personal/reflection.rs",
+    "binder-core:src/domain/personal/story.rs",
+    "binder-core:src/domain/pets/mod.rs",
+    "binder-core:src/domain/pets/pet.rs",
+    "binder-core:src/domain/pets/vet_visit.rs",
+    "binder-core:src/domain/relationships/mod.rs",
+    "binder-core:src/domain/relationships/person_relationship.rs",
+    "binder-core:src/domain/travel/mod.rs",
+    "binder-core:src/domain/travel/passport.rs",
+    "binder-core:src/domain/travel/trip.rs",
+    "binder-core:src/domain/travel/visa.rs",
+    "binder-core:src/domain/value/address.rs",
+    "binder-core:src/domain/value/coordinates.rs",
+    "binder-core:src/domain/value/distance.rs",
+    "binder-core:src/domain/value/duration.rs",
+    "binder-core:src/domain/value/email_address.rs",
+    "binder-core:src/domain/value/energy.rs",
+    "binder-core:src/domain/value/heart_rate.rs",
+    "binder-core:src/domain/value/mass.rs",
+    "binder-core:src/domain/value/mod.rs",
+    "binder-core:src/domain/value/money.rs",
+    "binder-core:src/domain/value/pace.rs",
+    "binder-core:src/domain/value/percentage.rs",
+    "binder-core:src/domain/value/speed.rs",
+    "binder-core:src/domain/value/temperature.rs",
+    "binder-core:src/domain/value/time_range.rs",
+    "binder-core:src/domain/value/url.rs",
+    "binder-core:src/domain/weather/mod.rs",
+    "binder-core:src/domain/weather/observation.rs",
+    "binder-core:src/domain/work/meeting.rs",
+    "binder-core:src/domain/work/mod.rs",
+    "binder-core:src/domain/work/project.rs",
+    "binder-core:src/domain/work/role.rs",
+    "binder-core:src/domain/work/time_entry.rs",
+    "binder-core:src/error.rs",
+    "binder-core:src/graph/mod.rs",
+    "binder-core:src/graph/queries.rs",
+    "binder-core:src/graph/temporal.rs",
+    "binder-core:src/identity.rs",
+    "binder-core:src/ingest/bindb_store.rs",
+    "binder-core:src/ingest/canonical_entity_store.rs",
+    "binder-core:src/ingest/canonical_key.rs",
+    "binder-core:src/ingest/connection.rs",
+    "binder-core:src/ingest/error.rs",
+    "binder-core:src/ingest/lineage.rs",
+    "binder-core:src/ingest/mem_store.rs",
+    "binder-core:src/ingest/mod.rs",
+    "binder-core:src/ingest/processing.rs",
+    "binder-core:src/ingest/retention.rs",
+    "binder-core:src/ingest/source_record.rs",
+    "binder-core:src/ingest/store.rs",
+    "binder-core:src/lib.rs",
+    "binder-core:src/observability.rs",
+    "binder-core:src/pipeline/contract.rs",
+    "binder-core:src/pipeline/metric.rs",
+    "binder-core:src/pipeline/mod.rs",
+    "binder-core:src/pipeline/observation.rs",
+    "binder-core:src/pipeline/projector.rs",
+    "binder-core:src/query/commerce.rs",
+    "binder-core:src/query/finance.rs",
+    "binder-core:src/query/foundation.rs",
+    "binder-core:src/query/health.rs",
+    "binder-core:src/query/home.rs",
+    "binder-core:src/query/learning.rs",
+    "binder-core:src/query/media.rs",
+    "binder-core:src/query/mod.rs",
+    "binder-core:src/query/page.rs",
+    "binder-core:src/query/personal.rs",
+    "binder-core:src/query/pets.rs",
+    "binder-core:src/query/relationships.rs",
+    "binder-core:src/query/travel.rs",
+    "binder-core:src/query/weather.rs",
+    "binder-core:src/query/work.rs",
+    "binder-core:src/repository/commerce.rs",
+    "binder-core:src/repository/finance.rs",
+    "binder-core:src/repository/foundation.rs",
+    "binder-core:src/repository/health.rs",
+    "binder-core:src/repository/home.rs",
+    "binder-core:src/repository/learning.rs",
+    "binder-core:src/repository/media.rs",
+    "binder-core:src/repository/mod.rs",
+    "binder-core:src/repository/personal.rs",
+    "binder-core:src/repository/pets.rs",
+    "binder-core:src/repository/relationships.rs",
+    "binder-core:src/repository/travel.rs",
+    "binder-core:src/repository/weather.rs",
+    "binder-core:src/repository/work.rs",
+    "binder-core:src/semantic/chunking.rs",
+    "binder-core:src/semantic/engine.rs",
+    "binder-core:src/semantic/error.rs",
+    "binder-core:src/semantic/extraction.rs",
+    "binder-core:src/semantic/mod.rs",
+    "binder-core:src/semantic/model.rs",
+    "binder-core:src/semantic/models/mock.rs",
+    "binder-core:src/semantic/models/mod.rs",
+    "binder-core:src/semantic/types.rs",
+    "binder-core:src/service/commerce.rs",
+    "binder-core:src/service/finance.rs",
+    "binder-core:src/service/foundation.rs",
+    "binder-core:src/service/health.rs",
+    "binder-core:src/service/home.rs",
+    "binder-core:src/service/learning.rs",
+    "binder-core:src/service/media.rs",
+    "binder-core:src/service/mod.rs",
+    "binder-core:src/service/personal.rs",
+    "binder-core:src/service/pets.rs",
+    "binder-core:src/service/relationships.rs",
+    "binder-core:src/service/travel.rs",
+    "binder-core:src/service/weather.rs",
+    "binder-core:src/service/work.rs",
+    "binder-core:tests/commerce_order.rs",
+    "binder-core:tests/finance_account.rs",
+    "binder-core:tests/foundation_person.rs",
+    "binder-core:tests/health_workout.rs",
+    "binder-core:tests/home_property.rs",
+    "binder-core:tests/learning_reading.rs",
+    "binder-core:tests/media_photo.rs",
+    "binder-core:tests/personal_memory.rs",
+    "binder-core:tests/pets_pet.rs",
+    "binder-core:tests/travel_trip.rs",
+    "binder-core:tests/work_project.rs"
+  ],
+  "interpretation": "matched binder-core/binder-core",
+  "likely_affected": [
+    "apple-health-binder/apple-health-binder",
+    "binder-core/binder-core",
+    "binder-desktop/binder-ai",
+    "binder-desktop/binder-ai-mistralrs",
+    "binder-desktop/binder-app",
+    "binder-desktop/binder-binders",
+    "binder-desktop/binder-commands",
+    "binder-desktop/binder-core-shim",
+    "binder-desktop/binder-dpk",
+    "binder-desktop/binder-events",
+    "binder-desktop/binder-home",
+    "binder-desktop/binder-platform",
+    "binder-desktop/binder-runtime",
+    "binder-desktop/binder-sdk",
+    "binder-desktop/binder-service-rt",
+    "binder-desktop/binder-ui",
+    "binder-desktop/binder-watcher",
+    "binder-desktop/binder-workspace",
+    "binder-server/binder-server",
+    "garmin-binder/garmin-binder",
+    "memory-binder/memory-binder",
+    "story-binder/story-binder",
+    "weather-binder/weather-binder"
+  ],
+  "matched_kind": "crate",
+  "matching_patterns": [
+    {
+      "detail": "binder-core::service::personal::PerspectiveService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::work::RoleQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::percentage::Percentage",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::BindbStoryRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::home::warranty::Warranty",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::contributions::RuntimeContributions",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::query::QueryEngine",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::pipeline::DiffResult",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::foundation::document::Document",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::finance::TransactionQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::canonical_key::CanonicalIdAllocator",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::manifest::ValidationDiagnostic",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_projectors::DailyMetricsProjector",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::commerce::DeliveryQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::SrcKeyPayload",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_projectors::WeatherProjector",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::personal::ObservationService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::travel::trip::Trip",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::BindbPersonRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::BindbBodyRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::personal::ReentryQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::WarrantyRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::work::time_entry::TimeEntry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::BindbVehicleRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::personal::ReflectionQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_projectors::WorkoutProjector",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::energy::Energy",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::pipeline::ContributionSet",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::media::AudioService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::TimeEntryRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::StoryRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::LinPayload",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::chunking::ChunkConfig",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_finance::AccountContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::travel::passport::Passport",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::health::BodyService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::extraction::SemanticFieldRegistry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::finance::account::Account",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::BindbWarrantyRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::BindbOrganizationRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::BindbPerspectiveRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::BindbOrbRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::finance::TransactionService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::temperature::Temperature",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::store::SourceFilter",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::finance::budget::Budget",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::FinanceContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::CesPayload",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::personal::perspective::Perspective",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::BindbDeliveryRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::LineageKey",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::personal::OrbService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::permissions::GrantStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::home::VehicleService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::contributions::PanelContribution",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::commerce::ShoppingOrderService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::commerce::order::OrderItem",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::commerce::DeliveryService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::work::role::Role",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::BindbVideoRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::health::VitalQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::AudioRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::application::health::HealthSummary",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::source_record::SourceRecordId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::object::ObjectIdentity",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::health::LabQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::pets::VetVisitService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::BindbCanonicalEntityStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::pipeline::projector::ProjectorRegistry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::permissions::ScopeString",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::pets::BindbPetRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::engine::SemanticEngine",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::time_range::TimeRange",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::version::HostApiVersion",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::observation_query::ObservationJoin",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::models::mock::MockEmbeddingModel",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::pace::Pace",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::pipeline::DomainObject",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::RelationshipsContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::travel::PassportService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::work::ProjectQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::manifest::ValidationResult",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::id::SchemaVersion",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::BindbPassportRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::id::UntypedEntityId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::finance::BillQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::media::PhotoService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::WeatherContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::media::source::MediaSource",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::duration::Duration",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::pets::PetRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::permissions::GrantEntry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::contributions::NavContribution",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::BindbVisaRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::personal::reentry::Reentry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::types::ProjectionGeneration",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::percentage::OutOfRangePercentage",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::retention::ProviderRetentionPolicy",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::travel::PassportQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::health::vital::Vital",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::personal::reflection::Reflection",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::health::sleep::SleepStage",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::mass::Mass",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::types::Embedding",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::LearningContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::BindbReadingRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::weather::BindbWeatherObservationRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::types::ChunkId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::permissions::DataScopeDeclaration",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::work::TimeEntryQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::BindbDailyMetricsRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::finance::budget::BudgetLine",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::foundation::AccountIdentityQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::speed::Speed",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::home::MaintenanceService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::pets::PetQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::BindbObservationRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BindbInstitutionRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::PerspectiveRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::personal::ObservationQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::url::Url",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::weather::WeatherObservationService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::TripRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::personal::PerspectiveQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::MemSourceEntry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::FoundationContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::object::ObjectConnection",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BindbBillRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::BindbWorkoutRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::types::SemanticIndexResult",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::provider_id::ProviderId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::BindbAccountIdentityRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::InstitutionRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::finance::BudgetQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::work::project::Project",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::commerce::delivery::Delivery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::pets::PetService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::personal::StoryQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::media::audio::Audio",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::observation_catalog::ObservationCatalog",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::id::tests::NotSendNotSync",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::BindbSourceStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::CourseRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::pets::VetVisitQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::heart_rate::HeartRate",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::learning::ReadingService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::pets::pet::Pet",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::home::WarrantyService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::finance::InstitutionService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::finance::AccountService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::health::FoodLogQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::foundation::account_identity::AccountIdentity",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::MemLineageStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::types::EmbeddingInput",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::OrderItemJson",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::personal::StoryService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::learning::note::Note",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::BindbPhotoRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::ProjectRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::foundation::organization::Organization",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::BindbAudioRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::media::PhotoQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::media::VideoService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::foundation::OrganizationService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::builder::TransactionBuilder",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::travel::VisaQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::ReflectionRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::home::VehicleQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::object::ObjectMetadata",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::finance::bill::Bill",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::VideoRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::id::ContentHash",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::finance::InstitutionQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::application::health::HealthApplication",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::personal::ReentryService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::personal::MemoryService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::learning::ReadingQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::BindbReentryRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::relationships::BindbPersonRelationshipRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::pipeline::Connection",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::distance::Distance",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::ReentryRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::foundation::LocationQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_home::PropertyContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::media::VideoQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::learning::course::Course",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::connection::SourceConnectionId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::commerce::order::ShoppingOrder",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::permissions::GrantStoreEntry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::graph::GraphEngine",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::observation_query::MetricInventoryEntry",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::email_address::EmailAddress",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::provider_id::InvalidProviderId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BindbAccountRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::health::DailyMetricsQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::health::SleepService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::MemSourceStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::finance::BillService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::BindbShoppingOrderRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::travel::TripQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_finance::TransactionContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::source_record::SourceRecord",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BindbTransactionRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::personal::story::Story",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BudgetLineJson",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::BindbSleepRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::id::ObjectId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::reconciler::ContributionReconciler",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::observation_query::ObservationQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::HealthContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::contributions::StaticContributions",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::object::Provenance",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::value::coordinates::Coordinates",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::BindbNoteRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::source_record::ContentHash",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::BindbPropertyRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_loader::tests::VecStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::travel::VisaService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::page::Page",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::RoleRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::BindbMemoryRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::home::PropertyQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::DeliveryRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::foundation::AccountIdentityService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::home::PropertyService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::version::ObjectSchemaVersion",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::PassportRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::relationships::PersonRelationshipRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::relationships::person_relationship::PersonRelationship",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::finance::LoanQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::finance::institution::Institution",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::relationships::PersonRelationshipQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::health::BodyQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::relationships::PersonRelationshipService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::health::DailyMetricsService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_projectors::SleepProjector",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::BindbReflectionRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::commerce::ShoppingOrderQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::foundation::LocationService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::learning::CourseService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::home::property::Property",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::work::RoleService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::contribution::observation_query::ObservationPair",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::BindbCourseRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::AccountIdentityRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::health::provider::HealthProvider",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::types::ModelId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::personal::orb::MemoryOrb",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::capability::DegradedContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::base::BindbRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::finance::BudgetService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::media::video::Video",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::weather::WeatherObservationQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::learning::NoteService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::foundation::OrganizationQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::analytics::typed_health::SleepContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::home::MaintenanceQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::PersonRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::BindbTripRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::health::WorkoutQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BindbLoanRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::learning::CourseQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::BindbLocationRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::BindbRoleRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::id::BinderId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::HomeContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::foundation::event::Event",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::learning::NoteQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::BindbProjectRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BindbBudgetRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::personal::ReflectionService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::work::TimeEntryService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::BindbTimeEntryRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::OrbRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::foundation::PersonQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::BindbMaintenanceRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::media::AudioQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::version::BinderManifestVersion",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::foundation::person::Person",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::semantic::types::ContentHash",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::pets::BindbVetVisitRepository",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::TravelContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::home::WarrantyQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::personal::OrbQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::finance::LoanService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::page::PageRequest",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::OrganizationRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::travel::TripService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::WorkContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::media::photo::Photo",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::personal::MemoryQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::work::ProjectService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::NoteRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::PetsContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::BindbLineageStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::BudgetRow",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::observability::OtelGuard",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::MediaContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::context::CommerceContext",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::foundation::PersonService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::finance::AccountQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::foundation::location::Location",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::capability::DegradationHint",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::binder::id::AppId",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::MemCanonicalEntityStore",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::service::health::WorkoutService",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::domain::finance::investment::Investment",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::query::health::SleepQuery",
+      "kind": "possible_newtype"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::impl<AccountIdentityRepository for BindbAccountIdentityRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::connection::impl<SourceConnectionId> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::id::impl<EntityId<T>> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::personal::impl<ReflectionService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::impl<PropertyRepository for BindbPropertyRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::finance::impl<LoanService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::impl<LoanRepository for BindbLoanRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::work::impl<ProjectService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::impl<WarrantyRepository for BindbWarrantyRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::impl<VideoRepository for BindbVideoRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::media::impl<AudioService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::impl<SourceStore for BindbSourceStore> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::impl<ProjectRepository for BindbProjectRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::distance::impl<Distance> (6 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::travel::impl<TripService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::binder::env::impl<AcceleratedComputeTier> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::impl<LineageStore for MemLineageStore> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::pets::impl<PetRepository for BindbPetRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::personal::impl<ReentryService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::impl<NoteRepository for BindbNoteRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::impl<BindbLineageStore> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::binder::env::impl<MemoryTier> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::finance::impl<AccountService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::contribution::observation_time_index::impl<ObservationTimeIndex> (10 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::personal::impl<StoryService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::mass::impl<Mass> (6 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::home::impl<PropertyService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::pipeline::projector::impl<ProjectorRegistry> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::pipeline::observation::impl<Observation> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::impl<PersonRepository for BindbPersonRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::duration::impl<Duration> (12 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::impl<CanonicalEntityStore for BindbCanonicalEntityStore> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::contribution::query::impl<QueryEngine> (17 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::impl<WorkoutRepository for BindbWorkoutRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::home::impl<WarrantyService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::impl<LineageStore for BindbLineageStore> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::impl<ReadingRepository for BindbReadingRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::contribution::metric_index::impl<MetricIndex> (14 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::relationships::impl<PersonRelationshipService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::foundation::impl<OrganizationService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::commerce::impl<ShoppingOrderService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::binder::provider_id::impl<ProviderId> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::impl<OrganizationRepository for BindbOrganizationRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::finance::impl<TransactionService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::pets::impl<PetService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::learning::impl<ReadingService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::impl<LocationRepository for BindbLocationRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::impl<InstitutionRepository for BindbInstitutionRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::pace::impl<Pace> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<PerspectiveRepository for BindbPerspectiveRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::impl<CanonicalEntityStore for MemCanonicalEntityStore> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::identity::impl<IdentityEngine> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::personal::impl<PerspectiveService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::impl<SourceStore for MemSourceStore> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::binder::permissions::impl<GrantStore> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::percentage::impl<Percentage> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::home::impl<VehicleService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::weather::impl<WeatherObservationService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::binder::object::impl<Object> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::health::impl<SleepService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::impl<ShoppingOrderRepository for BindbShoppingOrderRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::health::impl<BodyService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::health::impl<DailyMetricsService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::speed::impl<Speed> (6 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::work::impl<RoleService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::travel::impl<PassportService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::finance::impl<BudgetService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::relationships::impl<PersonRelationshipRepository for BindbPersonRelationshipRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::impl<VisaRepository for BindbVisaRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::analytics::typed_loader::tests::impl<CanonicalEntityStore for VecStore> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::error::impl<DpkError> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::impl<DeliveryRepository for BindbDeliveryRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::graph::impl<GraphEngine> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::pets::impl<VetVisitService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::semantic::engine::impl<SemanticEngine> (6 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::impl<TripRepository for BindbTripRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<ReflectionRepository for BindbReflectionRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::travel::impl<PassportRepository for BindbPassportRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::impl<RoleRepository for BindbRoleRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::impl<VehicleRepository for BindbVehicleRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::binder::capability::impl<CapabilitySpec> (3 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::foundation::impl<AccountIdentityService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::media::impl<PhotoService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<MemoryRepository for BindbMemoryRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::travel::impl<VisaService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::impl<BodyRepository for BindbBodyRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::learning::impl<CourseRepository for BindbCourseRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::personal::impl<OrbService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<ObservationRepository for BindbObservationRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::personal::impl<MemoryService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::foundation::impl<PersonService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::commerce::impl<DeliveryService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::finance::impl<BillService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::health::impl<WorkoutService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::impl<MaintenanceRepository for BindbMaintenanceRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::impl<TransactionRepository for BindbTransactionRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::personal::impl<ObservationService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::impl<BudgetRepository for BindbBudgetRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::impl<BillRepository for BindbBillRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<StoryRepository for BindbStoryRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::base::impl<BindbRepository<E>> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::impl<BindbSourceStore> (6 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::weather::impl<WeatherObservationRepository for BindbWeatherObservationRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::semantic::models::mock::impl<EmbeddingModel for MockEmbeddingModel> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::foundation::impl<LocationService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::contribution::observation_catalog::impl<ObservationCatalog> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::learning::impl<CourseService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::pets::impl<VetVisitRepository for BindbVetVisitRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::impl<PhotoRepository for BindbPhotoRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::work::impl<TimeEntryService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::impl<AudioRepository for BindbAudioRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::energy::impl<Energy> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::impl<TimeEntryRepository for BindbTimeEntryRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::home::impl<MaintenanceService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::impl<AccountRepository for BindbAccountRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<OrbRepository for BindbOrbRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::media::impl<VideoService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<ReentryRepository for BindbReentryRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::learning::impl<NoteService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::value::temperature::impl<Temperature> (6 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::contribution::observation_query::impl<ObservationQuery> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::impl<DailyMetricsRepository for BindbDailyMetricsRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::impl<SleepRepository for BindbSleepRepository> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::domain::id::impl<UntypedEntityId> (5 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::service::finance::impl<InstitutionService> (4 methods)",
+      "kind": "builder_like"
+    },
+    {
+      "detail": "binder-core::error::impl<DpkError>::not_found, binder-core::error::impl<DpkError>::validation, binder-core::error::impl<DpkError>::corrupt",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::personal::perspective::impl<Perspective>::new, binder-core::domain::personal::reentry::impl<Reentry>::new, binder-core::domain::personal::reflection::impl<Reflection>::new, binder-core::domain::travel::trip::impl<Trip>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::impl<TryFrom<OrganizationRow> for Organization>::try_from, binder-core::adapter::bindb::finance::impl<TryFrom<InstitutionRow> for Institution>::try_from",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::graph::queries::runs_with_high_hrv, binder-core::graph::queries::runs_where_humidity_above, binder-core::graph::queries::runs_with_high_recovery, binder-core::graph::queries::runs_with_high_uv",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::commerce::delivery::impl<DeliveryStatus>::as_str, binder-core::domain::health::condition::impl<ConditionStatus>::as_str, binder-core::domain::health::nutrition::impl<MealKind>::as_str, binder-core::domain::finance::institution::impl<InstitutionKind>::as_str, binder-core::domain::pets::pet::impl<PetSpecies>::as_str, binder-core::domain::home::vehicle::impl<VehicleKind>::as_str, binder-core::domain::personal::memory::impl<MemoryKind>::as_str, binder-core::domain::travel::visa::impl<VisaKind>::as_str",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::finance::account::impl<AccountKind>::as_str, binder-core::domain::finance::bill::impl<Recurrence>::as_str, binder-core::domain::home::maintenance::impl<MaintenanceKind>::as_str, binder-core::domain::home::property::impl<PropertyKind>::as_str, binder-core::domain::foundation::account_identity::impl<ProviderKind>::as_str",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::observability::build_tracer_provider, binder-core::observability::build_logger_provider",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::learning::reading::impl<ReadingKind>::decode, binder-core::domain::finance::loan::impl<FilingStatus>::decode, binder-core::domain::foundation::organization::impl<OrgKind>::decode, binder-core::domain::health::sleep::impl<SleepStageKind>::decode",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::provider_id::tests::valid_provider_id, binder-core::domain::value::url::tests::valid_http, binder-core::domain::value::url::tests::valid_https, binder-core::domain::value::percentage::tests::display_formats_with_percent, binder-core::domain::value::email_address::tests::display_matches_input, binder-core::domain::value::email_address::tests::valid_email, binder-core::domain::value::url::tests::display",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::observation_catalog::tests::empty_catalog_query_by_tags_returns_empty, binder-core::contribution::observation_catalog::tests::empty_catalog_query_returns_empty",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::finance::bill::impl<Recurrence>::decode, binder-core::domain::home::property::impl<PropertyKind>::decode, binder-core::domain::finance::account::impl<AccountKind>::decode, binder-core::domain::home::maintenance::impl<MaintenanceKind>::decode, binder-core::domain::foundation::account_identity::impl<ProviderKind>::decode",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::observation_time_index::impl<ObservationTimeIndex>::range_by_subject, binder-core::contribution::observation_time_index::impl<ObservationTimeIndex>::range_by_observed_at",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::retention::tests::retention_policy_roundtrip_metadata_only, binder-core::ingest::retention::tests::retention_policy_roundtrip_permanent",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::processing::tests::state_received_serde_roundtrip, binder-core::ingest::processing::tests::state_canonicalized_serde",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::query::impl<QueryEngine>::observation_catalog, binder-core::contribution::query::impl<QueryEngine>::subgraph",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::telemetry::record_service_restart, binder-core::binder::telemetry::record_startup_duration",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::contributions::impl<RuntimeContributions>::added_since, binder-core::binder::contributions::impl<RuntimeContributions>::removed_since",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::provider_id::tests::serde_roundtrip, binder-core::ingest::connection::tests::serde_roundtrip",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::home::impl<MaintenanceRepository for BindbMaintenanceRepository>::list, binder-core::adapter::bindb::work::impl<RoleRepository for BindbRoleRepository>::list, binder-core::adapter::bindb::home::impl<WarrantyRepository for BindbWarrantyRepository>::list",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::pet_open_world_species, binder-core::organization_open_world_kind",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::pipeline::metric::tests::aggregation_serializes_snake_case, binder-core::pipeline::metric::tests::semantic_type_serializes_snake_case",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::impl<ShoppingOrderRepository for BindbShoppingOrderRepository>::put, binder-core::adapter::bindb::foundation::impl<PersonRepository for BindbPersonRepository>::put, binder-core::adapter::bindb::media::impl<PhotoRepository for BindbPhotoRepository>::put, binder-core::adapter::bindb::health::impl<BodyRepository for BindbBodyRepository>::put, binder-core::adapter::bindb::travel::impl<VisaRepository for BindbVisaRepository>::put, binder-core::adapter::bindb::home::impl<VehicleRepository for BindbVehicleRepository>::put, binder-core::adapter::bindb::pets::impl<VetVisitRepository for BindbVetVisitRepository>::put, binder-core::adapter::bindb::finance::impl<BudgetRepository for BindbBudgetRepository>::put, binder-core::adapter::bindb::personal::impl<ObservationRepository for BindbObservationRepository>::put, binder-core::adapter::bindb::finance::impl<BillRepository for BindbBillRepository>::put, binder-core::adapter::bindb::health::impl<WorkoutRepository for BindbWorkoutRepository>::put, binder-core::adapter::bindb::learning::impl<NoteRepository for BindbNoteRepository>::put, binder-core::adapter::bindb::work::impl<TimeEntryRepository for BindbTimeEntryRepository>::put, binder-core::adapter::bindb::personal::impl<OrbRepository for BindbOrbRepository>::put, binder-core::adapter::bindb::personal::impl<StoryRepository for BindbStoryRepository>::put, binder-core::adapter::bindb::foundation::impl<AccountIdentityRepository for BindbAccountIdentityRepository>::put, binder-core::adapter::bindb::home::impl<PropertyRepository for BindbPropertyRepository>::put, binder-core::adapter::bindb::work::impl<RoleRepository for BindbRoleRepository>::put, binder-core::adapter::bindb::work::impl<ProjectRepository for BindbProjectRepository>::put, binder-core::adapter::bindb::commerce::impl<DeliveryRepository for BindbDeliveryRepository>::put, binder-core::adapter::bindb::learning::impl<CourseRepository for BindbCourseRepository>::put, binder-core::adapter::bindb::personal::impl<PerspectiveRepository for BindbPerspectiveRepository>::put, binder-core::adapter::bindb::finance::impl<LoanRepository for BindbLoanRepository>::put, binder-core::adapter::bindb::home::impl<WarrantyRepository for BindbWarrantyRepository>::put, binder-core::adapter::bindb::finance::impl<TransactionRepository for BindbTransactionRepository>::put, binder-core::adapter::bindb::foundation::impl<LocationRepository for BindbLocationRepository>::put, binder-core::adapter::bindb::foundation::impl<OrganizationRepository for BindbOrganizationRepository>::put, binder-core::adapter::bindb::home::impl<MaintenanceRepository for BindbMaintenanceRepository>::put, binder-core::adapter::bindb::learning::impl<ReadingRepository for BindbReadingRepository>::put, binder-core::adapter::bindb::personal::impl<ReflectionRepository for BindbReflectionRepository>::put, binder-core::adapter::bindb::finance::impl<AccountRepository for BindbAccountRepository>::put, binder-core::adapter::bindb::media::impl<VideoRepository for BindbVideoRepository>::put, binder-core::adapter::bindb::pets::impl<PetRepository for BindbPetRepository>::put, binder-core::adapter::bindb::weather::impl<WeatherObservationRepository for BindbWeatherObservationRepository>::put, binder-core::adapter::bindb::health::impl<DailyMetricsRepository for BindbDailyMetricsRepository>::put, binder-core::adapter::bindb::travel::impl<PassportRepository for BindbPassportRepository>::put, binder-core::adapter::bindb::personal::impl<ReentryRepository for BindbReentryRepository>::put, binder-core::adapter::bindb::health::impl<SleepRepository for BindbSleepRepository>::put, binder-core::adapter::bindb::personal::impl<MemoryRepository for BindbMemoryRepository>::put, binder-core::adapter::bindb::finance::impl<InstitutionRepository for BindbInstitutionRepository>::put, binder-core::adapter::bindb::travel::impl<TripRepository for BindbTripRepository>::put, binder-core::adapter::bindb::relationships::impl<PersonRelationshipRepository for BindbPersonRelationshipRepository>::put, binder-core::adapter::bindb::media::impl<AudioRepository for BindbAudioRepository>::put",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::impl<TryFrom<&Role> for RoleRow>::try_from, binder-core::adapter::bindb::work::impl<TryFrom<&TimeEntry> for TimeEntryRow>::try_from",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::graph::temporal::tests::health_poc_rules_returns_three_rules, binder-core::pipeline::observation::tests::point_observation_duration_is_zero",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::health::provider::impl<HealthProvider>::new, binder-core::domain::learning::course::impl<Course>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::personal::orb::impl<OrbState>::as_str, binder-core::binder::env::impl<AcceleratedComputeTier>::as_str, binder-core::domain::learning::reading::impl<ReadingStatus>::as_str",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::impl<BindbSourceStore>::decode_src_payload, binder-core::ingest::bindb_store::impl<BindbLineageStore>::decode_lin_payload",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::permissions::tests::invalid_action_rejected, binder-core::binder::permissions::tests::wildcard_rejected",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::travel::visa::impl<Visa>::new, binder-core::domain::finance::loan::impl<Loan>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::finance::impl<TryFrom<&Institution> for InstitutionRow>::try_from, binder-core::adapter::bindb::foundation::impl<TryFrom<&Organization> for OrganizationRow>::try_from",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::identity::tests::resolve_skips_same_namespace, binder-core::identity::tests::resolve_no_match_when_names_differ",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::url::tests::missing_scheme_is_invalid, binder-core::domain::value::url::tests::ftp_is_invalid, binder-core::domain::value::email_address::tests::empty_is_invalid, binder-core::domain::value::url::tests::empty_is_invalid, binder-core::domain::value::email_address::tests::missing_at_is_invalid",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::impl<TryFrom<VideoRow> for Video>::try_from, binder-core::adapter::bindb::media::impl<TryFrom<AudioRow> for Audio>::try_from",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::analytics::insights::tests::rank_insights_empty_factors, binder-core::analytics::correlation::tests::analyze_empty_returns_empty",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::graph::temporal::tests::recovery_rule_edge_type_and_related_type, binder-core::graph::temporal::tests::sleep_rule_edge_type_and_strategy",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::observation_time_index::impl<ObservationTimeIndex>::metric_ids, binder-core::contribution::metric_index::impl<MetricIndex>::tags",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::bindb_store::tests::make_meta, binder-core::ingest::mem_store::tests::make_meta",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::finance::investment::impl<AssetClass>::decode, binder-core::domain::health::vital::impl<VitalKind>::decode, binder-core::domain::relationships::person_relationship::impl<RelationshipKind>::decode",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::media::impl<TryFrom<&Audio> for AudioRow>::try_from, binder-core::adapter::bindb::media::impl<TryFrom<&Video> for VideoRow>::try_from",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::money::tests::eur_cents_fields, binder-core::domain::value::money::tests::usd_cents_fields",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::pipeline::contract::store_prefix, binder-core::pipeline::contract::observation_id",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<TryFrom<PerspectiveRow> for Perspective>::try_from, binder-core::adapter::bindb::personal::impl<TryFrom<ReflectionRow> for Reflection>::try_from",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::foundation::organization::impl<Organization>::new, binder-core::domain::finance::institution::impl<Institution>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::source_record::tests::source_record_ids_are_unique, binder-core::ingest::connection::tests::new_ids_are_unique",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::impl<LineageStore for MemLineageStore>::for_entity, binder-core::ingest::mem_store::impl<LineageStore for MemLineageStore>::for_source",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<StoryRepository for BindbStoryRepository>::list, binder-core::adapter::bindb::personal::impl<ReflectionRepository for BindbReflectionRepository>::list, binder-core::adapter::bindb::learning::impl<NoteRepository for BindbNoteRepository>::list, binder-core::adapter::bindb::finance::impl<BillRepository for BindbBillRepository>::list, binder-core::adapter::bindb::health::impl<BodyRepository for BindbBodyRepository>::list, binder-core::adapter::bindb::personal::impl<ReentryRepository for BindbReentryRepository>::list, binder-core::adapter::bindb::personal::impl<ObservationRepository for BindbObservationRepository>::list, binder-core::adapter::bindb::personal::impl<PerspectiveRepository for BindbPerspectiveRepository>::list, binder-core::adapter::bindb::commerce::impl<ShoppingOrderRepository for BindbShoppingOrderRepository>::list, binder-core::adapter::bindb::weather::impl<WeatherObservationRepository for BindbWeatherObservationRepository>::list, binder-core::adapter::bindb::health::impl<DailyMetricsRepository for BindbDailyMetricsRepository>::list, binder-core::adapter::bindb::health::impl<SleepRepository for BindbSleepRepository>::list, binder-core::adapter::bindb::travel::impl<TripRepository for BindbTripRepository>::list",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::pets::impl<PetRepository for BindbPetRepository>::list, binder-core::adapter::bindb::finance::impl<InstitutionRepository for BindbInstitutionRepository>::list, binder-core::adapter::bindb::home::impl<PropertyRepository for BindbPropertyRepository>::list, binder-core::adapter::bindb::foundation::impl<OrganizationRepository for BindbOrganizationRepository>::list, binder-core::adapter::bindb::work::impl<ProjectRepository for BindbProjectRepository>::list, binder-core::adapter::bindb::personal::impl<OrbRepository for BindbOrbRepository>::list",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::temperature::impl<Temperature>::fahrenheit, binder-core::domain::value::temperature::impl<Temperature>::celsius, binder-core::domain::value::temperature::impl<Temperature>::kelvin",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::analytics::typed_health::sleep_contexts, binder-core::analytics::typed_health::daily_metrics_contexts, binder-core::analytics::typed_weather::weather_contexts",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<MemoryRepository for BindbMemoryRepository>::list, binder-core::adapter::bindb::health::impl<WorkoutRepository for BindbWorkoutRepository>::list",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::impl<BindbDailyMetricsRepository>::new, binder-core::adapter::bindb::personal::impl<BindbReentryRepository>::new, binder-core::adapter::bindb::media::impl<BindbAudioRepository>::new, binder-core::adapter::bindb::learning::impl<BindbNoteRepository>::new, binder-core::adapter::bindb::home::impl<BindbWarrantyRepository>::new, binder-core::adapter::bindb::weather::impl<BindbWeatherObservationRepository>::new, binder-core::adapter::bindb::travel::impl<BindbVisaRepository>::new, binder-core::adapter::bindb::pets::impl<BindbVetVisitRepository>::new, binder-core::adapter::bindb::relationships::impl<BindbPersonRelationshipRepository>::new, binder-core::adapter::bindb::foundation::impl<BindbAccountIdentityRepository>::new, binder-core::adapter::bindb::media::impl<BindbPhotoRepository>::new, binder-core::adapter::bindb::finance::impl<BindbLoanRepository>::new, binder-core::adapter::bindb::commerce::impl<BindbDeliveryRepository>::new, binder-core::adapter::bindb::work::impl<BindbTimeEntryRepository>::new, binder-core::adapter::bindb::finance::impl<BindbAccountRepository>::new, binder-core::adapter::bindb::learning::impl<BindbCourseRepository>::new, binder-core::adapter::bindb::personal::impl<BindbMemoryRepository>::new, binder-core::adapter::bindb::finance::impl<BindbInstitutionRepository>::new, binder-core::adapter::bindb::finance::impl<BindbBudgetRepository>::new, binder-core::adapter::bindb::media::impl<BindbVideoRepository>::new, binder-core::adapter::bindb::home::impl<BindbPropertyRepository>::new, binder-core::adapter::bindb::personal::impl<BindbStoryRepository>::new, binder-core::adapter::bindb::personal::impl<BindbPerspectiveRepository>::new, binder-core::adapter::bindb::travel::impl<BindbPassportRepository>::new, binder-core::adapter::bindb::commerce::impl<BindbShoppingOrderRepository>::new, binder-core::adapter::bindb::finance::impl<BindbTransactionRepository>::new, binder-core::adapter::bindb::travel::impl<BindbTripRepository>::new, binder-core::adapter::bindb::foundation::impl<BindbLocationRepository>::new, binder-core::adapter::bindb::learning::impl<BindbReadingRepository>::new, binder-core::adapter::bindb::personal::impl<BindbOrbRepository>::new, binder-core::adapter::bindb::health::impl<BindbWorkoutRepository>::new, binder-core::adapter::bindb::home::impl<BindbVehicleRepository>::new, binder-core::adapter::bindb::foundation::impl<BindbPersonRepository>::new, binder-core::adapter::bindb::foundation::impl<BindbOrganizationRepository>::new, binder-core::adapter::bindb::pets::impl<BindbPetRepository>::new, binder-core::adapter::bindb::finance::impl<BindbBillRepository>::new, binder-core::adapter::bindb::work::impl<BindbProjectRepository>::new, binder-core::adapter::bindb::health::impl<BindbSleepRepository>::new, binder-core::adapter::bindb::personal::impl<BindbReflectionRepository>::new, binder-core::adapter::bindb::health::impl<BindbBodyRepository>::new, binder-core::adapter::bindb::work::impl<BindbRoleRepository>::new, binder-core::adapter::bindb::home::impl<BindbMaintenanceRepository>::new, binder-core::adapter::bindb::personal::impl<BindbObservationRepository>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::mem_store::impl<SourceStore for MemSourceStore>::payload, binder-core::ingest::mem_store::impl<SourceStore for MemSourceStore>::meta",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::learning::reading::impl<ReadingStatus>::try_decode, binder-core::domain::personal::orb::impl<OrbState>::try_decode",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::media::audio::impl<Audio>::new, binder-core::domain::media::video::impl<Video>::new, binder-core::domain::media::photo::impl<Photo>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::permissions::tests::valid_scopes_parse, binder-core::domain::value::percentage::tests::new_valid_range",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::health::vital::impl<VitalKind>::as_str, binder-core::domain::finance::investment::impl<AssetClass>::as_str, binder-core::domain::relationships::person_relationship::impl<RelationshipKind>::as_str",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::distance::tests::round_trip_miles, binder-core::domain::value::speed::tests::from_mph_round_trip, binder-core::domain::value::pace::tests::mins_per_km, binder-core::domain::value::speed::tests::from_kmh_round_trip, binder-core::domain::value::temperature::tests::boiling_point_c_to_f, binder-core::domain::value::mass::tests::from_kg_round_trip, binder-core::domain::value::mass::tests::from_lbs_round_trip, binder-core::domain::value::distance::tests::round_trip_km, binder-core::domain::value::temperature::tests::fahrenheit_to_celsius, binder-core::domain::value::energy::tests::kj_to_kcal, binder-core::domain::value::duration::tests::as_seconds_f64, binder-core::domain::value::temperature::tests::kelvin_to_celsius, binder-core::domain::value::speed::tests::kmh_to_ms, binder-core::domain::value::energy::tests::from_kj_round_trip",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::foundation::location::impl<Location>::new, binder-core::domain::foundation::document::impl<Document>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::observation_query::tests::adjacent_intervals_overlap_at_boundary, binder-core::contribution::observation_query::tests::overlapping_intervals_detected, binder-core::contribution::observation_query::tests::point_in_interval_overlaps, binder-core::contribution::observation_query::tests::contained_interval_overlaps, binder-core::contribution::observation_query::tests::reversed_order_still_detects_overlap",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::commerce::impl<DeliveryRepository for BindbDeliveryRepository>::list, binder-core::adapter::bindb::finance::impl<AccountRepository for BindbAccountRepository>::list",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<ReflectionRepository for BindbReflectionRepository>::get, binder-core::adapter::bindb::health::impl<DailyMetricsRepository for BindbDailyMetricsRepository>::get, binder-core::adapter::bindb::work::impl<TimeEntryRepository for BindbTimeEntryRepository>::get, binder-core::adapter::bindb::pets::impl<VetVisitRepository for BindbVetVisitRepository>::get, binder-core::adapter::bindb::travel::impl<PassportRepository for BindbPassportRepository>::get, binder-core::adapter::bindb::commerce::impl<ShoppingOrderRepository for BindbShoppingOrderRepository>::get, binder-core::adapter::bindb::foundation::impl<AccountIdentityRepository for BindbAccountIdentityRepository>::get, binder-core::adapter::bindb::finance::impl<AccountRepository for BindbAccountRepository>::get, binder-core::adapter::bindb::media::impl<AudioRepository for BindbAudioRepository>::get, binder-core::adapter::bindb::personal::impl<ObservationRepository for BindbObservationRepository>::get, binder-core::adapter::bindb::home::impl<MaintenanceRepository for BindbMaintenanceRepository>::get, binder-core::adapter::bindb::weather::impl<WeatherObservationRepository for BindbWeatherObservationRepository>::get, binder-core::adapter::bindb::travel::impl<TripRepository for BindbTripRepository>::get, binder-core::adapter::bindb::home::impl<PropertyRepository for BindbPropertyRepository>::get, binder-core::adapter::bindb::personal::impl<ReentryRepository for BindbReentryRepository>::get, binder-core::adapter::bindb::relationships::impl<PersonRelationshipRepository for BindbPersonRelationshipRepository>::get, binder-core::adapter::bindb::finance::impl<BillRepository for BindbBillRepository>::get, binder-core::adapter::bindb::finance::impl<TransactionRepository for BindbTransactionRepository>::get, binder-core::adapter::bindb::learning::impl<ReadingRepository for BindbReadingRepository>::get, binder-core::adapter::bindb::learning::impl<NoteRepository for BindbNoteRepository>::get, binder-core::adapter::bindb::personal::impl<StoryRepository for BindbStoryRepository>::get, binder-core::adapter::bindb::home::impl<WarrantyRepository for BindbWarrantyRepository>::get, binder-core::adapter::bindb::foundation::impl<PersonRepository for BindbPersonRepository>::get, binder-core::adapter::bindb::finance::impl<BudgetRepository for BindbBudgetRepository>::get, binder-core::adapter::bindb::work::impl<ProjectRepository for BindbProjectRepository>::get, binder-core::adapter::bindb::pets::impl<PetRepository for BindbPetRepository>::get, binder-core::adapter::bindb::learning::impl<CourseRepository for BindbCourseRepository>::get, binder-core::adapter::bindb::finance::impl<InstitutionRepository for BindbInstitutionRepository>::get, binder-core::adapter::bindb::travel::impl<VisaRepository for BindbVisaRepository>::get, binder-core::adapter::bindb::foundation::impl<LocationRepository for BindbLocationRepository>::get, binder-core::adapter::bindb::personal::impl<PerspectiveRepository for BindbPerspectiveRepository>::get, binder-core::adapter::bindb::personal::impl<MemoryRepository for BindbMemoryRepository>::get, binder-core::adapter::bindb::media::impl<PhotoRepository for BindbPhotoRepository>::get, binder-core::adapter::bindb::personal::impl<OrbRepository for BindbOrbRepository>::get, binder-core::adapter::bindb::foundation::impl<OrganizationRepository for BindbOrganizationRepository>::get, binder-core::adapter::bindb::home::impl<VehicleRepository for BindbVehicleRepository>::get, binder-core::adapter::bindb::commerce::impl<DeliveryRepository for BindbDeliveryRepository>::get, binder-core::adapter::bindb::media::impl<VideoRepository for BindbVideoRepository>::get, binder-core::adapter::bindb::finance::impl<LoanRepository for BindbLoanRepository>::get, binder-core::adapter::bindb::work::impl<RoleRepository for BindbRoleRepository>::get",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::service::relationships::impl<PersonRelationshipService>::list, binder-core::service::home::impl<MaintenanceService>::get, binder-core::service::weather::impl<WeatherObservationService>::list, binder-core::service::health::impl<BodyService>::get, binder-core::service::weather::impl<WeatherObservationService>::get, binder-core::service::foundation::impl<AccountIdentityService>::list, binder-core::service::commerce::impl<ShoppingOrderService>::get, binder-core::service::foundation::impl<AccountIdentityService>::get, binder-core::service::relationships::impl<PersonRelationshipService>::get",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::heart_rate::tests::serde_roundtrip, binder-core::domain::value::duration::tests::serde_roundtrip, binder-core::domain::value::speed::tests::serde_roundtrip, binder-core::domain::value::distance::tests::serde_roundtrip, binder-core::domain::value::money::tests::money_serde_roundtrip, binder-core::domain::value::pace::tests::serde_roundtrip, binder-core::domain::value::mass::tests::serde_roundtrip, binder-core::domain::value::energy::tests::serde_roundtrip",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::env::impl<AcceleratedComputeTier>::satisfies, binder-core::binder::env::impl<MemoryTier>::satisfies",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::id::tests::binder_ids_are_unique, binder-core::binder::id::tests::object_ids_are_unique",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::health::nutrition::impl<serde::Deserialize<'de> for MealKind>::deserialize, binder-core::domain::home::vehicle::impl<serde::Deserialize<'de> for VehicleKind>::deserialize, binder-core::domain::relationships::person_relationship::impl<serde::Deserialize<'de> for RelationshipKind>::deserialize, binder-core::domain::learning::reading::impl<serde::Deserialize<'de> for ReadingKind>::deserialize, binder-core::domain::home::property::impl<serde::Deserialize<'de> for PropertyKind>::deserialize, binder-core::domain::health::vital::impl<serde::Deserialize<'de> for VitalKind>::deserialize, binder-core::domain::finance::loan::impl<serde::Deserialize<'de> for FilingStatus>::deserialize, binder-core::domain::travel::visa::impl<serde::Deserialize<'de> for VisaKind>::deserialize, binder-core::domain::finance::account::impl<serde::Deserialize<'de> for AccountKind>::deserialize, binder-core::domain::finance::bill::impl<serde::Deserialize<'de> for Recurrence>::deserialize, binder-core::domain::home::maintenance::impl<serde::Deserialize<'de> for MaintenanceKind>::deserialize, binder-core::domain::finance::transaction::impl<serde::Deserialize<'de> for TransactionCategory>::deserialize, binder-core::domain::foundation::account_identity::impl<serde::Deserialize<'de> for ProviderKind>::deserialize, binder-core::domain::health::condition::impl<serde::Deserialize<'de> for ConditionStatus>::deserialize, binder-core::domain::finance::investment::impl<serde::Deserialize<'de> for AssetClass>::deserialize, binder-core::domain::finance::institution::impl<serde::Deserialize<'de> for InstitutionKind>::deserialize, binder-core::domain::foundation::organization::impl<serde::Deserialize<'de> for OrgKind>::deserialize, binder-core::domain::media::source::impl<serde::Deserialize<'de> for MediaSourceKind>::deserialize, binder-core::domain::health::workout::impl<serde::Deserialize<'de> for SportKind>::deserialize, binder-core::domain::work::meeting::impl<serde::Deserialize<'de> for MeetingKind>::deserialize, binder-core::domain::health::sleep::impl<serde::Deserialize<'de> for SleepStageKind>::deserialize",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::learning::note::impl<Note>::new, binder-core::domain::finance::budget::impl<Budget>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::env::impl<MemoryTier>::telemetry_label, binder-core::binder::env::impl<MemoryTier>::as_str, binder-core::domain::work::project::impl<ProjectStatus>::as_str",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::health::daily_metrics::impl<DailyMetrics>::new, binder-core::domain::finance::loan::impl<TaxReturn>::new, binder-core::domain::weather::observation::impl<WeatherObservation>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::home::vehicle::impl<VehicleKind>::decode, binder-core::domain::finance::institution::impl<InstitutionKind>::decode, binder-core::domain::travel::visa::impl<VisaKind>::decode, binder-core::domain::personal::memory::impl<MemoryKind>::decode, binder-core::domain::commerce::delivery::impl<DeliveryStatus>::decode, binder-core::domain::pets::pet::impl<PetSpecies>::decode, binder-core::domain::health::condition::impl<ConditionStatus>::decode, binder-core::domain::health::nutrition::impl<MealKind>::decode",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::events::tests::object_changed_stores_id, binder-core::contribution::events::tests::object_added_stores_id, binder-core::contribution::events::tests::object_removed_stores_id",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::health::impl<WorkoutRepository for BindbWorkoutRepository>::get, binder-core::adapter::bindb::health::impl<SleepRepository for BindbSleepRepository>::get, binder-core::adapter::bindb::health::impl<BodyRepository for BindbBodyRepository>::get",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::work::impl<TimeEntryRepository for BindbTimeEntryRepository>::list, binder-core::adapter::bindb::pets::impl<VetVisitRepository for BindbVetVisitRepository>::list",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::telemetry::record_object_count_by_app, binder-core::binder::telemetry::record_contribution_count, binder-core::binder::telemetry::record_activation_duration",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::finance::bill::impl<Bill>::new, binder-core::domain::finance::account::impl<Account>::new, binder-core::domain::relationships::person_relationship::impl<PersonRelationship>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::pipeline::impl<ContributionPipeline>::v1, binder-core::domain::media::video::impl<Video>::new_id",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::provider_id::tests::spaces_are_invalid, binder-core::binder::provider_id::tests::valid_with_hyphen, binder-core::binder::provider_id::tests::uppercase_is_invalid, binder-core::binder::provider_id::tests::empty_is_invalid",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::distance::impl<Distance>::from_miles, binder-core::domain::value::mass::impl<Mass>::from_lbs, binder-core::domain::value::mass::impl<Mass>::from_kg, binder-core::domain::value::distance::impl<Distance>::from_km, binder-core::domain::value::duration::impl<Duration>::from_seconds, binder-core::domain::value::duration::impl<Duration>::from_millis",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::heart_rate::tests::ordering, binder-core::domain::value::duration::tests::ordering, binder-core::domain::value::pace::tests::ordering",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::finance::loan::impl<FilingStatus>::as_str, binder-core::domain::health::sleep::impl<SleepStageKind>::as_str, binder-core::domain::learning::reading::impl<ReadingKind>::as_str, binder-core::domain::foundation::organization::impl<OrgKind>::as_str",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::analytics::correlation::tier_avg, binder-core::analytics::correlation::pace_tier_avg",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::personal::memory::impl<Emotion>::as_str, binder-core::domain::work::meeting::impl<MeetingKind>::as_str",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::foundation::event::impl<Event>::new, binder-core::domain::work::project::impl<Project>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::ingest::error::tests::invalid_provider_message, binder-core::ingest::error::tests::retention_policy_message, binder-core::ingest::error::tests::not_found_message, binder-core::ingest::error::tests::storage_message, binder-core::binder::binder_error::tests::binder_error_invalid_manifest_message",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::provider_id::tests::builtin_apple_health, binder-core::binder::provider_id::tests::builtin_garmin",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::query::impl<QueryEngine>::observation_time_index, binder-core::contribution::query::impl<QueryEngine>::metric_index",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::foundation::impl<PersonRepository for BindbPersonRepository>::list, binder-core::adapter::bindb::finance::impl<LoanRepository for BindbLoanRepository>::list, binder-core::adapter::bindb::media::impl<VideoRepository for BindbVideoRepository>::list, binder-core::adapter::bindb::foundation::impl<LocationRepository for BindbLocationRepository>::list, binder-core::adapter::bindb::finance::impl<BudgetRepository for BindbBudgetRepository>::list, binder-core::adapter::bindb::home::impl<VehicleRepository for BindbVehicleRepository>::list, binder-core::adapter::bindb::learning::impl<CourseRepository for BindbCourseRepository>::list, binder-core::adapter::bindb::media::impl<AudioRepository for BindbAudioRepository>::list",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::duration::impl<Duration>::checked_add, binder-core::domain::value::duration::impl<Duration>::checked_sub",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::adapter::bindb::personal::impl<TryFrom<&Perspective> for PerspectiveRow>::try_from, binder-core::adapter::bindb::personal::impl<TryFrom<&Reentry> for ReentryRow>::try_from, binder-core::adapter::bindb::personal::impl<TryFrom<&Reflection> for ReflectionRow>::try_from",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::value::percentage::tests::serde_roundtrip, binder-core::domain::value::url::tests::serde_roundtrip, binder-core::domain::value::email_address::tests::serde_roundtrip",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::value::tests::from_f64, binder-core::binder::value::tests::from_i64, binder-core::ingest::source_record::tests::content_hash_differs_for_different_bytes",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::home::maintenance::impl<MaintenanceItem>::new, binder-core::domain::foundation::relationship::impl<Relationship>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::work::role::impl<Role>::new, binder-core::domain::work::time_entry::impl<TimeEntry>::new, binder-core::domain::foundation::account_identity::impl<AccountIdentity>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::semantic::chunking::impl<Default for ChunkConfig>::default, binder-core::query::page::impl<Default for PageRequest>::default",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::contribution::query::deserialize_version, binder-core::contribution::observation_time_index::deserialize_observation",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::binder::id::tests::app_id_display, binder-core::domain::value::energy::tests::from_kcal_round_trip, binder-core::domain::value::distance::tests::from_meters, binder-core::domain::value::pace::tests::round_trip, binder-core::domain::value::mass::tests::from_grams_round_trip, binder-core::domain::value::distance::tests::km_to_meters, binder-core::domain::value::duration::tests::from_hours, binder-core::domain::value::duration::tests::from_minutes, binder-core::domain::value::speed::tests::from_ms_round_trip, binder-core::domain::value::temperature::tests::celsius_identity, binder-core::domain::value::heart_rate::tests::edge_zero, binder-core::domain::value::mass::tests::kg_to_grams, binder-core::domain::value::heart_rate::tests::from_bpm_round_trip",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::home::property::impl<Property>::new, binder-core::domain::pets::pet::impl<Pet>::new",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::perspective_round_trip, binder-core::reflection_round_trip",
+      "kind": "structural_duplicate"
+    },
+    {
+      "detail": "binder-core::domain::personal::memory::impl<Emotion>::decode, binder-core::domain::work::meeting::impl<MeetingKind>::decode",
+      "kind": "structural_duplicate"
+    }
+  ],
+  "primary_source": "bindb",
+  "repositories": [
+    "apple-health-binder",
+    "binder-core",
+    "binder-desktop",
+    "binder-server",
+    "garmin-binder",
+    "memory-binder",
+    "story-binder",
+    "weather-binder"
+  ],
+  "request": "change binder-core",
+  "rules_must_remain_satisfied": [
+    "app-registry:workspace.acyclic-crates",
+    "apple-health-binder:workspace.acyclic-crates",
+    "audio_ai:workspace.acyclic-crates",
+    "bindb:workspace.acyclic-crates",
+    "binder-ai:workspace.acyclic-crates",
+    "binder-client:workspace.acyclic-crates",
+    "binder-cloud:workspace.acyclic-crates",
+    "binder-core:workspace.acyclic-crates",
+    "binder-desktop:binder.acyclic-crates",
+    "binder-desktop:binder.domain-isolation",
+    "binder-desktop:binder.layering",
+    "binder-desktop:binder.storage-not-ingest",
+    "binder-desktop:binder.storage-not-sdk",
+    "binder-ios:workspace.acyclic-crates",
+    "binder-llm:workspace.acyclic-crates",
+    "binder-sdk:workspace.acyclic-crates",
+    "binder-server:workspace.acyclic-crates",
+    "codeintel:workspace.acyclic-crates",
+    "codev:workspace.acyclic-crates",
+    "dpk-agent:workspace.acyclic-crates",
+    "dpk-build:workspace.acyclic-crates",
+    "dpk-ci:workspace.acyclic-crates",
+    "dpk-codev:workspace.acyclic-crates",
+    "dpk-docs:workspace.acyclic-crates",
+    "dpk-infra:workspace.acyclic-crates",
+    "foreman:workspace.acyclic-crates",
+    "garmin-binder:workspace.acyclic-crates",
+    "image-decipher:workspace.acyclic-crates",
+    "image_ai:workspace.acyclic-crates",
+    "keepsake-e2e-tests:workspace.acyclic-crates",
+    "keepsake-image-sd:workspace.acyclic-crates",
+    "keepsake-media:workspace.acyclic-crates",
+    "memory-binder:workspace.acyclic-crates",
+    "pdp:workspace.acyclic-crates",
+    "repo-dashboard:workspace.acyclic-crates",
+    "resume-generate:workspace.acyclic-crates",
+    "resume-pipeline:workspace.acyclic-crates",
+    "security-audit:workspace.acyclic-crates",
+    "stories:workspace.acyclic-crates",
+    "story-binder:workspace.acyclic-crates",
+    "text-decipher:workspace.acyclic-crates",
+    "text_ai:workspace.acyclic-crates",
+    "video-decipher:workspace.acyclic-crates",
+    "video_ai:workspace.acyclic-crates",
+    "weather-binder:workspace.acyclic-crates",
+    "workspace-host:workspace.acyclic-crates"
+  ],
+  "smallest_file_set": [
+    "binder-core:.cargo/config.toml",
+    "binder-core:Cargo.toml",
+    "binder-core:Makefile",
+    "binder-core:dpk.toml",
+    "binder-core:src/adapter/bindb/base.rs",
+    "binder-core:src/adapter/bindb/commerce.rs",
+    "binder-core:src/adapter/bindb/finance.rs",
+    "binder-core:src/adapter/bindb/foundation.rs",
+    "binder-core:src/adapter/bindb/health.rs",
+    "binder-core:src/adapter/bindb/home.rs",
+    "binder-core:src/adapter/bindb/learning.rs",
+    "binder-core:src/adapter/bindb/media.rs",
+    "binder-core:src/adapter/bindb/mod.rs",
+    "binder-core:src/adapter/bindb/personal.rs",
+    "binder-core:src/adapter/bindb/pets.rs",
+    "binder-core:src/adapter/bindb/relationships.rs",
+    "binder-core:src/adapter/bindb/travel.rs",
+    "binder-core:src/adapter/bindb/weather.rs",
+    "binder-core:src/adapter/bindb/work.rs",
+    "binder-core:src/adapter/mod.rs",
+    "binder-core:src/analytics/correlation.rs",
+    "binder-core:src/analytics/insights.rs",
+    "binder-core:src/analytics/loader.rs",
+    "binder-core:src/analytics/mod.rs",
+    "binder-core:src/analytics/typed_finance.rs",
+    "binder-core:src/analytics/typed_health.rs",
+    "binder-core:src/analytics/typed_home.rs",
+    "binder-core:src/analytics/typed_loader.rs",
+    "binder-core:src/analytics/typed_projectors.rs",
+    "binder-core:src/analytics/typed_weather.rs",
+    "binder-core:src/application/health.rs",
+    "binder-core:src/application/mod.rs",
+    "binder-core:src/binder/binder_error.rs",
+    "binder-core:src/binder/capability.rs",
+    "binder-core:src/binder/contributions.rs",
+    "binder-core:src/binder/entity_kind.rs",
+    "binder-core:src/binder/env.rs",
+    "binder-core:src/binder/id.rs",
+    "binder-core:src/binder/manifest.rs",
+    "binder-core:src/binder/mod.rs",
+    "binder-core:src/binder/object.rs",
+    "binder-core:src/binder/permissions.rs",
+    "binder-core:src/binder/provider_id.rs",
+    "binder-core:src/binder/telemetry.rs",
+    "binder-core:src/binder/value.rs",
+    "binder-core:src/binder/version.rs",
+    "binder-core:src/context.rs",
+    "binder-core:src/contribution/builder.rs",
+    "binder-core:src/contribution/events.rs",
+    "binder-core:src/contribution/metric_index.rs",
+    "binder-core:src/contribution/mod.rs",
+    "binder-core:src/contribution/observation_catalog.rs",
+    "binder-core:src/contribution/observation_query.rs",
+    "binder-core:src/contribution/observation_time_index.rs",
+    "binder-core:src/contribution/pipeline.rs",
+    "binder-core:src/contribution/query.rs",
+    "binder-core:src/contribution/reconciler.rs",
+    "binder-core:src/domain/commerce/delivery.rs",
+    "binder-core:src/domain/commerce/mod.rs",
+    "binder-core:src/domain/commerce/order.rs",
+    "binder-core:src/domain/finance/account.rs",
+    "binder-core:src/domain/finance/bill.rs",
+    "binder-core:src/domain/finance/budget.rs",
+    "binder-core:src/domain/finance/institution.rs",
+    "binder-core:src/domain/finance/investment.rs",
+    "binder-core:src/domain/finance/loan.rs",
+    "binder-core:src/domain/finance/mod.rs",
+    "binder-core:src/domain/finance/transaction.rs",
+    "binder-core:src/domain/foundation/account_identity.rs",
+    "binder-core:src/domain/foundation/document.rs",
+    "binder-core:src/domain/foundation/event.rs",
+    "binder-core:src/domain/foundation/location.rs",
+    "binder-core:src/domain/foundation/mod.rs",
+    "binder-core:src/domain/foundation/organization.rs",
+    "binder-core:src/domain/foundation/person.rs",
+    "binder-core:src/domain/foundation/relationship.rs",
+    "binder-core:src/domain/health/body.rs",
+    "binder-core:src/domain/health/condition.rs",
+    "binder-core:src/domain/health/daily_metrics.rs",
+    "binder-core:src/domain/health/lab.rs",
+    "binder-core:src/domain/health/medication.rs",
+    "binder-core:src/domain/health/mod.rs",
+    "binder-core:src/domain/health/nutrition.rs",
+    "binder-core:src/domain/health/provider.rs",
+    "binder-core:src/domain/health/sleep.rs",
+    "binder-core:src/domain/health/vital.rs",
+    "binder-core:src/domain/health/workout.rs",
+    "binder-core:src/domain/home/maintenance.rs",
+    "binder-core:src/domain/home/mod.rs",
+    "binder-core:src/domain/home/property.rs",
+    "binder-core:src/domain/home/vehicle.rs",
+    "binder-core:src/domain/home/warranty.rs",
+    "binder-core:src/domain/id.rs",
+    "binder-core:src/domain/learning/book.rs",
+    "binder-core:src/domain/learning/course.rs",
+    "binder-core:src/domain/learning/mod.rs",
+    "binder-core:src/domain/learning/note.rs",
+    "binder-core:src/domain/learning/reading.rs",
+    "binder-core:src/domain/media/audio.rs",
+    "binder-core:src/domain/media/mod.rs",
+    "binder-core:src/domain/media/photo.rs",
+    "binder-core:src/domain/media/source.rs",
+    "binder-core:src/domain/media/video.rs",
+    "binder-core:src/domain/mod.rs",
+    "binder-core:src/domain/personal/memory.rs",
+    "binder-core:src/domain/personal/mod.rs",
+    "binder-core:src/domain/personal/observation.rs",
+    "binder-core:src/domain/personal/orb.rs",
+    "binder-core:src/domain/personal/perspective.rs",
+    "binder-core:src/domain/personal/reentry.rs",
+    "binder-core:src/domain/personal/reflection.rs",
+    "binder-core:src/domain/personal/story.rs",
+    "binder-core:src/domain/pets/mod.rs",
+    "binder-core:src/domain/pets/pet.rs",
+    "binder-core:src/domain/pets/vet_visit.rs",
+    "binder-core:src/domain/relationships/mod.rs",
+    "binder-core:src/domain/relationships/person_relationship.rs",
+    "binder-core:src/domain/travel/mod.rs",
+    "binder-core:src/domain/travel/passport.rs",
+    "binder-core:src/domain/travel/trip.rs",
+    "binder-core:src/domain/travel/visa.rs",
+    "binder-core:src/domain/value/address.rs",
+    "binder-core:src/domain/value/coordinates.rs",
+    "binder-core:src/domain/value/distance.rs",
+    "binder-core:src/domain/value/duration.rs",
+    "binder-core:src/domain/value/email_address.rs",
+    "binder-core:src/domain/value/energy.rs",
+    "binder-core:src/domain/value/heart_rate.rs",
+    "binder-core:src/domain/value/mass.rs",
+    "binder-core:src/domain/value/mod.rs",
+    "binder-core:src/domain/value/money.rs",
+    "binder-core:src/domain/value/pace.rs",
+    "binder-core:src/domain/value/percentage.rs",
+    "binder-core:src/domain/value/speed.rs",
+    "binder-core:src/domain/value/temperature.rs",
+    "binder-core:src/domain/value/time_range.rs",
+    "binder-core:src/domain/value/url.rs",
+    "binder-core:src/domain/weather/mod.rs",
+    "binder-core:src/domain/weather/observation.rs",
+    "binder-core:src/domain/work/meeting.rs",
+    "binder-core:src/domain/work/mod.rs",
+    "binder-core:src/domain/work/project.rs",
+    "binder-core:src/domain/work/role.rs",
+    "binder-core:src/domain/work/time_entry.rs",
+    "binder-core:src/error.rs",
+    "binder-core:src/graph/mod.rs",
+    "binder-core:src/graph/queries.rs",
+    "binder-core:src/graph/temporal.rs",
+    "binder-core:src/identity.rs",
+    "binder-core:src/ingest/bindb_store.rs",
+    "binder-core:src/ingest/canonical_entity_store.rs",
+    "binder-core:src/ingest/canonical_key.rs",
+    "binder-core:src/ingest/connection.rs",
+    "binder-core:src/ingest/error.rs",
+    "binder-core:src/ingest/lineage.rs",
+    "binder-core:src/ingest/mem_store.rs",
+    "binder-core:src/ingest/mod.rs",
+    "binder-core:src/ingest/processing.rs",
+    "binder-core:src/ingest/retention.rs",
+    "binder-core:src/ingest/source_record.rs",
+    "binder-core:src/ingest/store.rs",
+    "binder-core:src/lib.rs",
+    "binder-core:src/observability.rs",
+    "binder-core:src/pipeline/contract.rs",
+    "binder-core:src/pipeline/metric.rs",
+    "binder-core:src/pipeline/mod.rs",
+    "binder-core:src/pipeline/observation.rs",
+    "binder-core:src/pipeline/projector.rs",
+    "binder-core:src/query/commerce.rs",
+    "binder-core:src/query/finance.rs",
+    "binder-core:src/query/foundation.rs",
+    "binder-core:src/query/health.rs",
+    "binder-core:src/query/home.rs",
+    "binder-core:src/query/learning.rs",
+    "binder-core:src/query/media.rs",
+    "binder-core:src/query/mod.rs",
+    "binder-core:src/query/page.rs",
+    "binder-core:src/query/personal.rs",
+    "binder-core:src/query/pets.rs",
+    "binder-core:src/query/relationships.rs",
+    "binder-core:src/query/travel.rs",
+    "binder-core:src/query/weather.rs",
+    "binder-core:src/query/work.rs",
+    "binder-core:src/repository/commerce.rs",
+    "binder-core:src/repository/finance.rs",
+    "binder-core:src/repository/foundation.rs",
+    "binder-core:src/repository/health.rs",
+    "binder-core:src/repository/home.rs",
+    "binder-core:src/repository/learning.rs",
+    "binder-core:src/repository/media.rs",
+    "binder-core:src/repository/mod.rs",
+    "binder-core:src/repository/personal.rs",
+    "binder-core:src/repository/pets.rs",
+    "binder-core:src/repository/relationships.rs",
+    "binder-core:src/repository/travel.rs",
+    "binder-core:src/repository/weather.rs",
+    "binder-core:src/repository/work.rs",
+    "binder-core:src/semantic/chunking.rs",
+    "binder-core:src/semantic/engine.rs",
+    "binder-core:src/semantic/error.rs",
+    "binder-core:src/semantic/extraction.rs",
+    "binder-core:src/semantic/mod.rs",
+    "binder-core:src/semantic/model.rs",
+    "binder-core:src/semantic/models/mock.rs",
+    "binder-core:src/semantic/models/mod.rs",
+    "binder-core:src/semantic/types.rs",
+    "binder-core:src/service/commerce.rs",
+    "binder-core:src/service/finance.rs",
+    "binder-core:src/service/foundation.rs",
+    "binder-core:src/service/health.rs",
+    "binder-core:src/service/home.rs",
+    "binder-core:src/service/learning.rs",
+    "binder-core:src/service/media.rs",
+    "binder-core:src/service/mod.rs",
+    "binder-core:src/service/personal.rs",
+    "binder-core:src/service/pets.rs",
+    "binder-core:src/service/relationships.rs",
+    "binder-core:src/service/travel.rs",
+    "binder-core:src/service/weather.rs",
+    "binder-core:src/service/work.rs",
+    "binder-core:tests/commerce_order.rs",
+    "binder-core:tests/finance_account.rs",
+    "binder-core:tests/foundation_person.rs",
+    "binder-core:tests/health_workout.rs",
+    "binder-core:tests/home_property.rs",
+    "binder-core:tests/learning_reading.rs",
+    "binder-core:tests/media_photo.rs",
+    "binder-core:tests/personal_memory.rs",
+    "binder-core:tests/pets_pet.rs",
+    "binder-core:tests/travel_trip.rs",
+    "binder-core:tests/work_project.rs"
+  ],
+  "source_files_opened": 0
+}

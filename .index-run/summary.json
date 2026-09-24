@@ -1,0 +1,616 @@
+{
+  "crates": 31,
+  "dependency_overview": [
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "apple-health-binder",
+      "from_repo": "apple-health-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-ai",
+      "to_crate": "binder-llm",
+      "to_repo": "binder-llm"
+    },
+    {
+      "from_crate": "binder-core",
+      "from_repo": "binder-core",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-ai",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-ai-mistralrs",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-app",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-binders",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-commands",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-core-shim",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-dpk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-events",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-home",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-platform",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-ai",
+      "to_repo": "binder-ai"
+    },
+    {
+      "from_crate": "binder-runtime",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-sdk",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-service-rt",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-ui",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-watcher",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-workspace",
+      "from_repo": "binder-desktop",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "binder-server",
+      "from_repo": "binder-server",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "codeintel",
+      "from_repo": "codeintel",
+      "to_crate": "bindb",
+      "to_repo": "bindb"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "garmin-binder",
+      "from_repo": "garmin-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "memory-binder",
+      "from_repo": "memory-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "story-binder",
+      "from_repo": "story-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-core",
+      "to_repo": "binder-core"
+    },
+    {
+      "from_crate": "weather-binder",
+      "from_repo": "weather-binder",
+      "to_crate": "binder-sdk",
+      "to_repo": "binder-desktop"
+    }
+  ],
+  "doctrine": [
+    "binder",
+    "flat"
+  ],
+  "files": 6244,
+  "modules": 651,
+  "primary_source": "bindb",
+  "repositories": [
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 24,
+      "modules": 0,
+      "name": "app-registry",
+      "sha": "46f574368340eefdfe1bb6f6da1b03add189a829",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 22,
+      "modules": 5,
+      "name": "apple-health-binder",
+      "sha": "2a86f34cd239028c94f6c397b9038667c30f5da0",
+      "symbols": 54
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 11,
+      "modules": 0,
+      "name": "audio_ai",
+      "sha": "f23ef30878fc2d1d4c4e169e7408e2d62cbfc424",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 91,
+      "modules": 30,
+      "name": "bindb",
+      "sha": "c1474119314040fab73c3682dea51586d7e233da",
+      "symbols": 1610
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 105,
+      "modules": 70,
+      "name": "binder-ai",
+      "sha": "82e0d66ac6fd22b23700ab4afa21f535a5234952",
+      "symbols": 929
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 175,
+      "modules": 0,
+      "name": "binder-client",
+      "sha": "195bcd0d49cf9534f464119564f01d25971d7cb6",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 839,
+      "modules": 0,
+      "name": "binder-cloud",
+      "sha": "1e917e4d36ae8eb2635111726bf40bb9e5630a93",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 243,
+      "modules": 216,
+      "name": "binder-core",
+      "sha": "e2b6f05946558aa5d5265922c32d159a293e8614",
+      "symbols": 3014
+    },
+    {
+      "crates": 19,
+      "doctrine": "binder",
+      "files": 274,
+      "modules": 140,
+      "name": "binder-desktop",
+      "sha": "8d9d8b16fa9f537deb13628a684a11483feb2f5f",
+      "symbols": 2271
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 102,
+      "modules": 0,
+      "name": "binder-ios",
+      "sha": "60133e2b00d1a8ecf9a6c272365befe06132db57",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 61,
+      "modules": 36,
+      "name": "binder-llm",
+      "sha": "622e643fefe2d72b3f2d4d3ad03f7ae0db901b75",
+      "symbols": 438
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 94,
+      "modules": 0,
+      "name": "binder-sdk",
+      "sha": "57ffcd721d6ace1e30a6231b625487fbb9db9daa",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 203,
+      "modules": 86,
+      "name": "binder-server",
+      "sha": "96864e266d1e0d540994b52389a09b068e8e388f",
+      "symbols": 3563
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 57,
+      "modules": 18,
+      "name": "codeintel",
+      "sha": "b528d31aef7cc9a23b8ed4384f5b80c193d8aa69",
+      "symbols": 384
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 145,
+      "modules": 0,
+      "name": "codev",
+      "sha": "50a03dd63fbef3ae0f01ee022e368c7f138b3994",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 134,
+      "modules": 0,
+      "name": "dpk-agent",
+      "sha": "2d45aa7352b1de6244a2b9017c17559b4c9c39aa",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 133,
+      "modules": 26,
+      "name": "dpk-build",
+      "sha": "d4e766e6ce3fcf33d55cbfcca5d2de079711d9a5",
+      "symbols": 254
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 67,
+      "modules": 0,
+      "name": "dpk-ci",
+      "sha": "f7d2dbc7f50c448b8de1f1c79634cce85e1f6cce",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 152,
+      "modules": 0,
+      "name": "dpk-codev",
+      "sha": "37cb1f6ab0a6db1d77f9229aadf5c1190d44fe4f",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 61,
+      "modules": 0,
+      "name": "dpk-docs",
+      "sha": "acd9a70765bb512ff8b5d32800bdcc858c3b4bcd",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 721,
+      "modules": 0,
+      "name": "dpk-infra",
+      "sha": "a5f8c48109e8eca19e6a4691a258019daa8e5c9d",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 1068,
+      "modules": 0,
+      "name": "foreman",
+      "sha": "06b55e0412338658e21cddf4ce13b911207b7f75",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 31,
+      "modules": 7,
+      "name": "garmin-binder",
+      "sha": "4cc503526be7e7755afb55a7feddcff91fed6493",
+      "symbols": 103
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 63,
+      "modules": 0,
+      "name": "image-decipher",
+      "sha": "4a0ccd17b50f2074571d93a2e7d27204f1ae6399",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 67,
+      "modules": 0,
+      "name": "image_ai",
+      "sha": "d708da2adfcb8e70e767d5cb6f9fd12ca49060ec",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 67,
+      "modules": 0,
+      "name": "keepsake-e2e-tests",
+      "sha": "1124280ff6a1a069e3c8d53ceccfbbe52c805c87",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 52,
+      "modules": 0,
+      "name": "keepsake-image-sd",
+      "sha": "bc4967986695b29227000e4addaf53a277a477bf",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 19,
+      "modules": 0,
+      "name": "keepsake-media",
+      "sha": "565ce19502304b9323cec91a49246af7e5d912cd",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 24,
+      "modules": 5,
+      "name": "memory-binder",
+      "sha": "d730d82aa7d6b7fc9c0e21cca3d09f3d1e7ca186",
+      "symbols": 40
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 326,
+      "modules": 0,
+      "name": "pdp",
+      "sha": "43bf94da99736de86416726ee2f1b92011663fe7",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 95,
+      "modules": 0,
+      "name": "repo-dashboard",
+      "sha": "c3c4221d4e6d9b949ef9ff44f5082418e1bd6020",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 16,
+      "modules": 0,
+      "name": "resume-generate",
+      "sha": "938c8613c84bea49e34eae3a8c96ccb235c58c68",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 209,
+      "modules": 0,
+      "name": "resume-pipeline",
+      "sha": "6fd6fddc41c14a8284cad4d4c15e195ff6889ed3",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 77,
+      "modules": 0,
+      "name": "security-audit",
+      "sha": "99aae0026f7f61f8f59e315635f7931c76832a78",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 114,
+      "modules": 0,
+      "name": "stories",
+      "sha": "44ad4c01d13dd00b248e19d337f9d0f42ad596f4",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 24,
+      "modules": 5,
+      "name": "story-binder",
+      "sha": "54759bde07adb49a9ac8f2d3eb14cd911172366d",
+      "symbols": 42
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 55,
+      "modules": 0,
+      "name": "text-decipher",
+      "sha": "35ef285c72e56d1bc8743cb8154c13cd54bdd93b",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 36,
+      "modules": 0,
+      "name": "text_ai",
+      "sha": "3bb0b75364cb8c2b9969a87963034c91d302994f",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 48,
+      "modules": 0,
+      "name": "video-decipher",
+      "sha": "7d6cc67062c646b8d060b2fb409cf31dce22b9a2",
+      "symbols": 0
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 84,
+      "modules": 0,
+      "name": "video_ai",
+      "sha": "c58eb2c37f2354baf16168439550d6bbbd62e9fa",
+      "symbols": 0
+    },
+    {
+      "crates": 1,
+      "doctrine": "flat",
+      "files": 26,
+      "modules": 7,
+      "name": "weather-binder",
+      "sha": "4d3e239c3ad1f644fb123650cd5d0dbffe52c1e8",
+      "symbols": 78
+    },
+    {
+      "crates": 0,
+      "doctrine": "flat",
+      "files": 29,
+      "modules": 0,
+      "name": "workspace-host",
+      "sha": "5dd985c4e393f85ae94e1642618b102f82bde58a",
+      "symbols": 0
+    }
+  ],
+  "source_files_opened": 0,
+  "symbols": 12780
+}

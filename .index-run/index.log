@@ -1,0 +1,320 @@
+start 2026-08-29T00:08:17Z
+binary /Volumes/SSD/dpk-workspace/codeintel/target/release/codeintel
+store /Volumes/SSD/dpk-workspace/codeintel/store
+count 42
+==== app-registry ====
+{
+  "branch": "master",
+  "duration_ms": 413,
+  "files_indexed": 24,
+  "files_seen": 24,
+  "model_bytes": 11249,
+  "name": "app-registry",
+  "sha": "46f574368340eefdfe1bb6f6da1b03add189a829",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 106552,
+  "store_bytes": 131199,
+  "symbol_count": 0
+}
+==== apple-health-binder ====
+{
+  "branch": "feat/declare-health-read-scopes",
+  "duration_ms": 387,
+  "files_indexed": 22,
+  "files_seen": 22,
+  "model_bytes": 47742,
+  "name": "apple-health-binder",
+  "sha": "2a86f34cd239028c94f6c397b9038667c30f5da0",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 37225,
+  "store_bytes": 639007,
+  "symbol_count": 54
+}
+==== audio_ai ====
+{
+  "branch": "master",
+  "duration_ms": 218,
+  "files_indexed": 11,
+  "files_seen": 11,
+  "model_bytes": 5094,
+  "name": "audio_ai",
+  "sha": "f23ef30878fc2d1d4c4e169e7408e2d62cbfc424",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 12194,
+  "store_bytes": 1065725,
+  "symbol_count": 0
+}
+==== bindb ====
+{
+  "branch": "master",
+  "duration_ms": 1719,
+  "files_indexed": 91,
+  "files_seen": 91,
+  "model_bytes": 1023518,
+  "name": "bindb",
+  "sha": "c1474119314040fab73c3682dea51586d7e233da",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 2652787,
+  "store_bytes": 14086298,
+  "symbol_count": 1610
+}
+==== binder-ai ====
+{
+  "branch": "master",
+  "duration_ms": 1671,
+  "files_indexed": 105,
+  "files_seen": 105,
+  "model_bytes": 653506,
+  "name": "binder-ai",
+  "sha": "82e0d66ac6fd22b23700ab4afa21f535a5234952",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 436560,
+  "store_bytes": 31276176,
+  "symbol_count": 929
+}
+==== binder-client ====
+{
+  "branch": "master",
+  "duration_ms": 2636,
+  "files_indexed": 175,
+  "files_seen": 175,
+  "model_bytes": 67879,
+  "name": "binder-client",
+  "sha": "195bcd0d49cf9534f464119564f01d25971d7cb6",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 3697417,
+  "store_bytes": 37042067,
+  "symbol_count": 0
+}
+==== binder-cloud ====
+{
+  "branch": "master",
+  "duration_ms": 12276,
+  "files_indexed": 839,
+  "files_seen": 839,
+  "model_bytes": 342616,
+  "name": "binder-cloud",
+  "sha": "1e917e4d36ae8eb2635111726bf40bb9e5630a93",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 13684568,
+  "store_bytes": 42001083,
+  "symbol_count": 0
+}
+==== binder-core ====
+{
+  "branch": "master",
+  "duration_ms": 3898,
+  "files_indexed": 243,
+  "files_seen": 243,
+  "model_bytes": 2152873,
+  "name": "binder-core",
+  "sha": "e2b6f05946558aa5d5265922c32d159a293e8614",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 893621,
+  "store_bytes": 61867141,
+  "symbol_count": 3014
+}
+==== binder-desktop ====
+{
+  "branch": "feat/shim-p7",
+  "duration_ms": 4437,
+  "files_indexed": 274,
+  "files_seen": 274,
+  "model_bytes": 1610802,
+  "name": "binder-desktop",
+  "sha": "8d9d8b16fa9f537deb13628a684a11483feb2f5f",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 6446349,
+  "store_bytes": 89690045,
+  "symbol_count": 2271
+}
+==== binder-ios ====
+{
+  "branch": "master",
+  "duration_ms": 1674,
+  "files_indexed": 102,
+  "files_seen": 102,
+  "model_bytes": 40618,
+  "name": "binder-ios",
+  "sha": "60133e2b00d1a8ecf9a6c272365befe06132db57",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 1605009,
+  "store_bytes": 102119353,
+  "symbol_count": 0
+}
+==== binder-llm ====
+{
+  "branch": "feat/reasoning-engine-boundary",
+  "duration_ms": 1175,
+  "files_indexed": 61,
+  "files_seen": 61,
+  "model_bytes": 305666,
+  "name": "binder-llm",
+  "sha": "622e643fefe2d72b3f2d4d3ad03f7ae0db901b75",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 210522,
+  "store_bytes": 105069218,
+  "symbol_count": 438
+}
+==== binder-sdk ====
+{
+  "branch": "master",
+  "duration_ms": 1501,
+  "files_indexed": 94,
+  "files_seen": 94,
+  "model_bytes": 58500,
+  "name": "binder-sdk",
+  "sha": "57ffcd721d6ace1e30a6231b625487fbb9db9daa",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 559171,
+  "store_bytes": 107881226,
+  "symbol_count": 0
+}
+==== binder-server ====
+{
+  "branch": "master",
+  "duration_ms": 3514,
+  "files_indexed": 203,
+  "files_seen": 203,
+  "model_bytes": 2861556,
+  "name": "binder-server",
+  "sha": "96864e266d1e0d540994b52389a09b068e8e388f",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 2191268,
+  "store_bytes": 129205331,
+  "symbol_count": 3563
+}
+==== codeintel ====
+{
+  "branch": "master",
+  "duration_ms": 1189,
+  "files_indexed": 57,
+  "files_seen": 57,
+  "model_bytes": 249680,
+  "name": "codeintel",
+  "sha": "b528d31aef7cc9a23b8ed4384f5b80c193d8aa69",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 276122,
+  "store_bytes": 151508094,
+  "symbol_count": 384
+}
+==== codev ====
+{
+  "branch": "chore/security-audit-thin",
+  "duration_ms": 2352,
+  "files_indexed": 145,
+  "files_seen": 145,
+  "model_bytes": 98896,
+  "name": "codev",
+  "sha": "50a03dd63fbef3ae0f01ee022e368c7f138b3994",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 1585164,
+  "store_bytes": 154293092,
+  "symbol_count": 0
+}
+==== dpk-agent ====
+{
+  "branch": "master",
+  "duration_ms": 2172,
+  "files_indexed": 134,
+  "files_seen": 134,
+  "model_bytes": 55550,
+  "name": "dpk-agent",
+  "sha": "2d45aa7352b1de6244a2b9017c17559b4c9c39aa",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 965211,
+  "store_bytes": 155584439,
+  "symbol_count": 0
+}
+==== dpk-build ====
+{
+  "branch": "master",
+  "duration_ms": 2354,
+  "files_indexed": 133,
+  "files_seen": 133,
+  "model_bytes": 219258,
+  "name": "dpk-build",
+  "sha": "d4e766e6ce3fcf33d55cbfcca5d2de079711d9a5",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 434547,
+  "store_bytes": 158430857,
+  "symbol_count": 254
+}
+==== dpk-ci ====
+{
+  "branch": "master",
+  "duration_ms": 1333,
+  "files_indexed": 67,
+  "files_seen": 67,
+  "model_bytes": 26541,
+  "name": "dpk-ci",
+  "sha": "f7d2dbc7f50c448b8de1f1c79634cce85e1f6cce",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 770883,
+  "store_bytes": 160793817,
+  "symbol_count": 0
+}
+==== dpk-codev ====
+{
+  "branch": "master",
+  "duration_ms": 2457,
+  "files_indexed": 152,
+  "files_seen": 152,
+  "model_bytes": 59681,
+  "name": "dpk-codev",
+  "sha": "37cb1f6ab0a6db1d77f9229aadf5c1190d44fe4f",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 1766891,
+  "store_bytes": 161804387,
+  "symbol_count": 0
+}
+==== dpk-docs ====
+{
+  "branch": "master",
+  "duration_ms": 1285,
+  "files_indexed": 61,
+  "files_seen": 61,
+  "model_bytes": 24043,
+  "name": "dpk-docs",
+  "sha": "acd9a70765bb512ff8b5d32800bdcc858c3b4bcd",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 450224,
+  "store_bytes": 162756701,
+  "symbol_count": 0
+}
+==== dpk-infra ====
+{
+  "branch": "master",
+  "duration_ms": 10458,
+  "files_indexed": 721,
+  "files_seen": 721,
+  "model_bytes": 479977,
+  "name": "dpk-infra",
+  "sha": "a5f8c48109e8eca19e6a4691a258019daa8e5c9d",
+  "skipped": false,
+  "skipped_unchanged": 0,
+  "source_bytes": 1827606,
+  "store_bytes": 168158692,
+  "symbol_count": 0
+}
+==== foreman ====
