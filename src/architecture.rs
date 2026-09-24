@@ -909,9 +909,19 @@ impl Architecture {
             .collect();
         let linked_issues = semantic_issues(&self.store, &names, &match_tokens)?;
         let linked_prs = semantic_prs(&self.store, &names, &match_tokens)?;
-        let linked_docs = semantic_docs(&self.store, &names, &match_tokens)?;
+        let scored_docs = scored_docs(&self.store, &names, &match_tokens)?;
+        let linked_docs: Vec<DocRef> = scored_docs.iter().take(8).map(|(_, d)| d.clone()).collect();
         let linked_skills = semantic_skills(&self.store, &match_tokens)?;
-        let guidance = semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos, None)?;
+        let mut guidance =
+            semantic_guidance(&self.store, &names, &match_tokens, &anchor_repos, None)?;
+        if let Some(learned) =
+            learn_from_decisive_docs(&self.store, request, &guidance, &scored_docs)
+        {
+            if !guidance.iter().any(|g| g.id == learned.id) {
+                guidance.insert(0, learned);
+                guidance.truncate(5);
+            }
+        }
 
         let mut reasoning: Vec<MatchReason> = Vec::new();
         for (repo, path) in &matched_files_for_reasoning {
@@ -1510,11 +1520,18 @@ fn semantic_prs(
     Ok(scored.into_iter().map(|(_, r)| r).collect())
 }
 
-fn semantic_docs(
+/// Overlap required before a doc can become a learned guidance row.
+const LEARN_MIN_DOC_OVERLAP: usize = 4;
+/// The top doc must lead the runner-up by this many tokens.
+const LEARN_DOC_MARGIN: usize = 2;
+/// An existing bank hit at or above this score already answers the request.
+const GUIDANCE_ALREADY_ANSWERS: u32 = 3;
+
+fn scored_docs(
     store: &BinderStore,
     names: &[String],
     match_tokens: &BTreeSet<String>,
-) -> Result<Vec<DocRef>> {
+) -> Result<Vec<(usize, DocRef)>> {
     if match_tokens.is_empty() {
         return Ok(Vec::new());
     }
@@ -1543,8 +1560,69 @@ fn semantic_docs(
         }
     }
     scored.sort_by_key(|a| Reverse(a.0));
-    scored.truncate(8);
-    Ok(scored.into_iter().map(|(_, r)| r).collect())
+    Ok(scored)
+}
+
+/// One document clearly ahead of the rest. Ties and weak overlaps return none
+/// so a noisy `linked_docs` list is never stored as the answer.
+fn decisive_doc(scored: &[(usize, DocRef)]) -> Option<&DocRef> {
+    let (best, doc) = scored.first()?;
+    if *best < LEARN_MIN_DOC_OVERLAP {
+        return None;
+    }
+    let second = scored.get(1).map(|(score, _)| *score).unwrap_or(0);
+    if scored.len() > 1 && best.saturating_sub(second) < LEARN_DOC_MARGIN {
+        return None;
+    }
+    Some(doc)
+}
+
+fn learned_answer(doc: &DocRef) -> String {
+    let title = if doc.title.is_empty() {
+        doc.path.clone()
+    } else {
+        doc.title.clone()
+    };
+    format!(
+        "{repo} documents this in `{path}` ({title}). Read that file before changing related code. Do not treat plan linked_docs as the inspection set, and do not search a second repository for the same fact. This answer was learned from the indexed document graph.",
+        repo = doc.repo,
+        path = doc.path.replace('|', "/"),
+        title = title.replace('|', "/"),
+    )
+}
+
+/// When the bank has no strong hit and one indexed document is decisive, store
+/// an Active guidance row so the next plan retrieves it. A store error does
+/// not fail the plan.
+fn learn_from_decisive_docs(
+    store: &BinderStore,
+    request: &str,
+    guidance: &[GuidanceItem],
+    scored: &[(usize, DocRef)],
+) -> Option<GuidanceItem> {
+    if guidance
+        .iter()
+        .any(|item| item.match_score >= GUIDANCE_ALREADY_ANSWERS)
+    {
+        return None;
+    }
+    let doc = decisive_doc(scored)?;
+    let overlap = scored.first().map(|(score, _)| *score).unwrap_or(0);
+    let answer = learned_answer(doc);
+    match crate::question_bank::learn_question(store, &doc.repo, request, &answer) {
+        Ok(rec) => Some(GuidanceItem {
+            id: rec.id,
+            question: rec.question,
+            answer: rec.answer,
+            version: rec.version,
+            match_score: overlap as u32,
+            aliases: rec.aliases,
+        }),
+        Err(err) => {
+            eprintln!("codeintel: plan self-learn failed: {err}");
+            None
+        }
+    }
 }
 
 fn semantic_skills(store: &BinderStore, match_tokens: &BTreeSet<String>) -> Result<Vec<SkillRef>> {
@@ -1744,5 +1822,39 @@ mod doc_severity_tests {
             "frontmatter: missing title".into(),
         ];
         assert_eq!(worst_severity(&issues), DocViolationSeverity::Error);
+    }
+}
+
+#[cfg(test)]
+mod learn_gate_tests {
+    use super::{decisive_doc, DocRef};
+
+    fn doc(path: &str) -> DocRef {
+        DocRef {
+            path: path.into(),
+            title: path.into(),
+            repo: "docsrepo".into(),
+            kind: "doc".into(),
+            description: String::new(),
+            category: String::new(),
+        }
+    }
+
+    #[test]
+    fn weak_or_tied_docs_are_not_decisive() {
+        assert!(decisive_doc(&[(3, doc("a.md"))]).is_none());
+        assert!(decisive_doc(&[(4, doc("a.md")), (3, doc("b.md"))]).is_none());
+        assert!(decisive_doc(&[(5, doc("a.md")), (5, doc("b.md"))]).is_none());
+    }
+
+    #[test]
+    fn a_clear_lead_is_decisive() {
+        let scored = [(6, doc("docs/ports.md")), (2, doc("other.md"))];
+        let winner = decisive_doc(&scored).unwrap();
+        assert_eq!(winner.path, "docs/ports.md");
+        assert_eq!(
+            decisive_doc(&[(4, doc("only.md"))]).unwrap().path,
+            "only.md"
+        );
     }
 }

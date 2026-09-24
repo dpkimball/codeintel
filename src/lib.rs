@@ -40,8 +40,9 @@ pub use indexer::{index, IndexOptions, IndexStats};
 pub use query::QueryEngine;
 pub use question_bank::{
     content_hash, delete_question, export_questions, get_question, index_questions,
-    index_questions_with_opts, patch_question_answer, patch_question_with_opts, put_question,
-    put_question_with_opts, reactivate_question, retire_question, QuestionWriteOpts,
+    index_questions_with_opts, learn_question, learned_question_id, patch_question_answer,
+    patch_question_with_opts, put_question, put_question_with_opts, reactivate_question,
+    retire_question, QuestionWriteOpts,
 };
 pub use report::{run_validation, ValidationReport};
 pub use skills::index_skills;

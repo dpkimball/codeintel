@@ -318,3 +318,64 @@ fn nested_git_subdirectory_indexes_only_that_app() {
     );
     arch.close().unwrap();
 }
+
+#[test]
+fn decisive_doc_is_learned_once() {
+    let root = tempfile::tempdir().unwrap();
+    init_service(root.path(), "docsrepo", "");
+    fs::create_dir_all(root.path().join("docs")).unwrap();
+    fs::write(
+        root.path().join("docs/ports.md"),
+        "# Nodeport hostport hyperdx otelcollector\n\n\
+         nodeport hostport hyperdx otelcollector documented values for the collector.\n",
+    )
+    .unwrap();
+    git(root.path(), &["add", "-A"]);
+    git(root.path(), &["commit", "-m", "docs"]);
+    let store_dir = tempfile::tempdir().unwrap();
+    index(opts(root.path(), store_dir.path(), "docsrepo")).unwrap();
+
+    let arch = Architecture::open(store_dir.path()).unwrap();
+    let request = "Where are nodeport hostport hyperdx otelcollector documented?";
+    let plan = arch.plan(request).unwrap();
+    assert_eq!(plan.source_files_opened, 0);
+    let learned = plan
+        .guidance
+        .iter()
+        .find(|g| g.id.starts_with("L-"))
+        .expect("learned guidance");
+    assert_eq!(learned.version, 1);
+    assert!(learned.answer.contains("docsrepo"));
+    assert!(learned.answer.contains("docs/ports.md"));
+    assert!(learned.answer.contains("Do not"));
+    let again = arch.plan(request).unwrap();
+    let learned_again = again.guidance.iter().find(|g| g.id == learned.id).unwrap();
+    assert_eq!(learned_again.version, 1);
+    arch.close().unwrap();
+}
+
+#[test]
+fn tied_docs_are_not_stored_as_guidance() {
+    let root = tempfile::tempdir().unwrap();
+    init_service(root.path(), "docsrepo", "");
+    fs::create_dir_all(root.path().join("docs")).unwrap();
+    let body = "# Nodeport hostport hyperdx otelcollector\n\n\
+                nodeport hostport hyperdx otelcollector documented values.\n";
+    fs::write(root.path().join("docs/one.md"), body).unwrap();
+    fs::write(root.path().join("docs/two.md"), body).unwrap();
+    git(root.path(), &["add", "-A"]);
+    git(root.path(), &["commit", "-m", "docs"]);
+    let store_dir = tempfile::tempdir().unwrap();
+    index(opts(root.path(), store_dir.path(), "docsrepo")).unwrap();
+
+    let arch = Architecture::open(store_dir.path()).unwrap();
+    let plan = arch
+        .plan("Where are nodeport hostport hyperdx otelcollector documented?")
+        .unwrap();
+    assert!(
+        plan.guidance.iter().all(|g| !g.id.starts_with("L-")),
+        "tied docs must not be learned: {:?}",
+        plan.guidance
+    );
+    arch.close().unwrap();
+}
