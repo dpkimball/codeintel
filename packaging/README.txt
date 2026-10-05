@@ -4,7 +4,7 @@ codeintel
 Official compiled release of codeintel.
 
 Indexes Git repositories into a bindb store as a semantic graph.
-Public executable only — source is private.
+Source is MIT licensed in https://github.com/dpkimball/codeintel.
 
 There are no SQL tables. A store is a directory (commits.wal).
 Use YOUR store path and YOUR git checkouts — nothing DPK-specific required.

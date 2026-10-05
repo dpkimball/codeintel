@@ -11,12 +11,54 @@ concurrency:
   group: codeintel-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  ci:
-    uses: dpkimball/dpk-ci/.github/workflows/rust-library-ci.yml@master
-    with:
-      project_name: codeintel
-      path_dep_repo: bindb
-      runner: product-ci
-      run_publish: false
-    secrets: inherit
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codeintel
+        uses: actions/checkout@v4
+        with:
+          path: codeintel
+
+      # Path dependency is ../bindb. No token: this clone must work for a fork
+      # once bindb is public. Do not pass secrets into this job.
+      - name: Checkout bindb
+        uses: actions/checkout@v4
+        with:
+          repository: dpkimball/bindb
+          ref: master
+          path: bindb
+          persist-credentials: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            codeintel/target
+          key: ${{ runner.os }}-codeintel-${{ hashFiles('codeintel/Cargo.lock') }}
+
+      - name: Format check
+        working-directory: codeintel
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        working-directory: codeintel
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: codeintel
+        run: cargo test --locked

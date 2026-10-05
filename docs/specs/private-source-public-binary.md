@@ -1,9 +1,9 @@
 ---
 id: private-source-public-binary
 title: codeintel — private source / public binary + portable doctrine
-status: draft
+status: superseded
 created: 2026-09-02
-updated: 2026-09-02
+updated: 2026-10-05
 owner: codeintel
 github_issue: https://github.com/dpkimball/codeintel/issues/45
 related:
@@ -13,6 +13,8 @@ related:
 ---
 
 # codeintel — public artifact + portable doctrine
+
+> **Superseded for source licensing.** The source repository is MIT (`LICENSE`). This document describes the earlier private-source / public-binary channel. See `docs/public-release-readiness.md`.
 
 ## Purpose
 
