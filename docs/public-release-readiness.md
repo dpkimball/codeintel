@@ -1,7 +1,7 @@
-# Public release readiness: codeintel, binder-llm, and bindb
+# Public release readiness: bindb, codeintel, binder-llm, and binder-ai
 
 Prepared: October 5, 2026  
-Status: preparation in progress on `feature/public-release-readiness` in codeintel and binder-llm. No repository visibility changes performed. bindb was left on `feature/store-locked-111`.
+Status: codeintel and binder-llm preparation is on `master`. binder-ai is in the same set; its preparation is a separate branch. No repository visibility changes performed.
 
 This document tracks the work needed to make the three repositories public and usable by external engineers, including CTCT Platform Engineering. Findings are based on the local repositories and locally reachable Git history reviewed on the date above. Unchecked items are work remaining, not confirmed vulnerabilities.
 
@@ -11,7 +11,9 @@ Each repository is ready when its applicable release blockers below are resolved
 
 ## 1. Required before changing repository visibility
 
-### Isolate public CI — codeintel and binder-llm
+### Isolate public CI — codeintel, binder-llm, and binder-ai
+
+binder-ai pull-request CI follows the same shape: `ubuntu-latest`, Cargo, `permissions: contents: read`, no `secrets: inherit`. It checks out `binder-llm` as a sibling because `Cargo.toml` uses `path = "../binder-llm"`. The image build stays on `product-ci` and does not run on pull requests.
 
 **Finding:** Both PR workflows call `dpkimball/dpk-ci` using the `product-ci` runner and `secrets: inherit`. The locally inspected shared workflow uses a reused self-hosted workspace and executes the project's build. Public PR code must not gain access to trusted build infrastructure. Fork-secret restrictions alone do not isolate a runner.
 
@@ -26,12 +28,12 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 
 **Acceptance:** A fork PR can run the intended public checks without private credentials, persistent internal runners, or privileged publishing access. Confirm this in GitHub settings and a controlled fork test, not solely by reading YAML.
 
-### Align licenses — codeintel and binder-llm
+### Align licenses — codeintel, binder-llm, and binder-ai
 
-**Finding:** Both manifests declare MIT, but neither repository has a root LICENSE. Their `packaging/LICENSE.txt` files explicitly say the binaries are not open source and the source is private. bindb already has MIT text in both locations.
+**Finding:** The manifests declare MIT. bindb already had a root LICENSE. codeintel, binder-llm, and binder-ai now have a root LICENSE and MIT text in `packaging/LICENSE.txt`.
 
 - [x] Confirm the intended source and binary licensing policy. Aligned to the MIT text already declared in each `Cargo.toml` and already used by bindb. Release owner still signs the checklist below.
-- [x] Add a root LICENSE to codeintel and binder-llm matching the chosen policy and correct copyright holder.
+- [x] Add a root LICENSE to codeintel, binder-llm, and binder-ai matching the chosen policy and correct copyright holder.
 - [x] Align packaged licenses, README language, manifest metadata, and release archive contents.
 - [x] Update or clearly mark historical `docs/specs/private-source-public-binary.md` documents as superseded.
 - [ ] Confirm rights to publish contributed or imported code and bundled assets, including bindb's `image.png`.
@@ -39,7 +41,7 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 
 **Acceptance:** A reader and a binary recipient can determine their permissions without encountering contradictory current licensing instructions. Ownership and asset provenance have been checked by the release owner.
 
-### Complete disclosure checks — all three repositories
+### Complete disclosure checks — all four repositories
 
 **Review result:** A custom pattern scan found no matching credential signatures, private keys, literal credential assignments matching its rules, or CTCT references in current tracked files and 935 historical file blobs across 163 locally reachable commits. The repositories were not shallow. This does not establish that every secret or private reference is absent.
 
