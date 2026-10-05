@@ -11,7 +11,8 @@ use crate::indexer::put_json;
 use crate::model::{IssueRecord, PullRequestRecord};
 use bindb::{BinderStore, Provenance, ProvenanceSource, Transaction};
 use std::collections::BTreeSet;
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 use std::time::SystemTime;
 
 /// Fetch all issues for `github_repo` (e.g. "owner/repo") and index them
@@ -126,33 +127,8 @@ fn fetch_issues(github_repo: &str) -> Result<Vec<u8>> {
         }
     }
 
-    // Fall back to GitHub REST API via curl
-    let token = std::env::var("GITHUB_TOKEN").unwrap_or_default();
-    let mut cmd = Command::new("curl");
-    cmd.args([
-        "-s",
-        "-H",
-        "Accept: application/vnd.github+json",
-        "-H",
-        "X-GitHub-Api-Version: 2022-11-28",
-    ]);
-    if !token.is_empty() {
-        cmd.args(["-H", &format!("Authorization: Bearer {token}")]);
-    }
     let url = format!("https://api.github.com/repos/{github_repo}/issues?state=all&per_page=100");
-    cmd.arg(&url);
-
-    let out = cmd
-        .output()
-        .map_err(|e| CodeintelError::Other(format!("curl not available: {e}")))?;
-
-    if !out.status.success() {
-        return Err(CodeintelError::Other(format!(
-            "curl {url} failed: {}",
-            String::from_utf8_lossy(&out.stderr)
-        )));
-    }
-    Ok(out.stdout)
+    github_curl(&url)
 }
 
 /// Fetch all pull requests for `github_repo` and index them into `store`.
@@ -267,33 +243,66 @@ fn fetch_prs(github_repo: &str) -> Result<Vec<u8>> {
         }
     }
 
-    let token = std::env::var("GITHUB_TOKEN").unwrap_or_default();
-    let mut cmd = Command::new("curl");
-    cmd.args([
-        "-s",
-        "-H",
-        "Accept: application/vnd.github+json",
-        "-H",
-        "X-GitHub-Api-Version: 2022-11-28",
-    ]);
-    if !token.is_empty() {
-        cmd.args(["-H", &format!("Authorization: Bearer {token}")]);
-    }
-    // REST API returns issues + PRs; filter by pull_request field on caller side
     let url = format!("https://api.github.com/repos/{github_repo}/pulls?state=all&per_page=100");
-    cmd.arg(&url);
+    github_curl(&url)
+}
 
-    let out = cmd
-        .output()
+/// curl argv never includes the token. The bearer header is written to stdin
+/// via `curl -K -` so it does not appear in the process list.
+const CURL_ARGS: &[&str] = &["-sS", "-K", "-"];
+
+fn github_curl(url: &str) -> Result<Vec<u8>> {
+    let token = std::env::var("GITHUB_TOKEN").unwrap_or_default();
+    if token.bytes().any(|b| b == b'"' || b == b'\n' || b == b'\r') {
+        return Err(CodeintelError::Other(
+            "GITHUB_TOKEN contains characters that cannot be passed safely".into(),
+        ));
+    }
+    let mut child = Command::new("curl")
+        .args(CURL_ARGS)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .map_err(|e| CodeintelError::Other(format!("curl not available: {e}")))?;
-
+    {
+        let mut stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| CodeintelError::Other("curl stdin unavailable".into()))?;
+        stdin
+            .write_all(curl_config(&token, url).as_bytes())
+            .map_err(|e| CodeintelError::Other(format!("curl stdin write failed: {e}")))?;
+    }
+    let out = child
+        .wait_with_output()
+        .map_err(|e| CodeintelError::Other(format!("curl failed: {e}")))?;
     if !out.status.success() {
+        let stderr = redact_token(&String::from_utf8_lossy(&out.stderr), &token);
         return Err(CodeintelError::Other(format!(
-            "curl {url} failed: {}",
-            String::from_utf8_lossy(&out.stderr)
+            "curl {url} failed: {stderr}"
         )));
     }
     Ok(out.stdout)
+}
+
+fn curl_config(token: &str, url: &str) -> String {
+    let mut config = String::from(
+        "header = \"Accept: application/vnd.github+json\"\n\
+         header = \"X-GitHub-Api-Version: 2022-11-28\"\n",
+    );
+    if !token.is_empty() {
+        config.push_str(&format!("header = \"Authorization: Bearer {token}\"\n"));
+    }
+    config.push_str(&format!("url = \"{url}\"\n"));
+    config
+}
+
+fn redact_token(text: &str, token: &str) -> String {
+    if token.is_empty() {
+        return text.to_string();
+    }
+    text.replace(token, "[redacted]")
 }
 
 fn extract_issue_tokens(title: &str, body: &str) -> Vec<String> {
@@ -308,4 +317,44 @@ fn extract_issue_tokens(title: &str, body: &str) -> Vec<String> {
         }
     }
     tokens.into_iter().collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const FAKE_TOKEN: &str = "ghp_fakeTokenValue123456";
+
+    #[test]
+    fn curl_args_omit_token() {
+        let joined = CURL_ARGS.join(" ");
+        assert!(!joined.contains(FAKE_TOKEN));
+        assert!(!joined.to_lowercase().contains("authorization"));
+        assert!(!joined.to_lowercase().contains("bearer"));
+    }
+
+    #[test]
+    fn curl_config_keeps_token_off_the_argv_and_errors_do_not_echo_it() {
+        let url = "https://api.github.com/repos/example/repo/issues?state=all&per_page=100";
+        let config = curl_config(FAKE_TOKEN, url);
+        assert!(config.contains(FAKE_TOKEN));
+        let argv = CURL_ARGS.join(" ");
+        assert!(!argv.contains(FAKE_TOKEN));
+
+        let err = redact_token(
+            &format!("curl: (6) bearer {FAKE_TOKEN} could not resolve"),
+            FAKE_TOKEN,
+        );
+        assert!(!err.contains(FAKE_TOKEN));
+        assert!(err.contains("[redacted]"));
+    }
+
+    #[test]
+    fn pr_curl_config_also_keeps_token_out_of_argv() {
+        let url = "https://api.github.com/repos/example/repo/pulls?state=all&per_page=100";
+        let config = curl_config(FAKE_TOKEN, url);
+        assert!(config.contains("pulls?"));
+        assert!(config.contains(FAKE_TOKEN));
+        assert!(!CURL_ARGS.join(" ").contains(FAKE_TOKEN));
+    }
 }

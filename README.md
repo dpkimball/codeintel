@@ -19,13 +19,22 @@ POC #1: incremental Git sync. POC #2: doctrine and impact. Historical drift and 
 
 ## Build
 
-Requires a sibling `../bindb` checkout (path dependency).
+Requires a sibling `../bindb` checkout (path dependency). Clone both repositories next to each other. No private registry is required. `Cargo.lock` matches bindb 0.1.2 on `master`.
+
+```text
+workspace/
+  bindb/
+  codeintel/
+```
 
 ```bash
-cargo test
-cargo clippy --all-targets -- -D warnings
-make b    # lint + test + release build; no image / no deploy
+cd codeintel
+cargo fmt -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
 ```
+
+`make b` is the local DPK build entrypoint. The commands above are the public build.
 
 **Public binaries:** tag `v*` → [`codeintel-releases`](https://github.com/dpkimball/codeintel-releases). See [`docs/specs/private-source-public-binary.md`](docs/specs/private-source-public-binary.md).
 
@@ -78,6 +87,18 @@ Not SQL tables. Native bindb objects and edges under `code://`:
 Edges: `CONTAINS`, `DEFINED_IN`, `IMPORTS`, `CALLS`, `REFERENCES`, `IMPLEMENTS`, `DEPENDS_ON`, `AT_COMMIT`, `IN_REPO`, `PARENT_OF`.
 
 Call resolution is name-based (not rustc/HIR). Good enough to answer architectural questions; not a type checker.
+
+## What a store contains
+
+`index` writes structural records: paths, symbol names, kinds, and hashes. It does not store full source text.
+
+`index-issues` and `index-prs` do store GitHub issue and pull-request titles, URLs, labels, state, and body text truncated to 2,000 characters. A store built from a private repository can therefore contain private issue and PR text.
+
+The store is a directory you pass to `--store` (the WAL file is `commits.wal` inside it). Delete that directory to delete the store. Do not commit a populated store, and do not put a real `GITHUB_TOKEN` in examples or command arguments. The curl fallback reads `GITHUB_TOKEN` from the environment and passes it to curl on stdin, not in the process argument list.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
 
 ## Out of scope (POC)
 
