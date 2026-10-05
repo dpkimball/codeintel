@@ -27,8 +27,10 @@ jobs:
         with:
           path: codeintel
 
-      # Path dependency is ../bindb. No token: this clone must work for a fork
-      # once bindb is public. Do not pass secrets into this job.
+      # Path dependency is ../bindb. The default GITHUB_TOKEN cannot read
+      # another private repository. PAT_WORKFLOWGITACTION can. GitHub does not
+      # pass that secret to a pull request from a fork; after bindb is public,
+      # github.token is enough.
       - name: Checkout bindb
         uses: actions/checkout@v4
         with:
@@ -36,6 +38,7 @@ jobs:
           ref: master
           path: bindb
           persist-credentials: false
+          token: ${{ secrets.PAT_WORKFLOWGITACTION || github.token }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
