@@ -1,9 +1,20 @@
 # Public release readiness: bindb, codeintel, binder-llm, and binder-ai
 
 Prepared: October 5, 2026  
-Status: codeintel and binder-llm preparation is on `master`. binder-ai is in the same set; its preparation is a separate branch. No repository visibility changes performed.
+Status: preparation is on feature branches. No repository visibility changes performed. Pull-request CI pins are recorded below. The private-token checkout of bindb and binder-llm stays until those repositories are public.
 
-This document tracks the work needed to make the three repositories public and usable by external engineers, including CTCT Platform Engineering. Findings are based on the local repositories and locally reachable Git history reviewed on the date above. Unchecked items are work remaining, not confirmed vulnerabilities.
+This document tracks the work needed to make the four repositories public and usable by external engineers, including CTCT Platform Engineering. Findings are based on the local repositories and locally reachable Git history reviewed on the date above. Unchecked items are work remaining, not confirmed vulnerabilities.
+
+## Four-repository integration
+
+| Repository | Role | Dependency needed by external users |
+| --- | --- | --- |
+| bindb | Persistent objects, graph, and history | Foundation for codeintel |
+| codeintel | Builds and queries the code graph | Compatible bindb source at build time |
+| binder-llm | Provider transport and model inference | Foundation for binder-ai |
+| binder-ai | Orchestrates knowledge queries, context, models, and execution | Compatible binder-llm source at build time; codeintel binary and populated bindb store for knowledge workflows |
+
+binder-ai completes the public workflow. A source release should include an end-to-end example across these boundaries without requiring the private parent workspace or dashboard tooling.
 
 ## Release criteria
 
@@ -13,7 +24,7 @@ Each repository is ready when its applicable release blockers below are resolved
 
 ### Isolate public CI — codeintel, binder-llm, and binder-ai
 
-binder-ai pull-request CI follows the same shape: `ubuntu-latest`, Cargo, `permissions: contents: read`, no `secrets: inherit`. It checks out `binder-llm` as a sibling because `Cargo.toml` uses `path = "../binder-llm"`. The image build stays on `product-ci` and does not run on pull requests.
+binder-ai pull-request CI uses `ubuntu-latest`, Cargo, `permissions: contents: read`, and no `secrets: inherit`. It checks out `binder-llm` as a sibling because `Cargo.toml` uses `path = "../binder-llm"`. The checkout ref is commit `a27c989c36c19c9ae7c40a49b721689c638a1c9b`. `secrets.PAT_WORKFLOWGITACTION || github.token` remains until binder-llm is public, because a fork pull request cannot read a private sibling. codeintel's checkout of bindb is pinned to `c07efbc31ff02f8cf87d8b1dc4a6f5f7447abd68` with the same token constraint. The image build stays on `product-ci` and does not run on pull requests.
 
 **Finding:** Both PR workflows call `dpkimball/dpk-ci` using the `product-ci` runner and `secrets: inherit`. The locally inspected shared workflow uses a reused self-hosted workspace and executes the project's build. Public PR code must not gain access to trusted build infrastructure. Fork-secret restrictions alone do not isolate a runner.
 
@@ -23,8 +34,8 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 - [x] Make ordinary PR checks work without private `dpk-ci`, `dpk-build`, or registry credentials. Prefer direct Cargo commands for public validation.
 - [x] Keep privileged release and private publishing jobs separate from untrusted PR execution. Release workflows stay tag-triggered. Security-audit and image workflows no longer run on `pull_request`.
 - [x] Review security-audit and image workflows for the same private infrastructure assumptions.
-- [ ] Review actual GitHub Actions permissions, fork approval settings, runner groups, environments, and secret access in all three repositories.
-- [ ] Pin privileged third-party/shared workflow dependencies to reviewed immutable revisions.
+- [ ] Review actual GitHub Actions permissions, fork approval settings, runner groups, environments, and secret access in all four repositories.
+- [ ] Pin privileged third-party/shared workflow dependencies to reviewed immutable revisions. Pull-request `ci.yml` in all four repositories pins `actions/checkout` to `11d5960a326750d5838078e36cf38b85af677262` (v4.4.0) and `actions/cache` to `0057852bfaa89a56745cba8c7296529d2fc39830` (v4.3.0). `dtolnay/rust-toolchain@stable`, bindb release/bench/security-audit workflows, and any shared workflow still move with a tag.
 
 **Acceptance:** A fork PR can run the intended public checks without private credentials, persistent internal runners, or privileged publishing access. Confirm this in GitHub settings and a controlled fork test, not solely by reading YAML.
 
@@ -43,7 +54,7 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 
 ### Complete disclosure checks — all four repositories
 
-**Review result:** A custom pattern scan found no matching credential signatures, private keys, literal credential assignments matching its rules, or CTCT references in current tracked files and 935 historical file blobs across 163 locally reachable commits. The repositories were not shallow. This does not establish that every secret or private reference is absent.
+**Review result (October 6, 2026, `origin/master` of all four repositories):** A pattern scan of current trees and of `git log -G` history covered AWS access-key IDs, `github_pat_`, `ghp_`, `gho_`, Slack token prefixes, Slack webhook URLs, and private-key headers. bindb (102 commits), codeintel (47), binder-llm (10), and binder-ai (64) were included. The only hit is the test constant `FAKE_TOKEN` in `codeintel/src/github_issues.rs`. No credential was copied into this document, and nothing was rotated. This is not a gitleaks/trufflehog run, and it does not cover GitHub issues, pull-request discussions, Actions logs, wikis, or release attachments.
 
 - [ ] Fetch and inventory the branches and tags intended to become public, then run a dedicated secret scanner across that history and the release tree.
 - [ ] Review scanner findings without copying real secrets into issues, reports, or logs.
@@ -105,21 +116,40 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 
 **Acceptance:** An external sample project can use the library and run a mocked example without private registry access or real credentials.
 
+### Include binder-ai as the orchestration entry point
+
+**Initial inspection:** Root and packaged LICENSE files match. Hosted Cargo PR CI and public development instructions are present. This is a targeted source/configuration inspection, not a completed runtime security review or secret scan. Checked items in this section and in the bindb section below are on the open branches, not on `master`, until those branches land.
+
+- [ ] Include binder-ai in the GitHub-content, dependency-notice, and vulnerability scans. The October 6 pattern scan of `origin/master` history did include binder-ai.
+- [ ] Remove the private PAT fallback from public dependency checkout after binder-llm is public, then verify a fork pull request. The binder-llm revision is pinned to `a27c989c36c19c9ae7c40a49b721689c638a1c9b`. Anonymous checkout cannot work while that repository is private.
+- [ ] Record compatible revisions of all four repositories and test the locked build in a clean sibling workspace.
+- [ ] Provide a complete example: index a synthetic repo with codeintel, point binder-ai at that store and binary, request a plan, and demonstrate a mocked or explicitly configured model workflow.
+- [ ] Verify by running it that dry-run implementation leaves files unchanged. The README now states the binary default: `--dry-run` does not call a model and does not write; `--execute` may change files in the workspace; `--publish` is rejected.
+- [ ] Review `LocalRuntime` file boundaries, symlinks, command execution, environment inheritance, and handling of untrusted repository/model content. The README now states that `LocalRuntime` runs commands on the host with the process environment and is not a sandbox.
+- [ ] Verify LocalOnly/Private policy and fallback behavior using tests that prove no cloud provider receives request content under those policies.
+- [x] Default listen when `--listen` and `BINDER_AI_LISTEN` are unset is `127.0.0.1:7841`. The container image still sets `0.0.0.0:7841`. The process still has no authentication. `POST /plan` does not call a model. `POST /ask` and `POST /explain` can. Question routes can change the bank.
+- [ ] Test unauthorized access and workspace restrictions before recommending a network deployment.
+- [x] README distinguishes `/plan` from `/ask`, `/explain`, and the question routes.
+- [x] README no longer shows hygiene examples or links the private dashboard repository. `CLAUDE.md` no longer links it either.
+- [ ] Verify the public container build includes compatible dependencies without relying on the private registry or internal image workflow.
+
+**Acceptance:** An external engineer can run the documented four-repository workflow. Server and execution boundaries are documented and tested; source publication does not imply that the HTTP service is safe to expose unauthenticated.
+
 ## 3. Public documentation and maintenance policy
 
 ### bindb
 
-- [ ] Confirm whether automatic closure of PRs is intentional. The current `.github/workflows/no-prs.yml` closes new PRs, and README declares that contributions are not accepted. Keep both if this is the desired maintenance policy.
-- [ ] Revise `docs/benchmark-comparison.md` so measured bindb results are clearly distinguished from third-party figures collected on different hardware and workloads.
-- [ ] Remove unsupported same-hardware or universal performance claims, or supply controlled reproducible comparisons with exact versions and settings.
-- [ ] Make durability, supported scale, recovery behavior, and storage-format compatibility expectations clear to adopters.
+- [x] Automatic closure of pull requests stays. `.github/workflows/no-prs.yml` matches the README: this repository does not accept contributions. Open an issue instead.
+- [x] `docs/benchmark-comparison.md` separates measurements from the development machine and published figures from other systems.
+- [x] Same-hardware and universal "N times faster" claims were removed from the takeaways and the summary. No replacement same-hardware benchmark was added.
+- [x] README states WAL-fsync durability, replay on open, and that the on-disk format is not a compatibility promise between releases.
 
 ### All repositories
 
 - [ ] Provide a concise purpose, supported use cases, installation/build steps, and a small example in each README.
-- [x] Replace private issue-doctrine links in `.github/ISSUE_TEMPLATE` with accessible instructions. Done in codeintel and binder-llm. bindb still links at the private doctrine doc; that repo was not edited on this pass.
+- [x] Replace private issue-doctrine links in `.github/ISSUE_TEMPLATE` with accessible instructions. The contact link to the private workspace doctrine doc is removed in all four repositories. bindb's issue form no longer links it. `SECURITY.md` is present in bindb as well as codeintel and binder-llm.
 - [ ] State contribution and support expectations; accepting PRs is optional.
-- [x] Add a SECURITY.md with a private vulnerability reporting route that actually works. GitHub Security Advisories. Done in codeintel and binder-llm.
+- [x] Add a SECURITY.md with a private vulnerability reporting route that actually works. GitHub Security Advisories. Present in codeintel, binder-llm, binder-ai, and bindb.
 - [ ] State current stability and compatibility expectations without overstating production readiness.
 - [ ] Verify links and the source-to-binary release path, including separate `*-releases` repositories if retained.
 
@@ -131,6 +161,7 @@ Run in clean disposable checkouts with the selected dependency versions. Use tes
 | --- | --- |
 | codeintel | `cargo fmt -- --check`; `cargo clippy --locked --all-targets -- -D warnings`; `cargo test --locked`; index and query a small fixture repo; container smoke test if shipped |
 | binder-llm | `cargo fmt -- --check`; `cargo clippy --locked --all-targets --all-features -- -D warnings`; `cargo test --locked --all-features`; external library consumer example; redaction regressions |
+| binder-ai | `cargo fmt -- --check`; `cargo clippy --locked --all-targets --all-features -- -D warnings`; `cargo test --locked --all-features`; four-repository smoke test; dry-run, routing privacy, and server access-control checks |
 | bindb | `cargo fmt -- --check`; `cargo clippy --locked --all-targets -- -D warnings`; `cargo test --locked --all`; verify recovery/locking tests and an external embedding example |
 
 - [ ] Run a current dependency vulnerability audit for each lockfile and resolve or document findings.
@@ -156,7 +187,7 @@ Run in clean disposable checkouts with the selected dependency versions. Use tes
 1. Resolve disclosure and CI isolation items before making any repository public.
 2. Complete license alignment, runtime fixes, clean-build validation, and public documentation.
 3. Review the final public refs and release artifacts at recorded commit SHAs.
-4. Make bindb available before or alongside codeintel so codeintel's documented dependency can be obtained. binder-llm can be released independently.
+4. Publish foundations first: bindb before codeintel, and binder-llm before binder-ai. Then validate binder-ai against the public codeintel binary and a synthetic bindb store. Record the exact compatible revisions; do not rely on moving branch heads.
 5. Change repository visibility only after explicit release authorization.
 6. Verify anonymous clone/access, README links, external build steps, and public CI behavior.
 7. Announce availability to the intended audience after those checks succeed. Sending an announcement is a separate action requiring authorization.
