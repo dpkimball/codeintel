@@ -32,7 +32,8 @@ pub use doctrine::{ConformanceReport, Doctrine};
 pub use drift::{analyze as drift_analyze, DriftReport};
 pub use error::{CodeintelError, Result};
 pub use federation::{
-    analyze as federation_analyze, impact as federation_impact, FederationImpact, FederationReport,
+    analyze as federation_analyze, impact as federation_impact,
+    impact_paths as federation_impact_paths, FederationImpact, FederationReport, PathImpact,
 };
 pub use github_issues::{index_issues, index_prs};
 pub use impact::{analyze as impact_analyze, ImpactReport};

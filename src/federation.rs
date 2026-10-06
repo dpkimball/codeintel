@@ -2,10 +2,10 @@
 
 use crate::error::{CodeintelError, Result};
 use crate::ids::{
-    edge_id, parse_crate_id, ACTOR, PREFIX_ALL_CRATES, PREFIX_ALL_REPOS, REL_DEPENDS_ON,
+    edge_id, file_id, parse_crate_id, ACTOR, PREFIX_ALL_CRATES, PREFIX_ALL_REPOS, REL_DEPENDS_ON,
 };
 use crate::indexer::decode_obj;
-use crate::model::{CrateRecord, RepoRecord};
+use crate::model::{CrateRecord, FileRecord, RepoRecord};
 use crate::query::crate_cycles;
 use bindb::{BinderStore, ObjectId, Provenance, ProvenanceSource, Transaction};
 use serde::Serialize;
@@ -32,6 +32,23 @@ pub struct FederationReport {
     pub cross_repo_deps: Vec<CrossRepoDep>,
     pub cycles: Vec<Vec<String>>,
     pub linked_this_pass: u64,
+    pub primary_source: &'static str,
+    pub source_files_opened: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PathFile {
+    pub path: String,
+    pub crate_name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PathImpact {
+    pub repo: String,
+    pub files: Vec<PathFile>,
+    pub unmapped_paths: Vec<String>,
+    /// Crates in other repositories that `DEPENDS_ON` a crate touched by `files`.
+    pub dependents: Vec<FederatedCrate>,
     pub primary_source: &'static str,
     pub source_files_opened: usize,
 }
@@ -167,6 +184,66 @@ pub fn analyze(store: &BinderStore) -> Result<FederationReport> {
 
 pub fn impact(store: &BinderStore, spec: &str) -> Result<FederationImpact> {
     let _ = link_cross_repo(store)?;
+    impact_existing(store, spec)
+}
+
+/// Cross-repo dependents of the crates that own `paths`. Reads file objects already
+/// in the store. Does not write federation edges.
+pub fn impact_paths(store: &BinderStore, repo: &str, paths: &[String]) -> Result<PathImpact> {
+    if paths.is_empty() {
+        return Err(CodeintelError::Other("no paths".into()));
+    }
+    let mut files = Vec::new();
+    let mut unmapped_paths = Vec::new();
+    let mut crate_names = Vec::new();
+    for path in paths {
+        let path = normalize_repo_path(path)?;
+        let Some(raw) = store.get(&file_id(repo, &path))? else {
+            unmapped_paths.push(path);
+            continue;
+        };
+        let rec: FileRecord = decode_obj(&raw)?;
+        match rec.crate_name.as_deref().filter(|n| !n.is_empty()) {
+            Some(crate_name) => {
+                if !crate_names.iter().any(|n| n == crate_name) {
+                    crate_names.push(crate_name.to_string());
+                }
+                files.push(PathFile {
+                    path,
+                    crate_name: crate_name.to_string(),
+                });
+            }
+            None => unmapped_paths.push(path),
+        }
+    }
+    let mut dependents = Vec::new();
+    let mut seen = HashSet::new();
+    for crate_name in &crate_names {
+        let spec = format!("{repo}/{crate_name}");
+        let impact = impact_existing(store, &spec)?;
+        for dep in impact.dependents {
+            if dep.repo == repo {
+                continue;
+            }
+            if seen.insert((dep.repo.clone(), dep.name.clone())) {
+                dependents.push(dep);
+            }
+        }
+    }
+    dependents.sort_by(|a, b| a.repo.cmp(&b.repo).then(a.name.cmp(&b.name)));
+    files.sort_by(|a, b| a.path.cmp(&b.path));
+    unmapped_paths.sort();
+    Ok(PathImpact {
+        repo: repo.to_string(),
+        files,
+        unmapped_paths,
+        dependents,
+        primary_source: "bindb",
+        source_files_opened: 0,
+    })
+}
+
+fn impact_existing(store: &BinderStore, spec: &str) -> Result<FederationImpact> {
     let crates = load_crates(store)?;
     let target = resolve_crate(&crates, spec)?;
     let mut adj: HashMap<String, Vec<String>> = HashMap::new();
@@ -210,6 +287,20 @@ pub fn impact(store: &BinderStore, spec: &str) -> Result<FederationImpact> {
         primary_source: "bindb",
         source_files_opened: 0,
     })
+}
+
+fn normalize_repo_path(path: &str) -> Result<String> {
+    let path = path.trim().trim_start_matches("./");
+    if path.is_empty()
+        || path.starts_with('/')
+        || path.contains('\0')
+        || path
+            .split('/')
+            .any(|seg| seg.is_empty() || seg == ".." || seg == ".")
+    {
+        return Err(CodeintelError::Other(format!("invalid path {path}")));
+    }
+    Ok(path.to_string())
 }
 
 fn spans_repos(nodes: &[String]) -> bool {
