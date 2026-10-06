@@ -118,7 +118,7 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 
 ### Include binder-ai as the orchestration entry point
 
-**Initial inspection:** Root and packaged LICENSE files match. Hosted Cargo PR CI and public development instructions are present. This is a targeted source/configuration inspection, not a completed runtime security review or secret scan.
+**Initial inspection:** Root and packaged LICENSE files match. Hosted Cargo PR CI and public development instructions are present. This is a targeted source/configuration inspection, not a completed runtime security review or secret scan. Checked items in this section and in the bindb section below are on the open branches, not on `master`, until those branches land.
 
 - [ ] Include binder-ai in the GitHub-content, dependency-notice, and vulnerability scans. The October 6 pattern scan of `origin/master` history did include binder-ai.
 - [ ] Remove the private PAT fallback from public dependency checkout after binder-llm is public, then verify a fork pull request. The binder-llm revision is pinned to `a27c989c36c19c9ae7c40a49b721689c638a1c9b`. Anonymous checkout cannot work while that repository is private.
