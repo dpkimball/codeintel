@@ -149,7 +149,7 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 
 - [x] Provide a concise purpose, supported use cases, installation/build steps, and a small example in each README. Each README has a build section. binder-ai links `docs/examples/four-repo.md`.
 - [x] Replace private issue-doctrine links in `.github/ISSUE_TEMPLATE` with accessible instructions. The contact link to the private workspace doctrine doc is removed in all four repositories. bindb's issue form no longer links it. `SECURITY.md` is present in bindb as well as codeintel and binder-llm.
-- [x] State contribution and support expectations; accepting PRs is optional. bindb does not accept pull requests. The other three accept issues and pull requests. Security reports go to GitHub Security Advisories.
+- [x] State contribution and support expectations; accepting PRs is optional. All four repositories refuse pull requests. Fork to keep your own changes, and open an issue for bugs or suggestions. Security reports go to GitHub Security Advisories.
 - [x] Add a SECURITY.md with a private vulnerability reporting route that actually works. GitHub Security Advisories. Present in codeintel, binder-llm, binder-ai, and bindb.
 - [x] State current stability and compatibility expectations without overstating production readiness. Each README says 0.1.x and names what is not a compatibility promise.
 - [x] Verify links and the source-to-binary release path, including separate `*-releases` repositories if retained. codeintel v0.1.1 and binder-ai v0.1.2 archives were downloaded and listed. Their packaged LICENSE.txt is the withdrawn proprietary text; the release notes now say the source license is MIT. bindb and binder-llm have no GitHub release on the source repo.
