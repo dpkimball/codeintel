@@ -82,9 +82,15 @@ enum Cmd {
     Federation {
         #[arg(long)]
         store: PathBuf,
-        /// Crate name or `repo/crate` for cross-repo impact.
+        /// Crate name or `repo/crate` for cross-repo impact. Writes missing DEPENDS_ON edges.
         #[arg(long)]
         impact: Option<String>,
+        /// Repository name for `--path`. Read-only: does not write the store.
+        #[arg(long)]
+        repo: Option<String>,
+        /// Repo-relative file path. Repeat for each changed file.
+        #[arg(long = "path")]
+        path: Vec<String>,
     },
     /// Agent-facing architecture API (JSON). Prefer this over graph primitives.
     Architecture {
@@ -440,9 +446,25 @@ fn run() -> codeintel::Result<()> {
             println!("{}", serde_json::to_string_pretty(&report)?);
             db.close()?;
         }
-        Cmd::Federation { store, impact } => {
+        Cmd::Federation {
+            store,
+            impact,
+            repo,
+            path,
+        } => {
             let db = open_store(&store)?;
-            if let Some(target) = impact {
+            if !path.is_empty() {
+                if impact.is_some() {
+                    return Err(codeintel::CodeintelError::Other(
+                        "pass either --impact or --path, not both".into(),
+                    ));
+                }
+                let repo = repo.ok_or_else(|| {
+                    codeintel::CodeintelError::Other("--repo is required with --path".into())
+                })?;
+                let report = codeintel::federation_impact_paths(&db, &repo, &path)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else if let Some(target) = impact {
                 let report = codeintel::federation_impact(&db, &target)?;
                 println!("{}", serde_json::to_string_pretty(&report)?);
             } else {

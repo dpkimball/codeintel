@@ -96,7 +96,25 @@ fn federation_links_named_dep_across_repos_without_source() {
     );
 
     let impact = codeintel::federation_impact(&db, "libx").unwrap();
+    let by_path = codeintel::federation_impact_paths(&db, "libs", &["src/lib.rs".into()]).unwrap();
     db.close().unwrap();
+    assert!(
+        by_path
+            .files
+            .iter()
+            .any(|f| f.path == "src/lib.rs" && f.crate_name == "libx"),
+        "src/lib.rs should map to crate libx: {:?}",
+        by_path.files
+    );
+    assert!(
+        by_path
+            .dependents
+            .iter()
+            .any(|c| c.repo == "apps" && c.name == "appx"),
+        "path impact should list apps/appx: {:?}",
+        by_path.dependents
+    );
+    assert!(by_path.unmapped_paths.is_empty());
     assert_eq!(impact.source_files_opened, 0);
     assert!(
         impact
@@ -106,4 +124,24 @@ fn federation_links_named_dep_across_repos_without_source() {
         "libx should list apps/appx as a dependent: {:?}",
         impact.dependents
     );
+}
+
+#[test]
+fn federation_path_impact_reports_unmapped_without_writing() {
+    let lib = tempfile::tempdir().unwrap();
+    let app = tempfile::tempdir().unwrap();
+    init_crate(lib.path(), "libx", Some("appx"));
+    init_crate(app.path(), "appx", Some("libx"));
+
+    let store_dir = tempfile::tempdir().unwrap();
+    index(opts(lib.path(), store_dir.path(), "libs")).unwrap();
+    index(opts(app.path(), store_dir.path(), "apps")).unwrap();
+
+    let db = open_store(store_dir.path()).unwrap();
+    let missing = codeintel::federation_impact_paths(&db, "libs", &["missing.rs".into()]).unwrap();
+    db.close().unwrap();
+    assert!(missing.files.is_empty());
+    assert_eq!(missing.unmapped_paths, vec!["missing.rs".to_string()]);
+    assert!(missing.dependents.is_empty());
+    assert_eq!(missing.source_files_opened, 0);
 }
