@@ -71,7 +71,7 @@ jobs:
             echo "bindb already present at ${DEST}"
             exit 0
           fi
-          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
+          git clone --depth 1 "https://github.com/dpkimball/bindb.git" "${DEST}"
           test -f "${DEST}/Cargo.toml"
       - name: Install dist
         # we specify bash to get pipefail; it guards against the `curl` command
@@ -148,7 +148,7 @@ jobs:
             echo "bindb already present at ${DEST}"
             exit 0
           fi
-          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
+          git clone --depth 1 "https://github.com/dpkimball/bindb.git" "${DEST}"
           test -f "${DEST}/Cargo.toml"
         env:
           "GH_TOKEN": "${{ secrets.PAT_WORKFLOWGITACTION || secrets.GH_RELEASES_TOKEN || github.token }}"
@@ -215,7 +215,7 @@ jobs:
             echo "bindb already present at ${DEST}"
             exit 0
           fi
-          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
+          git clone --depth 1 "https://github.com/dpkimball/bindb.git" "${DEST}"
           test -f "${DEST}/Cargo.toml"
       - name: Install cached dist
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
@@ -278,7 +278,7 @@ jobs:
             echo "bindb already present at ${DEST}"
             exit 0
           fi
-          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
+          git clone --depth 1 "https://github.com/dpkimball/bindb.git" "${DEST}"
           test -f "${DEST}/Cargo.toml"
       - name: Install cached dist
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8

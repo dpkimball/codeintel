@@ -16,15 +16,13 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.PAT_WORKFLOWGITACTION }}
-      # bindb is a path dep (`../bindb`) — clone so cargo metadata can resolve it.
+      # bindb is a path dep (`../bindb`). The repository is public.
       - name: Checkout bindb as path dependency
-        env:
-          GH_TOKEN: ${{ secrets.PAT_WORKFLOWGITACTION || secrets.GH_RELEASES_TOKEN || github.token }}
         run: |
           set -euo pipefail
           DEST="${GITHUB_WORKSPACE}/../bindb"
           if [ ! -f "${DEST}/Cargo.toml" ]; then
-            git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/dpkimball/bindb.git" "${DEST}"
+            git clone --depth 1 "https://github.com/dpkimball/bindb.git" "${DEST}"
           fi
           test -f "${DEST}/Cargo.toml"
       - name: Release (create git tag when Cargo.toml version is untagged)

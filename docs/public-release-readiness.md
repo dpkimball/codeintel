@@ -122,7 +122,7 @@ References: `codeintel/.github/workflows/ci.yml`, `binder-llm/.github/workflows/
 **Initial inspection:** Root and packaged LICENSE files match. Hosted Cargo PR CI and public development instructions are present. This is a targeted source/configuration inspection, not a completed runtime security review or secret scan. Checked items in this section and in the bindb section below are on the open branches, not on `master`, until those branches land.
 
 - [x] Include binder-ai in the GitHub-content, dependency-notice, and vulnerability scans. gitleaks and the issue/PR scan on 2026-10-26 included binder-ai. `THIRD_PARTY_NOTICES.md` is in the repo. `cargo audit` results are in the closure section.
-- [ ] Remove the private PAT fallback from public dependency checkout after binder-llm is public, then verify a fork pull request. The binder-llm revision is pinned to `634690cf2706cd2b30a6fc02e4fbb9b904054467`. Anonymous checkout cannot work while that repository is private. This box is closed in the same publication, immediately after the visibility change.
+- [x] Remove the private PAT fallback from public dependency checkout after binder-llm is public, then verify a fork pull request. binder-llm is pinned to `294dd57e0eb2ea7dc6e1c77e95ad001f6fe7a054`. bindb is pinned to `40730ea18571f2e1ba8cc9e9c7be635a33351a37`. Sibling image checkouts use the default token. The maintainer helm bump still uses `PAT_WORKFLOWGITACTION` to push the private dpk-infra chart. The fork pull request result is in the closure section.
 - [x] Record compatible revisions of all four repositories and test the locked build in a clean sibling workspace. The workspace siblings were tested with `cargo test --locked` on 2026-10-26. Results are in the closure section. CI pins bindb `c07efbc31ff02f8cf87d8b1dc4a6f5f7447abd68` and binder-llm `634690cf2706cd2b30a6fc02e4fbb9b904054467`.
 - [x] Provide a complete example: index a synthetic repo with codeintel, point binder-ai at that store and binary, request a plan, and demonstrate a mocked or explicitly configured model workflow. See binder-ai `docs/examples/four-repo.md`. `binder-ai-plan` does not call a model. The run result is in the closure section.
 - [x] Verify by running it that dry-run implementation leaves files unchanged. The README states the binary default: `--dry-run` does not call a model and does not write; `--execute` may change files in the workspace; `--publish` is rejected. Locked tests cover that default.
@@ -204,7 +204,7 @@ Run in clean disposable checkouts with the selected dependency versions. Use tes
 - [x] Release owner approves the exact repositories and refs for publication.
 
 Release owner: Darin Kimball, approved in chat on 2026-10-26, including publication of `bindb/image.png`.  
-Reviewed commit SHAs: the `master` tips after merging the 2026-10-26 release branches. Recorded again in the closure section once those commits exist.  
+Reviewed commit SHAs: bindb `40730ea18571f2e1ba8cc9e9c7be635a33351a37`, codeintel `68e37d3ebb5edc25b08b32ec052fb03f12f99360`, binder-llm `294dd57e0eb2ea7dc6e1c77e95ad001f6fe7a054`, binder-ai `188c82cbec53d2ad381fa79d041eea5dfa1fefcd`. Visibility was changed to public on 2026-10-26 in that order.  
 Approval date: 2026-10-26
 
 ## Closure (2026-10-26)

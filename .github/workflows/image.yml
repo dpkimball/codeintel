@@ -33,7 +33,6 @@ jobs:
         with:
           repository: dpkimball/bindb
           path: bindb
-          token: ${{ secrets.PAT_WORKFLOWGITACTION || github.token }}
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         if: github.event_name != 'pull_request'
