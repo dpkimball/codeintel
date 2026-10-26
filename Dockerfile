@@ -21,4 +21,7 @@ RUN cargo install --locked --path . --root /out \
   && strip /out/bin/codeintel || true
 
 FROM debian:bookworm-slim
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates git \
+  && rm -rf /var/lib/apt/lists/*
 COPY --from=build /out/bin/codeintel /out/bin/codeintel

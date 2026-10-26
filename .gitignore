@@ -5,3 +5,6 @@
 **/.dpk-build.lock
 /store/
 /validation-store/
+
+.env
+.env.*

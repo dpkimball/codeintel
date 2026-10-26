@@ -96,6 +96,14 @@ Call resolution is name-based (not rustc/HIR). Good enough to answer architectur
 
 The store is a directory you pass to `--store` (the WAL file is `commits.wal` inside it). Delete that directory to delete the store. Do not commit a populated store, and do not put a real `GITHUB_TOKEN` in examples or command arguments. The curl fallback reads `GITHUB_TOKEN` from the environment and passes it to curl on stdin, not in the process argument list.
 
+## Stability
+
+0.1.x. The `code://` object layout and CLI flags can change before 1.0. Build against a sibling bindb checkout, as documented above.
+
+## Contributing
+
+Issues and pull requests are welcome. Security reports go through [GitHub Security Advisories](https://github.com/dpkimball/codeintel/security/advisories/new). See [SECURITY.md](SECURITY.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
